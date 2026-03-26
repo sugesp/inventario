@@ -1,0 +1,86 @@
+<section class="card">
+  <div class="card-body">
+    <div class="list-header">
+      <div class="list-header-copy">
+        <span class="list-header-eyebrow">Cadastro base</span>
+        <h2 class="list-header-title">Locais</h2>
+        <p class="list-header-subtitle">Cadastre os locais e vincule a equipe responsável por cada área.</p>
+      </div>
+      <button class="btn btn-standard-new" type="button" (click)="openCreateModal()" [disabled]="equipes.length === 0">
+        Novo local
+      </button>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="equipes.length === 0 && !loadingEquipes">
+      Cadastre pelo menos uma equipe antes de criar locais.
+    </div>
+
+    <div class="table-card" *ngIf="locais.length > 0; else semLocais">
+      <div class="table-head">
+        <span>{{ locais.length }} local(is)</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Local</th>
+              <th>Equipe responsável</th>
+              <th class="text-end"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of locais">
+              <td>{{ item.nome }}</td>
+              <td>{{ item.equipeDescricao }}</td>
+              <td class="text-end">
+                <div class="row-actions">
+                  <button class="btn btn-sm btn-standard-action" type="button" (click)="edit(item)">Editar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<ng-template #semLocais>
+  <div class="empty-state" *ngIf="!loading">Nenhum local cadastrado.</div>
+</ng-template>
+
+<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
+<div class="modal-custom" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>{{ editingId ? 'Editar local' : 'Novo local' }}</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+
+    <form (ngSubmit)="submit()" #localFormNg="ngForm">
+      <div class="modal-body-custom">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nome do local</label>
+            <input class="form-control" name="localNome" [(ngModel)]="form.nome" required />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Equipe responsável</label>
+            <select class="form-select" name="localEquipeId" [(ngModel)]="form.equipeId" required>
+              <option value="" disabled>Selecione</option>
+              <option *ngFor="let equipe of equipes" [value]="equipe.id">{{ equipe.descricao }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" (click)="closeModal()">Fechar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="saving || !localFormNg.form.valid">
+          {{ saving ? 'Salvando...' : 'Salvar local' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

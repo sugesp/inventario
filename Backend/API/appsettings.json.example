@@ -1,0 +1,21 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "server=localhost;database=db_contratos;user=root;password=root"
+  },
+  "Database": {
+    "ServerVersion": "8.0.36-mysql"
+  },
+  "Jwt": {
+    "Secret": "troque-esta-chave-jwt-por-uma-sequencia-segura-com-32-caracteres",
+    "Issuer": "Contratos.API",
+    "Audience": "Contratos.App",
+    "ExpiresMinutes": 480
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}

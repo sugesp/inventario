@@ -1,0 +1,71 @@
+:host {
+  display: block;
+}
+
+.not-found-page {
+  min-height: calc(100vh - 140px);
+  display: grid;
+  place-items: center;
+  padding: 24px 0;
+}
+
+.not-found-card {
+  width: min(100%, 720px);
+  padding: 40px;
+  background: linear-gradient(145deg, #f8fbff 0%, #edf4fb 55%, #ffffff 100%);
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(24, 53, 84, 0.08);
+}
+
+.not-found-eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #5a7692;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.not-found-title {
+  margin: 0 0 12px;
+  color: #21384f;
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  line-height: 0.95;
+}
+
+.not-found-text {
+  max-width: 520px;
+  margin: 0;
+  color: #61788f;
+  font-size: 1rem;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.not-found-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 190px;
+}
+
+@media (max-width: 768px) {
+  .not-found-card {
+    padding: 28px 22px;
+  }
+
+  .not-found-page {
+    min-height: auto;
+  }
+
+  .not-found-actions .btn {
+    width: 100%;
+  }
+}

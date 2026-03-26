@@ -1,0 +1,55 @@
+<div class="searchable-select" [class.is-open]="isOpen" [class.is-disabled]="disabled">
+  <button
+    class="searchable-select-trigger"
+    type="button"
+    [disabled]="disabled"
+    [class.has-value]="!!selectedOption"
+    (click)="toggleDropdown()"
+  >
+    <span class="searchable-select-trigger-label">{{ selectedOption?.label || placeholder }}</span>
+  </button>
+
+  <div class="searchable-select-dropdown" *ngIf="isOpen">
+    <div class="searchable-select-search">
+      <input
+        #searchInput
+        class="form-control"
+        type="text"
+        [ngModel]="searchTerm"
+        (ngModelChange)="searchTerm = $event"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="searchPlaceholder"
+      />
+    </div>
+
+    <div class="searchable-select-options">
+      <button
+        *ngIf="emptyOptionLabel !== null"
+        class="searchable-select-option searchable-select-option-empty"
+        type="button"
+        [class.is-selected]="value === null || value === ''"
+        (mousedown)="handleClearMouseDown($event)"
+      >
+        {{ emptyOptionLabel }}
+      </button>
+
+      <button
+        *ngFor="let option of filteredOptions"
+        class="searchable-select-option"
+        type="button"
+        [class.is-selected]="option.value === value"
+        [style.--option-depth]="option.depth ?? 0"
+        (mousedown)="handleOptionMouseDown($event, option)"
+      >
+        <span class="searchable-select-option-content">
+          <span class="searchable-select-option-branch" *ngIf="(option.depth ?? 0) > 0" aria-hidden="true"></span>
+          <span>{{ option.label }}</span>
+        </span>
+      </button>
+
+      <div class="searchable-select-empty" *ngIf="filteredOptions.length === 0">
+        Nenhuma opcao encontrada.
+      </div>
+    </div>
+  </div>
+</div>

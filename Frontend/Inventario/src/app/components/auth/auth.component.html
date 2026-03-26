@@ -1,0 +1,109 @@
+<div class="auth-shell">
+  <section class="auth-brand">
+    <div class="auth-brand-copy">
+      <span class="auth-kicker">{{ appEyebrow }}</span>
+      <h1 class="auth-brand-title">{{ appTitle }}</h1>
+    </div>
+  </section>
+
+  <section class="auth-side">
+    <section class="auth-card">
+      <div class="auth-card-brand">
+        <img src="assets/sugesp-ro.png" alt="Governo do Estado de Rondônia - SUGESP" class="auth-logo" />
+      </div>
+
+      <form (ngSubmit)="submitLogin()" #loginNgForm="ngForm">
+        <h2>Acesse sua conta</h2>
+        <div class="mb-3">
+          <label class="form-label">CPF</label>
+          <input class="form-control" name="loginCpf" [(ngModel)]="loginForm.cpf" (ngModelChange)="onCpfInput($event)"
+            inputmode="numeric" maxlength="14" placeholder="CPF" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Senha</label>
+          <div class="password-field">
+            <input class="form-control" name="loginSenha" [(ngModel)]="loginForm.senha" placeholder="Senha"
+              [type]="showPassword ? 'text' : 'password'" required />
+            <button type="button" class="password-toggle" (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+              <i class="fa-solid" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100" type="submit" [disabled]="loading || !loginNgForm.form.valid">
+          {{ loading ? 'Entrando...' : 'Entrar' }}
+        </button>
+      </form>
+    </section>
+
+    <button type="button" class="auth-secondary-card" (click)="openPreRegisterModal()">
+      <span class="auth-secondary-icon">
+        <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+      </span>
+      <span class="auth-secondary-copy">
+        <span class="auth-secondary-kicker">Solicitar acesso</span>
+        <span class="auth-secondary-text">Abra um pré-cadastro para análise do administrador.</span>
+      </span>
+      <span class="auth-secondary-arrow">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </span>
+    </button>
+  </section>
+</div>
+
+<div class="auth-modal-backdrop" *ngIf="showPreRegisterModal"></div>
+<div class="auth-modal" *ngIf="showPreRegisterModal"
+  (mousedown)="onPreRegisterOverlayPointerDown($event)"
+  (mouseup)="onPreRegisterOverlayPointerUp($event)">
+  <div class="auth-modal-card" (click)="$event.stopPropagation()">
+    <div class="auth-modal-header">
+      <div>
+        <h3>Solicitar acesso</h3>
+        <p>Preencha seus dados para envio do pré-cadastro.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closePreRegisterModal()"></button>
+    </div>
+
+    <form (ngSubmit)="submitPreRegister()" #preRegisterNgForm="ngForm">
+      <div class="auth-modal-body">
+        <div class="mb-3">
+          <label class="form-label">Nome</label>
+          <input class="form-control" name="preRegisterNome" [(ngModel)]="preRegisterForm.nome" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" name="preRegisterEmail" [(ngModel)]="preRegisterForm.email" type="email" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">CPF</label>
+          <input class="form-control" name="preRegisterCpf" [(ngModel)]="preRegisterForm.cpf" (ngModelChange)="onPreRegisterCpfInput($event)"
+            inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Senha</label>
+          <div class="password-field">
+            <input class="form-control" name="preRegisterSenha" [(ngModel)]="preRegisterForm.senha" [type]="showPreRegisterPassword ? 'text' : 'password'" required />
+            <button type="button" class="password-toggle" (click)="showPreRegisterPassword = !showPreRegisterPassword"
+              [attr.aria-label]="showPreRegisterPassword ? 'Ocultar senha' : 'Mostrar senha'">
+              <i class="fa-solid" [ngClass]="showPreRegisterPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Confirmar senha</label>
+          <input class="form-control" name="preRegisterConfirmarSenha" [(ngModel)]="preRegisterForm.confirmarSenha" [type]="showPreRegisterPassword ? 'text' : 'password'" required />
+        </div>
+        <div class="alert alert-info mb-0">
+          Seu cadastro ficará pendente até que um administrador defina seu perfil e libere o acesso.
+        </div>
+      </div>
+
+      <div class="auth-modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closePreRegisterModal()">Fechar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="preRegisterLoading || !preRegisterNgForm.form.valid">
+          {{ preRegisterLoading ? 'Enviando...' : 'Solicitar acesso' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

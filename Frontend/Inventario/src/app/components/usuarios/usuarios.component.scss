@@ -1,0 +1,305 @@
+:host {
+  display: block;
+}
+
+.usuarios-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.list-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-box {
+  flex: 1;
+  position: relative;
+}
+
+.search-box .form-control {
+  padding-right: 44px;
+}
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #70839a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-clear:hover {
+  background: #eef3f8;
+  color: #27496d;
+}
+
+.list-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.list-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-pagination-label,
+.list-pagination-summary {
+  color: #5b6f88;
+  font-size: 0.95rem;
+}
+
+.table-responsive {
+  overflow: visible;
+}
+
+.table-responsive > .table {
+  min-width: 0;
+}
+
+.table {
+  overflow: visible;
+  table-layout: fixed;
+}
+
+.table td,
+.table th {
+  overflow: visible;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.table .col-nome {
+  width: 42%;
+}
+
+.table .col-cpf {
+  width: 16%;
+}
+
+.table .col-unidade {
+  width: 12%;
+}
+
+.table .col-perfil {
+  width: 14%;
+}
+
+.table .col-acoes {
+  width: 16%;
+}
+
+.table tbody tr td {
+  transition: background-color 0.18s ease;
+}
+
+.table tbody tr:hover td,
+.table tbody tr.row-active td {
+  background: #f4f8fc;
+}
+
+.actions-dropdown {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+.usuarios-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.usuarios-action-icon {
+  display: none;
+  font-size: 0.95rem;
+}
+
+.actions-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  z-index: 5;
+}
+
+.actions-menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  color: #2d3a4a;
+}
+
+.actions-menu-item:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.actions-menu-item:disabled {
+  opacity: 0.65;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status-badge-active {
+  background: #e7f6ec;
+  color: #1e7a3e;
+}
+
+.status-badge-pending {
+  background: #fff2df;
+  color: #b86800;
+}
+
+.status-badge-inactive {
+  background: #fde8e8;
+  color: #b42318;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 40, 44, 0.55);
+  z-index: 1070;
+}
+
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal-card {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+  padding: 0;
+}
+
+.modal-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e3eaf2;
+}
+
+.modal-header-custom h4 {
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .list-toolbar,
+  .list-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .list-pagination-actions {
+    justify-content: space-between;
+  }
+
+  .table-responsive {
+    overflow: visible;
+  }
+
+  .table-responsive > .table {
+    min-width: 100%;
+  }
+
+  .table {
+    table-layout: auto;
+  }
+
+  .table .col-nome {
+    width: auto;
+  }
+
+  .table .col-cpf {
+    width: 32%;
+  }
+
+  .table .col-unidade,
+  .table .col-perfil {
+    display: none;
+  }
+
+  .mobile-hidden-column {
+    display: none;
+  }
+
+  .table td,
+  .table th {
+    padding-inline: 0.5rem;
+  }
+
+  .table td:last-child,
+  .table th:last-child {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .usuarios-action-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 12px !important;
+  }
+
+  .usuarios-action-icon {
+    display: inline-block;
+  }
+
+  .usuarios-action-label {
+    display: none;
+  }
+
+  .actions-menu {
+    min-width: 148px;
+  }
+}

@@ -1,0 +1,228 @@
+<div class="admin-shell" *ngIf="showShellLayout; else authLayout" [class.sidebar-open]="mobileSidebarOpen">
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    *ngIf="isMobileViewport && mobileSidebarOpen"
+    (click)="closeSidebar()"
+    aria-label="Fechar menu"
+  ></button>
+
+  <aside class="sidebar" [class.open]="mobileSidebarOpen">
+    <div class="brand">
+      <img
+        src="assets/sugesp-fundo-branco.png"
+        alt="SUGESP"
+        class="brand-logo"
+      />
+      <div class="brand-copy">
+        <strong>Inventário</strong>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <div class="menu-group">
+        <a class="menu-item" routerLink="/dashboard" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
+          <span>Dashboard</span>
+        </a>
+        <div class="menu-divider"></div>
+      </div>
+
+      <div class="menu-group">
+        <a class="menu-item" routerLink="/itens-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
+          <span>Itens inventariados</span>
+        </a>
+        <div class="menu-divider" *ngIf="authService.isAdmin"></div>
+      </div>
+
+      <div class="menu-group" *ngIf="authService.isAdmin">
+        <a class="menu-item" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+          <span>Usuários</span>
+        </a>
+        <a class="menu-item" routerLink="/equipes" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-people-group"></i></span>
+          <span>Equipes</span>
+        </a>
+        <a class="menu-item" routerLink="/locais" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
+          <span>Locais</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-account" *ngIf="authService.isAuthenticated">
+      <button type="button" class="account-trigger" (click)="toggleUserMenu()">
+        <span class="account-avatar" *ngIf="!gravatarUrl">{{ userInitials }}</span>
+        <img
+          *ngIf="gravatarUrl"
+          class="account-avatar account-avatar-image"
+          [src]="gravatarUrl"
+          [alt]="userName"
+          (error)="onGravatarError()"
+        />
+        <span class="account-meta">
+          <strong>{{ userName }}</strong>
+          <small>{{ userRole }}</small>
+        </span>
+        <span class="account-caret" [class.open]="showUserMenu">▾</span>
+      </button>
+
+      <div class="account-menu" *ngIf="showUserMenu">
+        <button type="button" class="account-menu-item" (click)="changePassword()">
+          Alterar senha
+        </button>
+        <button type="button" class="account-menu-item danger" (click)="logout()">
+          Sair
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content-area">
+    <header class="mobile-topbar" *ngIf="isMobileViewport">
+      <button
+        type="button"
+        class="mobile-menu-button"
+        (click)="toggleSidebar()"
+        [attr.aria-expanded]="mobileSidebarOpen"
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
+      <div class="mobile-topbar-copy">
+        <strong>Inventário</strong>
+        <small>{{ userName }}</small>
+      </div>
+    </header>
+
+    <section class="content-wrapper">
+      <router-outlet></router-outlet>
+    </section>
+  </div>
+</div>
+
+<ng-template #authLayout>
+  <section class="content-wrapper auth-wrapper">
+    <router-outlet></router-outlet>
+  </section>
+</ng-template>
+
+<div
+  class="shell-modal-backdrop"
+  *ngIf="showChangePasswordModal"
+  (click)="!mustChangePassword && closeChangePasswordModal()"
+></div>
+<div class="shell-modal" *ngIf="showChangePasswordModal" (click)="!mustChangePassword && closeChangePasswordModal()">
+  <div class="shell-modal-card" (click)="$event.stopPropagation()">
+    <div class="shell-modal-header">
+      <div>
+        <h4>Alterar senha</h4>
+        <p class="mb-0" *ngIf="mustChangePassword">
+          Sua senha foi redefinida para o padrao do sistema. Defina uma nova senha para continuar.
+        </p>
+      </div>
+      <button
+        class="btn-close"
+        type="button"
+        aria-label="Close"
+        *ngIf="!mustChangePassword"
+        (click)="closeChangePasswordModal()"
+      ></button>
+    </div>
+
+    <form (ngSubmit)="submitChangePassword()" #changePasswordNgForm="ngForm">
+      <div class="modal-body-custom">
+        <div class="row g-3">
+          <div class="col-12" *ngIf="!mustChangePassword">
+            <label class="form-label">Senha atual</label>
+            <div class="password-field">
+              <input
+                class="form-control"
+                name="senhaAtual"
+                [(ngModel)]="passwordForm.senhaAtual"
+                [type]="showCurrentPassword ? 'text' : 'password'"
+                required
+              />
+              <button type="button" class="password-toggle" (click)="showCurrentPassword = !showCurrentPassword"
+                [attr.aria-label]="showCurrentPassword ? 'Ocultar senha atual' : 'Mostrar senha atual'">
+                <i class="fa-solid" [ngClass]="showCurrentPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nova senha</label>
+            <div class="password-field">
+              <input
+                class="form-control"
+                name="novaSenha"
+                [(ngModel)]="passwordForm.novaSenha"
+                [type]="showNewPassword ? 'text' : 'password'"
+                minlength="8"
+                required
+              />
+              <button type="button" class="password-toggle" (click)="showNewPassword = !showNewPassword"
+                [attr.aria-label]="showNewPassword ? 'Ocultar nova senha' : 'Mostrar nova senha'">
+                <i class="fa-solid" [ngClass]="showNewPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Confirmar nova senha</label>
+            <div class="password-field">
+              <input
+                class="form-control"
+                name="confirmarNovaSenha"
+                [(ngModel)]="passwordForm.confirmarNovaSenha"
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                minlength="8"
+                required
+              />
+              <button type="button" class="password-toggle" (click)="showConfirmPassword = !showConfirmPassword"
+                [attr.aria-label]="showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'">
+                <i class="fa-solid" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" *ngIf="!mustChangePassword" (click)="closeChangePasswordModal()">
+          Fechar
+        </button>
+        <button class="btn btn-primary" type="submit" [disabled]="changingPassword || !changePasswordNgForm.form.valid">
+          {{ changingPassword ? 'Salvando...' : 'Salvar nova senha' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="backend-modal-backdrop" *ngIf="backendStatusService.isUnavailable"></div>
+<div class="backend-modal" *ngIf="backendStatusService.isUnavailable">
+  <div class="backend-modal-card">
+    <span class="backend-modal-eyebrow">Indisponibilidade temporaria</span>
+    <h3>Oops! Servico temporariamente indisponivel.</h3>
+    <p>No momento, nosso sistema esta passando por uma instabilidade. Tente novamente em alguns instantes.</p>
+    <button
+      type="button"
+      class="btn btn-primary btn-standard-new"
+      [disabled]="checkingBackendStatus"
+      (click)="retryBackendConnection()"
+    >
+      {{ checkingBackendStatus ? 'Verificando...' : 'Tentar novamente' }}
+    </button>
+  </div>
+</div>
+
+<ngx-spinner
+  bdColor="rgba(34, 45, 50, 0.35)"
+  color="#3c8dbc"
+  size="medium"
+  type="ball-scale-multiple"
+  [fullScreen]="true"
+>
+  <p class="spinner-text">Carregando...</p>
+</ngx-spinner>

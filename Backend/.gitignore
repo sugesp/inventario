@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.db
+*.log
+API/appsettings.json
+API/appsettings.Development.json
+appsettings.Development.json
+.env
+!.env.example

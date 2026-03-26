@@ -1,0 +1,273 @@
+<form (ngSubmit)="submit()" #formContrato="ngForm" *ngIf="!loading">
+  <div class="layout-grid">
+    <section class="card form-card">
+      <div class="card-body">
+        <div class="mb-4">
+          <div>
+            <h2 class="h5 mb-1">{{ pageTitle }}</h2>
+            <p class="text-muted mb-0">{{ pageSubtitle }}</p>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Dados do Contrato</h3>
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label">Fornecedor</label>
+              <div class="fornecedor-picker">
+                <app-searchable-select name="fornecedorId" [(ngModel)]="form.fornecedorId" [options]="fornecedorOptions"
+                  placeholder="Selecione" searchPlaceholder="Pesquisar fornecedor"
+                  [required]="true"></app-searchable-select>
+                <button class="btn btn-primary fornecedor-picker-action" type="button" (click)="openFornecedorModal()">
+                  NOVO
+                </button>
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label">Unidade demandante</label>
+              <app-searchable-select name="unidadeDemandanteId" [(ngModel)]="form.unidadeDemandanteId"
+                [options]="unidadeDemandanteOptions" placeholder="Selecione" searchPlaceholder="Pesquisar unidade"
+                [required]="true"></app-searchable-select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label">Responsável (Setor de Contratos)</label>
+              <app-searchable-select name="responsavelGconv" [(ngModel)]="form.responsavelGconv"
+                [options]="responsavelOptions" placeholder="Selecione" searchPlaceholder="Pesquisar responsável"
+                [required]="true"></app-searchable-select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Número do Contrato</label>
+              <input class="form-control" name="numero" [(ngModel)]="form.numero" required />
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Número Processo SEI</label>
+              <input class="form-control" name="processo" [(ngModel)]="form.processo" required />
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">ID Sei</label>
+              <input class="form-control" name="idSei" [(ngModel)]="form.idSei" required />
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Lei</label>
+              <select class="form-select" name="lei" [(ngModel)]="form.lei" required>
+                <option value="14.133/2021">14.133/2021</option>
+                <option value="8.666/93">8.666/93</option>
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label">Objeto</label>
+              <textarea class="form-control" name="objeto" [(ngModel)]="form.objeto" rows="2" required></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Preposto</h3>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nome do preposto</label>
+              <input class="form-control" name="prepostoNome" [(ngModel)]="form.prepostoNome" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Número de contato do preposto</label>
+              <input class="form-control" name="prepostoNumeroContato" [(ngModel)]="form.prepostoNumeroContato" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="section-title mb-0">Procuradores da Empresa</h3>
+            <button class="btn btn-standard-new" type="button" (click)="addProcurador()">Adicionar procurador</button>
+          </div>
+
+          <div class="row g-3" *ngIf="form.procuradores.length > 0; else procuradoresEmptyState">
+            <div class="col-12" *ngFor="let procurador of form.procuradores; let i = index">
+              <div class="card border-0 bg-light">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <strong>Procurador {{ i + 1 }}</strong>
+                    <button class="btn btn-sm btn-standard-action" type="button"
+                      (click)="removeProcurador(i)">Remover</button>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Nome</label>
+                      <input class="form-control" [name]="'procuradorNome' + i" [(ngModel)]="procurador.nome"
+                        required />
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label">Número de contato</label>
+                      <input class="form-control" [name]="'procuradorNumeroContato' + i"
+                        [(ngModel)]="procurador.numeroContato" required />
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label">Email</label>
+                      <input class="form-control" type="email" [name]="'procuradorEmail' + i"
+                        [(ngModel)]="procurador.email" required />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #procuradoresEmptyState>
+            <p class="text-muted mb-0">Nenhum contato informado.</p>
+          </ng-template>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Vigência e Financeiro</h3>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label">Data de início</label>
+              <input type="date" class="form-control" name="dataInicio" [(ngModel)]="form.dataInicio" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Vigência inicial</label>
+              <input type="date" class="form-control" name="vigenciaInicial" [(ngModel)]="form.vigenciaInicial"
+                required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Vigência máxima</label>
+              <input type="date" class="form-control" name="vigenciaMaxima" [(ngModel)]="form.vigenciaMaxima" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Valor inicial</label>
+              <input type="text" class="form-control" name="valorInicialContratual"
+                [(ngModel)]="form.valorInicialContratual" currencyMask
+                [options]="{ prefix: 'R$ ', thousands: '.', decimal: ',', precision: 2 }" required />
+            </div>
+
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Observações</h3>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Obs</label>
+              <textarea class="form-control" name="obs" [(ngModel)]="form.obs" rows="3"></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Observações complementares</label>
+              <textarea class="form-control" name="observacoesComplementares"
+                [(ngModel)]="form.observacoesComplementares" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button class="btn btn-primary contract-form-action" type="submit"
+            [disabled]="saving || !formContrato.form.valid">
+            {{ submitLabel }}
+          </button>
+          <button class="btn btn-secondary contract-form-action" type="button" (click)="back()">Cancelar</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card summary-card">
+      <div class="card-body">
+        <h3 class="h6 mb-3">Resumo Financeiro</h3>
+
+        <div class="metric-box">
+          <span class="metric-label">Valor atual do contrato</span>
+          <strong class="metric-value">{{ valorAtualPreview | currency:'BRL' }}</strong>
+          <small class="text-muted">Na criação, equivale ao valor inicial.</small>
+        </div>
+        <hr />
+
+        <p class="hint-text mb-0">
+          Os campos de acréscimo, supressão e quantidade de aditivos são atualizados automaticamente a partir dos
+          aditivos cadastrados.
+        </p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+<div class="card" *ngIf="loading">
+  <div class="card-body">
+    <p class="text-muted mb-0">Carregando contrato...</p>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showFornecedorModal" (click)="closeFornecedorModal()"></div>
+<div class="modal-custom" *ngIf="showFornecedorModal" (click)="closeFornecedorModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>Novo fornecedor</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeFornecedorModal()"></button>
+    </div>
+
+    <form (ngSubmit)="createFornecedor()" #fornecedorFormNg="ngForm">
+      <div class="modal-body-custom">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">CNPJ</label>
+            <input class="form-control" name="fornecedorCnpjModal" [(ngModel)]="fornecedorForm.cnpj"
+              (ngModelChange)="onFornecedorCnpjInput($event)" inputmode="numeric" maxlength="18"
+              placeholder="00.000.000/0000-00" required />
+            <small class="form-hint" *ngIf="loadingFornecedorCnpj">Buscando dados do CNPJ...</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Razão social</label>
+            <input class="form-control" name="fornecedorRazaoSocialModal" [(ngModel)]="fornecedorForm.razaoSocial"
+              required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nome fantasia</label>
+            <input class="form-control" name="fornecedorNomeFantasiaModal" [(ngModel)]="fornecedorForm.nomeFantasia"
+              required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Telefone de contato</label>
+            <input class="form-control" name="fornecedorTelefoneContatoModal"
+              [(ngModel)]="fornecedorForm.telefoneContato" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" name="fornecedorEmailModal" [(ngModel)]="fornecedorForm.email" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Endereço</label>
+            <input class="form-control" name="fornecedorEnderecoModal" [(ngModel)]="fornecedorForm.endereco" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cidade</label>
+            <input class="form-control" name="fornecedorCidadeModal" [(ngModel)]="fornecedorForm.cidade" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Estado</label>
+            <input class="form-control" name="fornecedorEstadoModal" [(ngModel)]="fornecedorForm.estado"
+              maxlength="2" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" (click)="closeFornecedorModal()">Fechar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="savingFornecedor || !fornecedorFormNg.form.valid">
+          {{ savingFornecedor ? 'Salvando...' : 'Salvar fornecedor' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

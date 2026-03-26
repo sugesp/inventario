@@ -1,0 +1,337 @@
+@import "../node_modules/ngx-spinner/animations/ball-scale-multiple.css";
+
+// regular style toast
+@import "ngx-toastr/toastr";
+
+/* You can add global styles to this file, and also import other style files */
+
+/* Importing Bootstrap SCSS file. */
+// @import "~bootstrap/scss/bootstrap";
+
+/* Importing Datepicker SCSS file. */
+// @import "~ngx-bootstrap/datepicker/bs-datepicker";
+
+@import "../node_modules/bootswatch/dist/cosmo/bootstrap.min.css";
+
+@font-face {
+  font-family: "AmsiPro-Ultra";
+  src: url("/assets/fonts/AmsiPro-Ultra.otf") format("opentype");
+  font-weight: 900;
+}
+
+:root {
+  --ui-card-radius: 16px;
+  --ui-button-radius: 10px;
+  --ui-button-height: 40px;
+  --ui-button-padding-x: 18px;
+  --ui-field-radius: 12px;
+  --ui-field-border: #c0cad6;
+  --ui-field-border-focus: #7ea7d8;
+  --ui-field-text: #243b57;
+  --ui-field-placeholder: #7b8ea8;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
+.card,
+.modal-card,
+.auth-card,
+.hero-card,
+.panel-card,
+.metric-card,
+.summary-card,
+.progress-card,
+.shell-modal-card {
+  border-radius: var(--ui-card-radius) !important;
+}
+
+.modal-custom {
+  overflow: auto;
+}
+
+.modal-card,
+.shell-modal-card {
+  overflow: visible !important;
+}
+
+.btn,
+button,
+.tab-button,
+.account-trigger,
+.actions-menu-item {
+  border-radius: var(--ui-button-radius) !important;
+}
+
+.btn-standard-new,
+.btn-standard-action,
+.btn-standard-edit {
+  min-height: var(--ui-button-height);
+  padding-inline: var(--ui-button-padding-x);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.btn-standard-new {
+  background: #2f7edb;
+  border-color: #2f7edb;
+  color: #fff;
+}
+
+.btn-standard-new:hover,
+.btn-standard-new:focus {
+  background: #256dc2;
+  border-color: #256dc2;
+  color: #fff;
+}
+
+.btn-standard-action,
+.btn-standard-edit {
+  width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-standard-edit {
+  background: #2f7edb;
+  border-color: #2f7edb;
+  color: #fff;
+}
+
+.btn-standard-edit:hover,
+.btn-standard-edit:focus {
+  background: #256dc2;
+  border-color: #256dc2;
+  color: #fff;
+}
+
+.btn-standard-action {
+  background: #fff;
+  border-color: #c7d3df;
+  color: #2d3a4a;
+}
+
+.btn-standard-action:hover,
+.btn-standard-action:focus {
+  background: #f4f8fc;
+  border-color: #b7c6d6;
+  color: #1f2c3a;
+}
+
+.table tbody tr > * {
+  transition: background-color 0.18s ease;
+}
+
+.table tbody tr:hover > * {
+  background: #f4f8fc !important;
+}
+
+.modal-body-custom {
+  padding: 20px 24px;
+}
+
+.modal-footer-custom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #e3eaf2;
+  background: #f8fbfe;
+}
+
+.modal-footer-custom .btn {
+  min-width: 140px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.modal-header-custom h4,
+.shell-modal-header h4 {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-close {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.form-control,
+.form-select {
+  min-height: 48px;
+  border: 1px solid var(--ui-field-border) !important;
+  border-radius: var(--ui-field-radius) !important;
+  color: var(--ui-field-text) !important;
+  padding: 0.75rem 1rem;
+  box-shadow: none !important;
+}
+
+textarea.form-control {
+  min-height: 120px;
+}
+
+.form-control::placeholder {
+  color: var(--ui-field-placeholder) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--ui-field-border-focus) !important;
+  box-shadow: 0 0 0 0.25rem rgba(63, 125, 223, 0.16) !important;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background: #eef2f6 !important;
+  color: #8a99ad !important;
+}
+
+.list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.list-header-copy {
+  min-width: 0;
+}
+
+.copy-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #7b8ea8;
+  flex: 0 0 auto;
+  box-shadow: none;
+  line-height: 1;
+}
+
+.copy-button:hover,
+.copy-button:focus {
+  color: #285f8f;
+  background: transparent !important;
+}
+
+.copy-button i {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.list-header-eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #58728d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.list-header-title {
+  margin: 0;
+  color: #1f3954;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.list-header-subtitle {
+  margin: 8px 0 0;
+  max-width: 680px;
+  color: #6e7f90;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive > .table {
+  min-width: 640px;
+}
+
+@media (max-width: 768px) {
+  .list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .list-header .btn {
+    width: 100%;
+  }
+
+  .list-header-title {
+    font-size: 1.4rem;
+  }
+
+  .modal-body-custom {
+    padding: 18px 16px;
+  }
+
+  .modal-footer-custom {
+    flex-direction: column-reverse;
+    padding: 14px 16px 18px;
+  }
+
+  .modal-footer-custom .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .btn-standard-new,
+  .btn-standard-action,
+  .btn-standard-edit {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .card,
+  .modal-card,
+  .auth-card,
+  .hero-card,
+  .panel-card,
+  .metric-card,
+  .summary-card,
+  .progress-card,
+  .shell-modal-card {
+    border-radius: 14px !important;
+  }
+
+  .table-responsive > .table {
+    min-width: 560px;
+  }
+
+  .form-control,
+  .form-select {
+    min-height: 46px;
+    padding: 0.72rem 0.9rem;
+    font-size: 16px;
+  }
+}

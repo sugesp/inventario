@@ -1,0 +1,16 @@
+using Domain.Enum;
+
+namespace Application.DTO.Aditivo;
+
+public class AditivoDto
+{
+    public Guid Id { get; set; }
+    public Guid ContratoId { get; set; }
+    public string Numero { get; set; } = string.Empty;
+    public string IdSei { get; set; } = string.Empty;
+    public TipoAditivo Tipo { get; set; }
+    public string? Observacao { get; set; }
+    public DateTime DataInicio { get; set; }
+    public DateTime? NovaVigencia { get; set; }
+    public decimal Valor { get; set; }
+}

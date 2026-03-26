@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.hero-card,
+.info-card,
+.shortcut-card {
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+}
+
+.hero-card {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf4fb 100%);
+}
+
+.eyebrow,
+.info-label {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #5a7692;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.hero-title,
+.section-heading h3 {
+  margin: 0 0 8px;
+  color: #21384f;
+}
+
+.hero-text,
+.info-text,
+.shortcut-text {
+  margin: 0;
+  color: #61788f;
+}
+
+.info-grid,
+.shortcut-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.info-card {
+  padding: 18px;
+}
+
+.info-value {
+  display: block;
+  color: #17324d;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.shortcut-section {
+  display: grid;
+  gap: 12px;
+}
+
+.shortcut-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shortcut-card {
+  display: block;
+  padding: 20px;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-2px);
+  border-color: #9eb9d4;
+  box-shadow: 0 16px 32px rgba(26, 52, 79, 0.08);
+}
+
+.shortcut-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #eef4fb;
+  color: #295f96;
+  font-size: 1.1rem;
+}
+
+.shortcut-title {
+  display: block;
+  color: #21384f;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 767.98px) {
+  .info-grid,
+  .shortcut-grid {
+    grid-template-columns: 1fr;
+  }
+}

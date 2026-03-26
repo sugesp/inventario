@@ -1,0 +1,184 @@
+<div class="usuarios-grid">
+  <section class="card">
+    <div class="card-body">
+      <div class="list-header">
+        <div class="list-header-copy">
+          <span class="list-header-eyebrow">Gestão de acesso</span>
+          <h2 class="list-header-title">Usuários</h2>
+          <p class="list-header-subtitle">Cadastros podem ficar pendentes até que um administrador defina perfil e libere o acesso.</p>
+        </div>
+        <button class="btn btn-standard-new" type="button" (click)="openModal()">Novo usuário</button>
+      </div>
+      <div class="list-toolbar">
+        <div class="search-box">
+          <input
+            class="form-control"
+            type="text"
+            name="usuarioTerm"
+            [ngModel]="term"
+            (ngModelChange)="onTermChange($event)"
+            placeholder="Buscar por nome, email, CPF, perfil, status ou equipe"
+          />
+          <button
+            *ngIf="term"
+            class="search-clear"
+            type="button"
+            (click)="clearSearch()"
+            aria-label="Limpar busca"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <colgroup>
+            <col class="col-nome" />
+            <col class="col-cpf" />
+            <col class="col-perfil" />
+            <col class="col-perfil" />
+            <col class="col-perfil" />
+            <col class="col-acoes" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th class="mobile-hidden-column">Equipe</th>
+              <th class="mobile-hidden-column">Perfil</th>
+              <th class="mobile-hidden-column">Status</th>
+              <th class="text-end"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios" [class.row-active]="openActionsUserId === usuario.id">
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.cpf }}</td>
+              <td class="mobile-hidden-column">{{ usuario.equipeDescricao || '-' }}</td>
+              <td class="mobile-hidden-column">{{ usuario.perfil }}</td>
+              <td class="mobile-hidden-column">
+                <span [class]="getStatusBadgeClass(usuario.status)">{{ getStatusLabel(usuario.status) }}</span>
+              </td>
+              <td class="text-end">
+                <div class="actions-dropdown">
+                  <button
+                    class="btn btn-sm btn-standard-action usuarios-action-button"
+                    type="button"
+                    (click)="toggleActions(usuario.id)"
+                    [attr.aria-label]="'Ações do usuário ' + usuario.nome"
+                    title="Ações"
+                  >
+                    <i class="fa-solid fa-ellipsis-vertical usuarios-action-icon" aria-hidden="true"></i>
+                    <span class="usuarios-action-label">Ações</span>
+                  </button>
+                  <div class="actions-menu" *ngIf="openActionsUserId === usuario.id">
+                    <button class="actions-menu-item" type="button" (click)="edit(usuario)">Editar</button>
+                    <button class="actions-menu-item" type="button" (click)="updateStatus(usuario, 'Ativo')"
+                      [disabled]="updatingStatusUserId === usuario.id || usuario.status === 'Ativo'">
+                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Ativo' ? 'Atualizando...' : 'Ativar' }}
+                    </button>
+                    <button class="actions-menu-item" type="button" (click)="updateStatus(usuario, 'Desativado')"
+                      [disabled]="updatingStatusUserId === usuario.id || usuario.status === 'Desativado'">
+                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Desativado' ? 'Atualizando...' : 'Desativar' }}
+                    </button>
+                    <button class="actions-menu-item" type="button" (click)="resetPassword(usuario)"
+                      [disabled]="resettingUserId === usuario.id">
+                      {{ resettingUserId === usuario.id ? 'Resetando...' : 'Resetar senha' }}
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="usuarios.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">Nenhum usuário cadastrado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="list-pagination" *ngIf="!loading">
+        <span class="list-pagination-summary">{{ totalCount }} registro(s) encontrados.</span>
+        <div class="list-pagination-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber <= 1">
+            Anterior
+          </button>
+          <span class="list-pagination-label">{{ pageLabel }}</span>
+          <button class="btn btn-outline-secondary" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages || totalPages === 0">
+            Próxima
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
+<div class="modal-custom" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>{{ editingUserId ? 'Editar usuário' : 'Novo usuário' }}</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+
+    <form (ngSubmit)="submit()" #usuarioFormNg="ngForm">
+      <div class="modal-body-custom">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="usuarioNome" [(ngModel)]="form.nome" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email</label>
+            <input class="form-control" name="usuarioEmail" [(ngModel)]="form.email" type="email" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">CPF</label>
+            <input class="form-control" name="usuarioCpf" [(ngModel)]="form.cpf" (ngModelChange)="onCpfInput($event)"
+              inputmode="numeric" maxlength="14" placeholder="000.000.000-00" [readonly]="!!editingUserId" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Perfil</label>
+            <select class="form-select" name="usuarioPerfil" [(ngModel)]="form.perfil" required>
+              <option value="Operador">Operador</option>
+              <option value="Contratos">Contratos</option>
+              <option value="Financeiro">Financeiro</option>
+              <option value="Controle Interno">Controle Interno</option>
+              <option value="Administrador">Administrador</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="usuarioStatus" [(ngModel)]="form.status" required>
+              <option value="Ativo">Ativo</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Desativado">Desativado</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Equipe</label>
+            <select class="form-select" name="usuarioEquipeId" [(ngModel)]="form.equipeId">
+              <option [ngValue]="null">Nenhuma</option>
+              <option *ngFor="let equipe of equipes" [ngValue]="equipe.id">{{ equipe.descricao }}</option>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <div class="alert alert-info mb-0">
+              <ng-container *ngIf="!editingUserId; else editingHint">
+                O usuário será criado com a senha padrão <strong>12345678</strong>. Você também pode deixá-lo como <strong>pendente</strong> até concluir a liberação.
+              </ng-container>
+              <ng-template #editingHint>
+                A edição não altera a senha atual do usuário. Use a ação <strong>Resetar senha</strong> quando necessário.
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" (click)="closeModal()">Fechar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="saving || !usuarioFormNg.form.valid">
+          {{ saving ? 'Salvando...' : (editingUserId ? 'Salvar alterações' : 'Cadastrar usuário') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

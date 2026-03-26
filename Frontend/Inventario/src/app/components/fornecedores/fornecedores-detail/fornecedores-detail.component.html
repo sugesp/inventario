@@ -1,0 +1,116 @@
+<button class="back-link outside-card" type="button" (click)="back()">‹ Voltar</button>
+
+<div class="card">
+  <div class="card-body">
+    <div *ngIf="fornecedor">
+      <div class="supplier-header">
+        <div>
+          <div class="eyebrow">Fornecedor</div>
+          <h3 class="supplier-title mb-1">{{ fornecedor.nomeFantasia || fornecedor.razaoSocial }}</h3>
+          <p class="supplier-subtitle mb-0">
+            {{ fornecedor.razaoSocial }} • {{ fornecedor.cnpj | cnpj }}<span *ngIf="fornecedor.email"> • {{ fornecedor.email }}</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-button" [class.active]="activeTab === 'visao-geral'" (click)="setActiveTab('visao-geral')">
+          Visão Geral
+        </button>
+        <button class="tab-button" [class.active]="activeTab === 'contratos'" (click)="setActiveTab('contratos')">
+          Contratos
+          <span class="count-badge">{{ contratos.length }}</span>
+        </button>
+      </div>
+
+      <div *ngIf="activeTab === 'visao-geral'">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <span class="summary-label">Contratos vinculados</span>
+            <strong>{{ contratos.length }}</strong>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Valor total contratado</span>
+            <strong>{{ totalValorContratos | currency:'BRL' }}</strong>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4"><strong>Razão social:</strong><br />{{ fornecedor.razaoSocial }}</div>
+          <div class="col-md-4"><strong>Nome fantasia:</strong><br />{{ fornecedor.nomeFantasia }}</div>
+          <div class="col-md-3"><strong>CNPJ:</strong><br />{{ fornecedor.cnpj | cnpj }}</div>
+          <div class="col-md-3"><strong>Contato:</strong><br />{{ fornecedor.telefoneContato || '-' }}</div>
+          <div class="col-md-3"><strong>Email:</strong><br />{{ fornecedor.email || '-' }}</div>
+          <div class="col-md-6"><strong>Endereco:</strong><br />{{ fornecedor.endereco || '-' }}</div>
+          <div class="col-md-3"><strong>Cidade:</strong><br />{{ fornecedor.cidade || '-' }}</div>
+          <div class="col-md-3"><strong>Estado:</strong><br />{{ fornecedor.estado || '-' }}</div>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'contratos'">
+        <div class="section-header">
+          <h3 class="section-title mb-0">Contratos deste fornecedor</h3>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Numero</th>
+                <th class="mobile-hidden-column">Número Processo SEI</th>
+                <th class="mobile-hidden-column">Vigência atual</th>
+                <th class="mobile-hidden-column">Valor atual</th>
+                <th class="text-end details-column-header"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of contratos">
+                <td>{{ item.numero }}</td>
+                <td class="mobile-hidden-column">
+                  <span class="copy-value">
+                    <span>{{ item.processo }}</span>
+                    <button *ngIf="item.processo" type="button" class="copy-button" (click)="copyToClipboard(item.processo)" title="Copiar Número Processo SEI" aria-label="Copiar Número Processo SEI">
+                      <i class="fa-solid fa-copy"></i>
+                    </button>
+                  </span>
+                </td>
+                <td class="mobile-hidden-column">{{ item.vigenciaAtual | date:'dd/MM/yyyy' }}</td>
+                <td class="mobile-hidden-column">{{ item.valorAtualContrato | currency:'BRL' }}</td>
+                <td class="text-end">
+                  <div class="table-actions-group">
+                    <button class="btn btn-sm btn-standard-action detail-button" type="button" (click)="openContratoDetails(item)" aria-label="Ver detalhes do contrato" title="Detalhes"><span class="table-detail-label">Detalhes</span><i class="fa-solid fa-circle-info table-detail-icon" aria-hidden="true"></i></button>
+                    <a class="btn btn-sm btn-standard-action mobile-hidden-column" [routerLink]="['/contratos', item.id]">Visualizar</a>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="contratos.length === 0" class="empty-table-row">
+                <td colspan="5" class="text-center text-muted py-3">Nenhum contrato vinculado a este fornecedor.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showContratoDetailsModal" (click)="closeContratoDetailsModal()"></div>
+<div class="modal-custom" *ngIf="showContratoDetailsModal" (click)="closeContratoDetailsModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>{{ contratoDetailsTitle }}</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeContratoDetailsModal()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="detail-grid">
+        <div class="detail-item" *ngFor="let field of contratoDetailsFields">
+          <span class="detail-item-label">{{ field.label }}</span>
+          <strong>{{ field.value }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary" type="button" (click)="closeContratoDetailsModal()">Fechar</button>
+    </div>
+  </div>
+</div>

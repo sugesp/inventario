@@ -1,0 +1,25 @@
+<section class="not-found-page">
+  <article class="not-found-card">
+    <span class="not-found-eyebrow">Erro 404</span>
+    <h1 class="not-found-title">Pagina nao encontrada</h1>
+    <p class="not-found-text">
+      A rota que voce tentou acessar nao existe ou pode ter sido movida.
+    </p>
+
+    <div class="not-found-actions">
+      <a
+        class="btn btn-primary btn-standard-new"
+        [routerLink]="authService.isAuthenticated ? '/dashboard' : '/auth'"
+      >
+        {{ authService.isAuthenticated ? 'Voltar ao dashboard' : 'Ir para o login' }}
+      </a>
+      <a
+        *ngIf="authService.isAuthenticated"
+        class="btn btn-standard-action"
+        routerLink="/contratos"
+      >
+        Ver contratos
+      </a>
+    </div>
+  </article>
+</section>

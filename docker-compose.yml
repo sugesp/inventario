@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: dockerfile
+    env_file:
+      - path: ./Backend/.env
+        required: false
+    expose:
+      - "80"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./Frontend/Contrato
+      dockerfile: dockerfile
+      args:
+        API_BASE_URL: ${FRONTEND_API_BASE_URL:-/api}
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: contratos-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
