@@ -90,7 +90,12 @@
       <span class="step-number">3</span>
       <div>
         <h3>Conclua o inventário</h3>
-        <p>Confira os dados do tombamento e valide se o resumo condiz com o equipamento inventariado.</p>
+        <p *ngIf="aguardandoConfirmacaoResumo; else detalhesEdicaoTexto">
+          Confira primeiro os dados lidos no QR code. Na próxima etapa você poderá editar as informações antes de continuar.
+        </p>
+        <ng-template #detalhesEdicaoTexto>
+          <p>Revise e edite os dados do item antes de seguir para o registro das fotos.</p>
+        </ng-template>
       </div>
     </div>
 
@@ -102,28 +107,6 @@
       </div>
       <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar ao tombamento</button>
     </div>
-
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Tombamento lido</label>
-        <input class="form-control" [(ngModel)]="form.tombamentoNovo" (ngModelChange)="persistState()" (blur)="onTombamentoNovoBlur()" />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Tombamento antigo</label>
-        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="persistState()" />
-      </div>
-      <div class="col-md-8">
-        <label class="form-label">Descrição do item</label>
-        <input class="form-control" [(ngModel)]="form.descricao" (ngModelChange)="persistState()" />
-      </div>
-      <div class="col-12">
-        <label class="form-label">Observação</label>
-        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao" (ngModelChange)="persistState()"></textarea>
-      </div>
-    </div>
-
-    <div class="scan-feedback" *ngIf="consultaPublicaEmAndamento">Consultando dados públicos do bem...</div>
-    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem }}</div>
 
     <div class="summary-card public-summary-card" *ngIf="consultaPublicaResumo">
       <div>
@@ -143,16 +126,78 @@
 
     <div class="step-actions" *ngIf="consultaPublicaResumo && aguardandoConfirmacaoResumo">
       <button class="btn btn-outline-secondary" type="button" (click)="confirmarResumo(false)">
-        Não condiz, vou ajustar
+        Não condiz, ajustar dados
       </button>
       <button class="btn btn-primary" type="button" (click)="confirmarResumo(true)">
-        Sim, a descrição condiz
+        Conferido, editar dados
       </button>
     </div>
 
+    <div class="row g-3" *ngIf="!aguardandoConfirmacaoResumo">
+      <div class="col-md-6">
+        <label class="form-label">Tombamento (E-Estado)</label>
+        <input class="form-control" [(ngModel)]="form.tombamentoNovo" (ngModelChange)="onTombamentoNovoChange($event)" (blur)="onTombamentoNovoBlur()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tombamento antigo</label>
+        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Descrição do item</label>
+        <input class="form-control" [(ngModel)]="form.descricao" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observação</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao" (ngModelChange)="persistState()"></textarea>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="consultaPublicaEmAndamento">Consultando dados públicos do bem...</div>
+    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem }}</div>
+
     <div class="step-actions" *ngIf="!aguardandoConfirmacaoResumo">
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Limpar fluxo</button>
-      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="consultaPublicaEmAndamento">
+      <button class="btn btn-primary" type="button" (click)="goToClassificationStep()" [disabled]="consultaPublicaEmAndamento">
+        Continuar para classificação
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isClassificationStep">
+    <div class="step-head">
+      <span class="step-number">4</span>
+      <div>
+        <h3>Classificação do item</h3>
+        <p>Escolha a classificação do bem antes de registrar as fotos.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Item em conferência</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos dados</button>
+    </div>
+
+    <div class="local-card-grid">
+      <button
+        class="local-card"
+        type="button"
+        *ngFor="let option of classificacaoOptions"
+        [class.local-card-selected]="form.status === option.value"
+        (click)="selecionarClassificacao(option.value)"
+      >
+        <span class="local-card-eyebrow">Classificação</span>
+        <strong class="local-card-title">{{ option.label }}</strong>
+        <span class="local-card-action">{{ option.description }}</span>
+      </button>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="!form.status">
         Continuar para as fotos
       </button>
     </div>
@@ -160,7 +205,7 @@
 
   <section class="step-card" *ngIf="isPhotoEtiquetaStep">
     <div class="step-head">
-      <span class="step-number">4</span>
+      <span class="step-number">5</span>
       <div>
         <h3>{{ identificationStepTitle }}</h3>
         <p>{{ identificationStepDescription }}</p>
@@ -173,7 +218,7 @@
         <strong>{{ localSelecionado.nome }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos dados</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'classificacao'">Voltar à classificação</button>
     </div>
 
     <input
@@ -210,7 +255,7 @@
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'classificacao'">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()" [disabled]="!etiquetaPhoto || processingPhoto">
         Continuar
       </button>
@@ -219,7 +264,7 @@
 
   <section class="step-card" *ngIf="isPhotoFrontalStep">
     <div class="step-head">
-      <span class="step-number">5</span>
+      <span class="step-number">6</span>
       <div>
         <h3>Foto da parte frontal do item</h3>
         <p>Registre a parte frontal do equipamento de forma completa e bem iluminada.</p>
@@ -277,7 +322,7 @@
 
   <section class="step-card" *ngIf="isPhotoTraseiraStep">
     <div class="step-head">
-      <span class="step-number">6</span>
+      <span class="step-number">7</span>
       <div>
         <h3>Foto da parte traseira do item</h3>
         <p>Registre a parte traseira do equipamento para concluir o inventário.</p>
@@ -327,8 +372,8 @@
 
     <div class="summary-card">
       <div>
-        <strong>Status do envio</strong>
-        <span>Inventariado</span>
+        <strong>Classificação</strong>
+        <span>{{ form.status || '-' }}</span>
       </div>
       <div>
         <strong>Local selecionado</strong>

@@ -24,13 +24,14 @@ interface SelectedPhoto {
   previewUrl: string;
 }
 
-type InventoryStep = 'local' | 'capture' | 'details' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
+type InventoryStep = 'local' | 'capture' | 'details' | 'classificacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
 type PhotoTarget = 'etiqueta' | 'frontal' | 'traseira';
 
 interface ItemInventarioForm {
   tombamentoNovo: string;
   tombamentoAntigo: string;
   descricao: string;
+  status: string;
   observacao: string;
 }
 
@@ -49,6 +50,7 @@ interface PersistedInventoryState {
   styleUrl: './itens-inventariados.component.scss',
 })
 export class ItensInventariadosComponent implements OnInit, OnDestroy {
+  private static readonly CLASSIFICACOES = ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO'] as const;
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
   private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 1920;
   private static readonly UPLOAD_IMAGE_QUALITY = 0.82;
@@ -150,6 +152,10 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     return this.activeStep === 'details';
   }
 
+  get isClassificationStep(): boolean {
+    return this.activeStep === 'classificacao';
+  }
+
   get isPhotoEtiquetaStep(): boolean {
     return this.activeStep === 'photoEtiqueta';
   }
@@ -165,6 +171,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
   get canSubmit(): boolean {
     return !!this.selectedLocalId
       && !!this.form.descricao.trim()
+      && !!this.form.status.trim()
       && !!this.etiquetaPhoto
       && !!this.frontalPhoto
       && !!this.traseiraPhoto;
@@ -179,6 +186,10 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
 
     if (!this.form.descricao.trim()) {
       reasons.push('Preencha a descrição do item.');
+    }
+
+    if (!this.form.status.trim()) {
+      reasons.push('Selecione a classificação do item.');
     }
 
     if (!this.etiquetaPhoto) {
@@ -208,6 +219,14 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     return this.form.tombamentoNovo.trim()
       ? 'Registre a etiqueta do tombamento de forma nítida.'
       : 'Como o item não possui tombamento, registre o número de série ou outra identificação visível.';
+  }
+
+  get classificacaoOptions(): Array<{ value: string; label: string; description: string }> {
+    return [
+      { value: 'SERVÍVEL', label: 'SERVÍVEL', description: 'Item em condições de uso.' },
+      { value: 'INSERVÍVEL', label: 'INSERVÍVEL', description: 'Item sem condição de uso.' },
+      { value: 'OBSOLETO', label: 'OBSOLETO', description: 'Item defasado ou sem utilidade operacional.' },
+    ];
   }
 
   loadLocais(): void {
@@ -418,7 +437,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
       const rawValue = await this.detectCodeFromImageFile(file);
 
       if (rawValue) {
-        this.form.tombamentoNovo = this.normalizeScannedValue(rawValue);
+        this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
         this.codeReadMessage = 'Tombamento identificado automaticamente pela imagem.';
         this.consultarResumoPublico();
         this.persistState();
@@ -443,7 +462,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     payload.append('tombamentoNovo', this.form.tombamentoNovo.trim());
     payload.append('tombamentoAntigo', this.form.tombamentoAntigo.trim());
     payload.append('descricao', this.form.descricao.trim());
-    payload.append('status', 'Inventariado');
+    payload.append('status', this.form.status.trim());
     payload.append('observacao', this.form.observacao.trim());
     payload.append('fotos', this.etiquetaPhoto!.file, this.etiquetaPhoto!.file.name);
     payload.append('fotos', this.frontalPhoto!.file, this.frontalPhoto!.file.name);
@@ -503,7 +522,16 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
   }
 
   goToPhotoEtiquetaStep(): void {
+    if (!this.form.status.trim()) {
+      return;
+    }
+
     this.activeStep = 'photoEtiqueta';
+    this.persistState();
+  }
+
+  goToClassificationStep(): void {
+    this.activeStep = 'classificacao';
     this.persistState();
   }
 
@@ -644,6 +672,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
       tombamentoNovo: '',
       tombamentoAntigo: '',
       descricao: '',
+      status: '',
       observacao: '',
     };
   }
@@ -677,7 +706,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     this.detectCodeFromVideoFrame(video)
       .then((rawValue) => {
         if (rawValue) {
-          this.form.tombamentoNovo = this.normalizeScannedValue(rawValue);
+          this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
           this.codeReadMessage = 'Tombamento identificado automaticamente pela câmera.';
           this.consultarResumoPublico();
           this.activeStep = 'details';
@@ -879,8 +908,22 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     return digits || trimmed;
   }
 
+  private formatTombamentoValue(value: string): string {
+    const digits = this.normalizeScannedValue(value).replace(/\D/g, '').slice(0, 9);
+
+    if (digits.length <= 3) {
+      return digits;
+    }
+
+    if (digits.length <= 6) {
+      return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    }
+
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  }
+
   consultarResumoPublico(): void {
-    const tombamento = this.form.tombamentoNovo.trim();
+    const tombamento = this.normalizeScannedValue(this.form.tombamentoNovo);
     if (!tombamento) {
       this.clearConsultaPublica();
       return;
@@ -901,7 +944,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
         this.consultaPublicaResumo = resumo;
         this.aguardandoConfirmacaoResumo = true;
         this.consultaPublicaMensagem = 'Confira abaixo se a descrição condiz com o equipamento inventariado.';
-        this.form.tombamentoNovo = resumo.tombamento || tombamento;
+        this.form.tombamentoNovo = this.formatTombamentoValue(resumo.tombamento || tombamento);
         this.form.tombamentoAntigo = resumo.tombamentoAntigo || this.form.tombamentoAntigo;
         if (resumo.descricao) {
           this.form.descricao = resumo.descricao;
@@ -925,7 +968,21 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
     }
 
     this.aguardandoConfirmacaoResumo = false;
-    this.goToPhotoEtiquetaStep();
+    this.persistState();
+  }
+
+  onTombamentoNovoChange(value: string): void {
+    this.form.tombamentoNovo = this.formatTombamentoValue(value);
+    this.persistState();
+  }
+
+  selecionarClassificacao(status: string): void {
+    if (!ItensInventariadosComponent.CLASSIFICACOES.includes(status as typeof ItensInventariadosComponent.CLASSIFICACOES[number])) {
+      return;
+    }
+
+    this.form.status = status;
+    this.persistState();
   }
 
   onTombamentoNovoBlur(): void {
@@ -936,13 +993,13 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.consultaPublicaResumo?.tombamento === tombamentoNormalizado) {
-      this.form.tombamentoNovo = tombamentoNormalizado;
+    if (this.normalizeScannedValue(this.consultaPublicaResumo?.tombamento ?? '') === tombamentoNormalizado) {
+      this.form.tombamentoNovo = this.formatTombamentoValue(tombamentoNormalizado);
       this.persistState();
       return;
     }
 
-    this.form.tombamentoNovo = tombamentoNormalizado;
+    this.form.tombamentoNovo = this.formatTombamentoValue(tombamentoNormalizado);
     this.persistState();
     this.consultarResumoPublico();
   }
@@ -989,6 +1046,7 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
         tombamentoNovo: state.form?.tombamentoNovo ?? '',
         tombamentoAntigo: state.form?.tombamentoAntigo ?? '',
         descricao: state.form?.descricao ?? '',
+        status: state.form?.status ?? '',
         observacao: state.form?.observacao ?? '',
       };
       this.consultaPublicaMensagem = state.consultaPublicaMensagem ?? '';

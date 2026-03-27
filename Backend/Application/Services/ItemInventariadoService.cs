@@ -11,6 +11,13 @@ namespace Application.Services;
 
 public class ItemInventariadoService : IItemInventariadoService
 {
+    private static readonly HashSet<string> StatusPermitidos = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "SERVÍVEL",
+        "INSERVÍVEL",
+        "OBSOLETO"
+    };
+
     private readonly AppDbContext _context;
     private readonly IFileStorageService _fileStorageService;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -203,6 +210,11 @@ public class ItemInventariadoService : IItemInventariadoService
         if (string.IsNullOrWhiteSpace(dto.Status))
         {
             throw new InvalidOperationException("O status do item é obrigatório.");
+        }
+
+        if (!StatusPermitidos.Contains(dto.Status.Trim()))
+        {
+            throw new InvalidOperationException("Selecione uma classificação válida para o item.");
         }
 
         var localExiste = await _context.Locais.AnyAsync(
