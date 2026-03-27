@@ -3,38 +3,62 @@
     <span class="eyebrow">Início</span>
     <h2 class="hero-title">Painel do Inventário</h2>
     <p class="hero-text">
-      Esta área foi reorganizada para o novo sistema. Use os atalhos abaixo para começar o cadastro das equipes,
-      locais, usuários e itens inventariados.
+      Acompanhe aqui o andamento do inventário e os quantitativos já registrados no sistema.
     </p>
   </section>
 
-  <section class="info-grid">
-    <article class="info-card">
-      <span class="info-label">Usuário atual</span>
-      <strong class="info-value">{{ authService.session?.nome || 'Usuário' }}</strong>
-      <p class="info-text">Perfil: {{ authService.session?.perfil || 'Não identificado' }}</p>
-    </article>
-    <article class="info-card">
-      <span class="info-label">Situação</span>
-      <strong class="info-value">Base em reestruturação</strong>
-      <p class="info-text">Os módulos antigos foram removidos para abrir espaço ao fluxo real do inventário.</p>
-    </article>
-  </section>
-
-  <section class="shortcut-section">
+  <section class="stats-section" *ngIf="authService.isAdmin">
     <div class="section-heading">
-      <span class="eyebrow">Atalhos</span>
-      <h3>Acessos principais</h3>
+      <span class="eyebrow">Estatísticas</span>
+      <h3>Resumo do inventário</h3>
     </div>
 
-    <div class="shortcut-grid">
-      <a class="shortcut-card" *ngFor="let item of visibleShortcuts" [routerLink]="item.route">
-        <span class="shortcut-icon" aria-hidden="true">
-          <i class="fa-solid" [ngClass]="item.icon"></i>
-        </span>
-        <strong class="shortcut-title">{{ item.title }}</strong>
-        <p class="shortcut-text">{{ item.description }}</p>
-      </a>
+    <div class="scan-feedback" *ngIf="loadingStats">Carregando estatísticas dos itens inventariados...</div>
+
+    <div class="stats-grid" *ngIf="!loadingStats">
+      <article class="stats-card stats-card-highlight">
+        <span class="info-label">Total inventariado</span>
+        <strong class="stats-value">{{ totalInventariados }}</strong>
+        <p class="info-text">Quantidade total de itens já cadastrados no inventário.</p>
+      </article>
+    </div>
+
+    <div class="stats-block" *ngIf="!loadingStats">
+      <div class="section-heading">
+        <span class="eyebrow">Equipes</span>
+        <h3>Itens por equipe</h3>
+      </div>
+
+      <div class="empty-stats" *ngIf="equipeCards.length === 0">
+        Nenhum item inventariado foi encontrado para montar as estatísticas por equipe.
+      </div>
+
+      <div class="stats-grid" *ngIf="equipeCards.length > 0">
+        <article class="stats-card" *ngFor="let equipe of equipeCards">
+          <span class="stats-label">{{ equipe.label }}</span>
+          <strong class="stats-value">{{ equipe.value }}</strong>
+          <p class="info-text">{{ equipe.meta }}</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="stats-block" *ngIf="!loadingStats">
+      <div class="section-heading">
+        <span class="eyebrow">Locais</span>
+        <h3>Itens por local</h3>
+      </div>
+
+      <div class="empty-stats" *ngIf="localCards.length === 0">
+        Nenhum item inventariado foi encontrado para montar as estatísticas por local.
+      </div>
+
+      <div class="stats-grid" *ngIf="localCards.length > 0">
+        <article class="stats-card" *ngFor="let local of localCards">
+          <span class="stats-label">{{ local.label }}</span>
+          <strong class="stats-value">{{ local.value }}</strong>
+          <p class="info-text">{{ local.meta }}</p>
+        </article>
+      </div>
     </div>
   </section>
 </div>

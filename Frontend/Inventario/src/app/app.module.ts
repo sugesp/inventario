@@ -15,6 +15,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AuthComponent } from './components/auth/auth.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EquipesComponent } from './components/equipes/equipes.component';
+import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LocaisComponent } from './components/locais/locais.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
@@ -34,6 +35,7 @@ registerLocaleData(localePt);
     SearchableSelectComponent,
     EquipesComponent,
     LocaisComponent,
+    InventariarItemComponent,
     ItensInventariadosComponent,
   ],
   imports: [

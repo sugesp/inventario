@@ -31,12 +31,16 @@
       <div class="menu-group">
         <a class="menu-item" routerLink="/itens-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
-          <span>Itens inventariados</span>
+          <span>Inventariar item</span>
         </a>
         <div class="menu-divider" *ngIf="authService.isAdmin"></div>
       </div>
 
       <div class="menu-group" *ngIf="authService.isAdmin">
+        <a class="menu-item" routerLink="/itens-inventariados/lista" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
+          <span>Lista de inventariados</span>
+        </a>
         <a class="menu-item" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
           <span>Usuários</span>

@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../auth/auth.service';
+import { ItemInventariado } from '../../contracts/item-inventariado.model';
+import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 
 interface DashboardShortcut {
   title: string;
@@ -9,18 +12,31 @@ interface DashboardShortcut {
   adminOnly?: boolean;
 }
 
+interface DashboardCountCard {
+  label: string;
+  value: number;
+  meta: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   readonly shortcuts: DashboardShortcut[] = [
     {
-      title: 'Itens inventariados',
-      description: 'Consulte e mantenha o registro dos bens inventariados com fotos e status.',
+      title: 'Inventariar item',
+      description: 'Siga o fluxo completo de conferência, classificação e fotos para cadastrar um bem.',
       route: '/itens-inventariados',
       icon: 'fa-box-archive',
+    },
+    {
+      title: 'Listagem de itens',
+      description: 'Acompanhe todos os itens inventariados já registrados no sistema.',
+      route: '/itens-inventariados/lista',
+      icon: 'fa-table-list',
+      adminOnly: true,
     },
     {
       title: 'Usuários',
@@ -45,9 +61,74 @@ export class DashboardComponent {
     },
   ];
 
-  constructor(readonly authService: AuthService) {}
+  loadingStats = false;
+  itensInventariados: ItemInventariado[] = [];
+
+  constructor(
+    readonly authService: AuthService,
+    private readonly itemInventariadoService: ItemInventariadoService,
+    private readonly toastr: ToastrService
+  ) {}
+
+  ngOnInit(): void {
+    if (this.authService.isAdmin) {
+      this.loadDashboardStats();
+    }
+  }
 
   get visibleShortcuts(): DashboardShortcut[] {
     return this.shortcuts.filter((item) => !item.adminOnly || this.authService.isAdmin);
+  }
+
+  get totalInventariados(): number {
+    return this.itensInventariados.length;
+  }
+
+  get equipeCards(): DashboardCountCard[] {
+    const grouped = new Map<string, number>();
+
+    this.itensInventariados.forEach((item) => {
+      const key = item.equipeDescricao?.trim() || 'Equipe não informada';
+      grouped.set(key, (grouped.get(key) ?? 0) + 1);
+    });
+
+    return [...grouped.entries()]
+      .map(([label, value]) => ({
+        label,
+        value,
+        meta: value === 1 ? 'item inventariado' : 'itens inventariados',
+      }))
+      .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+  }
+
+  get localCards(): DashboardCountCard[] {
+    const grouped = new Map<string, number>();
+
+    this.itensInventariados.forEach((item) => {
+      const key = item.localNome?.trim() || 'Local não informado';
+      grouped.set(key, (grouped.get(key) ?? 0) + 1);
+    });
+
+    return [...grouped.entries()]
+      .map(([label, value]) => ({
+        label,
+        value,
+        meta: value === 1 ? 'item inventariado' : 'itens inventariados',
+      }))
+      .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+  }
+
+  loadDashboardStats(): void {
+    this.loadingStats = true;
+    this.itemInventariadoService.getAll().subscribe({
+      next: (data) => {
+        this.itensInventariados = data;
+        this.loadingStats = false;
+      },
+      error: () => {
+        this.loadingStats = false;
+        this.toastr.error('Não foi possível carregar as estatísticas do dashboard.');
+      },
+    });
   }
 }
