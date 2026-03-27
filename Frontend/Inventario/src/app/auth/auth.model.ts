@@ -7,7 +7,7 @@ export interface RegisterPayload {
   nome: string;
   email: string;
   cpf: string;
-  perfil: 'Administrador' | 'Contratos' | 'Financeiro' | 'Controle Interno' | 'Operador';
+  perfil: 'Administrador' | 'Inventario' | 'Financeiro' | 'Controle Interno' | 'Operador';
   status: 'Ativo' | 'Pendente' | 'Desativado';
   equipeId?: string | null;
 }
@@ -49,4 +49,4 @@ export interface AuthResponse {
   mustChangePassword: boolean;
 }
 
-export interface AuthSession extends AuthResponse {}
+export interface AuthSession extends AuthResponse { }

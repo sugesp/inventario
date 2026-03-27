@@ -17,7 +17,7 @@ export class AuthComponent {
   showPassword = false;
   showPreRegisterPassword = false;
   showPreRegisterModal = false;
-  readonly appTitle = environment.title?.trim() || 'Contratos';
+  readonly appTitle = environment.title?.trim() || 'Inventario';
   readonly appEyebrow = 'Sistema de Inventário';
 
   loginForm: LoginPayload = {

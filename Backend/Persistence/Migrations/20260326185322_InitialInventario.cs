@@ -143,7 +143,7 @@ namespace Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Contratos",
+                name: "Inventario",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
@@ -178,22 +178,22 @@ namespace Persistence.Migrations
                     ValorInicialContratual = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     ValorAcrescimo = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     ValorSupressao = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ValorAtualContrato = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ValorAtualInventario = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Contratos", x => x.Id);
+                    table.PrimaryKey("PK_Inventario", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Contratos_Fornecedores_FornecedorId",
+                        name: "FK_Inventario_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
                         principalTable: "Fornecedores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Contratos_Unidades_UnidadeDemandanteId",
+                        name: "FK_Inventario_Unidades_UnidadeDemandanteId",
                         column: x => x.UnidadeDemandanteId,
                         principalTable: "Unidades",
                         principalColumn: "Id",
@@ -246,7 +246,7 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Numero = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IdSei = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
@@ -265,9 +265,9 @@ namespace Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Aditivos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Aditivos_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_Aditivos_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
@@ -278,7 +278,7 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Ano = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
@@ -288,9 +288,9 @@ namespace Persistence.Migrations
                 {
                     table.PrimaryKey("PK_ExerciciosAnuais", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ExerciciosAnuais_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_ExerciciosAnuais_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
@@ -301,7 +301,7 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Titulo = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Descricao = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true)
@@ -320,9 +320,9 @@ namespace Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Notificacoes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Notificacoes_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_Notificacoes_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
@@ -333,7 +333,7 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     NumeroPortaria = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IdSei = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
@@ -349,20 +349,20 @@ namespace Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Portarias", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Portarias_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_Portarias_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ProcuradoresContrato",
+                name: "ProcuradoresInventario",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Nome = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     NumeroContato = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: false)
@@ -375,11 +375,11 @@ namespace Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProcuradoresContrato", x => x.Id);
+                    table.PrimaryKey("PK_ProcuradoresInventario", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProcuradoresContrato_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_ProcuradoresInventario_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
@@ -475,11 +475,11 @@ namespace Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EquipesContrato",
+                name: "EquipesInventario",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    ContratoId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InventarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     UsuarioId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     PortariaId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
                     Funcao = table.Column<int>(type: "int", nullable: false),
@@ -494,21 +494,21 @@ namespace Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EquipesContrato", x => x.Id);
+                    table.PrimaryKey("PK_EquipesInventario", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EquipesContrato_Contratos_ContratoId",
-                        column: x => x.ContratoId,
-                        principalTable: "Contratos",
+                        name: "FK_EquipesInventario_Inventario_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventario",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_EquipesContrato_Portarias_PortariaId",
+                        name: "FK_EquipesInventario_Portarias_PortariaId",
                         column: x => x.PortariaId,
                         principalTable: "Portarias",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_EquipesContrato_Usuarios_UsuarioId",
+                        name: "FK_EquipesInventario_Usuarios_UsuarioId",
                         column: x => x.UsuarioId,
                         principalTable: "Usuarios",
                         principalColumn: "Id",
@@ -680,24 +680,24 @@ namespace Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Aditivos_ContratoId",
+                name: "IX_Aditivos_InventarioId",
                 table: "Aditivos",
-                column: "ContratoId");
+                column: "InventarioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Contratos_FornecedorId",
-                table: "Contratos",
+                name: "IX_Inventario_FornecedorId",
+                table: "Inventario",
                 column: "FornecedorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Contratos_Numero",
-                table: "Contratos",
+                name: "IX_Inventario_Numero",
+                table: "Inventario",
                 column: "Numero",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Contratos_UnidadeDemandanteId",
-                table: "Contratos",
+                name: "IX_Inventario_UnidadeDemandanteId",
+                table: "Inventario",
                 column: "UnidadeDemandanteId");
 
             migrationBuilder.CreateIndex(
@@ -706,24 +706,24 @@ namespace Persistence.Migrations
                 column: "ExercicioAnualId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EquipesContrato_ContratoId",
-                table: "EquipesContrato",
-                column: "ContratoId");
+                name: "IX_EquipesInventario_InventarioId",
+                table: "EquipesInventario",
+                column: "InventarioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EquipesContrato_PortariaId",
-                table: "EquipesContrato",
+                name: "IX_EquipesInventario_PortariaId",
+                table: "EquipesInventario",
                 column: "PortariaId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EquipesContrato_UsuarioId",
-                table: "EquipesContrato",
+                name: "IX_EquipesInventario_UsuarioId",
+                table: "EquipesInventario",
                 column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExerciciosAnuais_ContratoId_Ano",
+                name: "IX_ExerciciosAnuais_InventarioId_Ano",
                 table: "ExerciciosAnuais",
-                columns: new[] { "ContratoId", "Ano" },
+                columns: new[] { "InventarioId", "Ano" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -773,9 +773,9 @@ namespace Persistence.Migrations
                 column: "ProcessoPagamentoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notificacoes_ContratoId",
+                name: "IX_Notificacoes_InventarioId",
                 table: "Notificacoes",
-                column: "ContratoId");
+                column: "InventarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Pagamentos_LiquidacaoId",
@@ -784,9 +784,9 @@ namespace Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Portarias_ContratoId",
+                name: "IX_Portarias_InventarioId",
                 table: "Portarias",
-                column: "ContratoId");
+                column: "InventarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProcessosPagamento_ExercicioAnualId",
@@ -794,9 +794,9 @@ namespace Persistence.Migrations
                 column: "ExercicioAnualId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProcuradoresContrato_ContratoId",
-                table: "ProcuradoresContrato",
-                column: "ContratoId");
+                name: "IX_ProcuradoresInventario_InventarioId",
+                table: "ProcuradoresInventario",
+                column: "InventarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RestosPagar_EmpenhoId",
@@ -828,7 +828,7 @@ namespace Persistence.Migrations
                 name: "Aditivos");
 
             migrationBuilder.DropTable(
-                name: "EquipesContrato");
+                name: "EquipesInventario");
 
             migrationBuilder.DropTable(
                 name: "GlosasNotasFiscais");
@@ -843,7 +843,7 @@ namespace Persistence.Migrations
                 name: "Pagamentos");
 
             migrationBuilder.DropTable(
-                name: "ProcuradoresContrato");
+                name: "ProcuradoresInventario");
 
             migrationBuilder.DropTable(
                 name: "RestosPagar");
@@ -879,7 +879,7 @@ namespace Persistence.Migrations
                 name: "ExerciciosAnuais");
 
             migrationBuilder.DropTable(
-                name: "Contratos");
+                name: "Inventario");
 
             migrationBuilder.DropTable(
                 name: "Fornecedores");

@@ -330,12 +330,12 @@ public class AuthService : IAuthService
         return PagedResult<UsuarioDto>.Create(data, pageParams);
     }
 
-    public async Task<IEnumerable<UsuarioResponsavelDto>> GetContratoUsersAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<UsuarioResponsavelDto>> GetInventarioUsersAsync(CancellationToken cancellationToken = default)
     {
         var usuarios = await _usuarioRepository.GetAllAsync(cancellationToken);
         return usuarios
             .Where(x =>
-                string.Equals(x.Perfil, "Contratos", StringComparison.OrdinalIgnoreCase)
+                string.Equals(x.Perfil, "Inventario", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(x.Status, StatusAtivo, StringComparison.OrdinalIgnoreCase))
             .OrderBy(x => x.Nome)
             .Select(x => new UsuarioResponsavelDto
@@ -350,8 +350,8 @@ public class AuthService : IAuthService
     {
         var jwtSection = _configuration.GetSection("Jwt");
         var secret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
-        var issuer = jwtSection["Issuer"] ?? "Contratos.API";
-        var audience = jwtSection["Audience"] ?? "Contratos.App";
+        var issuer = jwtSection["Issuer"] ?? "Inventario.API";
+        var audience = jwtSection["Audience"] ?? "Inventario.App";
         var expiresMinutes = int.TryParse(jwtSection["ExpiresMinutes"], out var value) ? value : 480;
         var expiresAt = DateTime.UtcNow.AddMinutes(expiresMinutes);
 
@@ -456,9 +456,9 @@ public class AuthService : IAuthService
             return "Controle Interno";
         }
 
-        if (string.Equals(perfil, "Contratos", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(perfil, "Inventario", StringComparison.OrdinalIgnoreCase))
         {
-            return "Contratos";
+            return "Inventario";
         }
 
         return string.Equals(perfil, "Administrador", StringComparison.OrdinalIgnoreCase)

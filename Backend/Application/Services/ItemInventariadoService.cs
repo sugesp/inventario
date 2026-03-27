@@ -4,6 +4,8 @@ using Domain.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Application.Services;
 
@@ -11,11 +13,17 @@ public class ItemInventariadoService : IItemInventariadoService
 {
     private readonly AppDbContext _context;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public ItemInventariadoService(AppDbContext context, IFileStorageService fileStorageService)
+    public ItemInventariadoService(
+        AppDbContext context,
+        IFileStorageService fileStorageService,
+        IHttpClientFactory httpClientFactory
+    )
     {
         _context = context;
         _fileStorageService = fileStorageService;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IEnumerable<ItemInventariadoDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -34,6 +42,39 @@ public class ItemInventariadoService : IItemInventariadoService
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
+    }
+
+    public async Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default)
+    {
+        var tombamentoNormalizado = NormalizeDigits(tombamento);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        {
+            throw new InvalidOperationException("Informe um tombamento válido para consulta.");
+        }
+
+        var client = _httpClientFactory.CreateClient("PatrimonioPublico");
+        using var response = await client.GetAsync($"publico/bens/{tombamentoNormalizado}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
+        var tipo = ExtractTipo(html);
+        var descricao = ExtractDescricao(html);
+        var tombamentoAntigo = ExtractIdentificacaoColumn(html, 2);
+        var tombamentoConsulta = ExtractIdentificacaoColumn(html, 1);
+
+        return new ConsultaPublicaBemDto
+        {
+            Tombamento = NormalizeDigits(tombamentoConsulta) is { Length: > 0 } tombamentoExtraido ? tombamentoExtraido : tombamentoNormalizado,
+            TombamentoAntigo = tombamentoAntigo,
+            Tipo = tipo,
+            Descricao = descricao,
+            UrlConsulta = $"https://e-estado.ro.gov.br/publico/bens/{tombamentoNormalizado}"
+        };
     }
 
     public async Task<ItemInventariadoDto> CreateAsync(
@@ -225,5 +266,87 @@ public class ItemInventariadoService : IItemInventariadoService
                 })
                 .ToArray()
         };
+    }
+
+    private static string ExtractTipo(string html)
+    {
+        var lines = ExtractDetalhesLines(html);
+        return lines.FirstOrDefault() ?? string.Empty;
+    }
+
+    private static string ExtractDescricao(string html)
+    {
+        var lines = ExtractDetalhesLines(html);
+        return lines.Skip(1).FirstOrDefault() ?? string.Empty;
+    }
+
+    private static List<string> ExtractDetalhesLines(string html)
+    {
+        var match = Regex.Match(
+            html,
+            @"Detalhes do Bem(?<content>[\s\S]*?)Identifica(?:ç|c)(?:ã|a)o",
+            RegexOptions.IgnoreCase
+        );
+
+        if (!match.Success)
+        {
+            return new List<string>();
+        }
+
+        var text = HtmlToText(match.Groups["content"].Value);
+        return text
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(line =>
+                !line.StartsWith("Data de Entrada", StringComparison.OrdinalIgnoreCase)
+                && !line.StartsWith("Unidade:", StringComparison.OrdinalIgnoreCase)
+                && !line.StartsWith("Departamento:", StringComparison.OrdinalIgnoreCase)
+                && !line.StartsWith("Responsável:", StringComparison.OrdinalIgnoreCase)
+            )
+            .ToList();
+    }
+
+    private static string ExtractIdentificacaoColumn(string html, int columnIndex)
+    {
+        var sectionMatch = Regex.Match(
+            html,
+            @"Identifica(?:ç|c)(?:ã|a)o(?<content>[\s\S]*?)Dados Gerais",
+            RegexOptions.IgnoreCase
+        );
+        if (!sectionMatch.Success)
+        {
+            return string.Empty;
+        }
+
+        var rowMatch = Regex.Match(
+            sectionMatch.Groups["content"].Value,
+            @"<tr[^>]*>\s*<td[^>]*>(?<col1>[\s\S]*?)</td>\s*<td[^>]*>(?<col2>[\s\S]*?)</td>",
+            RegexOptions.IgnoreCase
+        );
+        if (!rowMatch.Success)
+        {
+            return string.Empty;
+        }
+
+        return columnIndex switch
+        {
+            1 => HtmlToText(rowMatch.Groups["col1"].Value),
+            2 => HtmlToText(rowMatch.Groups["col2"].Value),
+            _ => string.Empty
+        };
+    }
+
+    private static string HtmlToText(string html)
+    {
+        var withLineBreaks = Regex.Replace(html, @"<(br|/p|/div|/tr|/h1|/h2|/h3|/td|/th)\b[^>]*>", "\n", RegexOptions.IgnoreCase);
+        var withoutTags = Regex.Replace(withLineBreaks, "<.*?>", " ");
+        var decoded = WebUtility.HtmlDecode(withoutTags);
+        var normalizedSpaces = Regex.Replace(decoded, @"[ \t\f\v]+", " ");
+        var normalizedLines = Regex.Replace(normalizedSpaces, @"\n\s*\n+", "\n");
+        return normalizedLines.Trim();
+    }
+
+    private static string NormalizeDigits(string value)
+    {
+        return string.Concat(value.Where(char.IsDigit));
     }
 }

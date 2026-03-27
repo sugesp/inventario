@@ -8,7 +8,7 @@ import { AuthResponse, AuthSession, ChangePasswordPayload, LoginPayload, PreRegi
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly storageKey = 'contratos.auth';
+  private readonly storageKey = 'inventario.auth';
   private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
   private readonly sessionSubject = new BehaviorSubject<AuthSession | null>(this.readSession());
 
@@ -17,7 +17,7 @@ export class AuthService {
   constructor(
     private readonly http: HttpClient,
     private readonly router: Router
-  ) {}
+  ) { }
 
   get session(): AuthSession | null {
     return this.sessionSubject.value;
@@ -39,13 +39,13 @@ export class AuthService {
     return this.session?.perfil === 'Administrador';
   }
 
-  get canManageContratos(): boolean {
-    return this.session?.perfil === 'Administrador' || this.session?.perfil === 'Contratos';
+  get canManageInventario(): boolean {
+    return this.session?.perfil === 'Administrador' || this.session?.perfil === 'Inventario';
   }
 
   get canManageFinanceiro(): boolean {
     return this.session?.perfil === 'Administrador'
-      || this.session?.perfil === 'Contratos'
+      || this.session?.perfil === 'Inventario'
       || this.session?.perfil === 'Financeiro';
   }
 
@@ -81,8 +81,8 @@ export class AuthService {
     });
   }
 
-  getContratoUsers(): Observable<Array<{ id: string; nome: string; cpf: string }>> {
-    return this.http.get<Array<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/contratos`);
+  getInventarioUsers(): Observable<Array<{ id: string; nome: string; cpf: string }>> {
+    return this.http.get<Array<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/inventario`);
   }
 
   changePassword(payload: ChangePasswordPayload): Observable<AuthResponse> {

@@ -28,7 +28,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -68,12 +68,12 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("InventarioId");
 
                     b.ToTable("Aditivos", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Model.Contrato", b =>
+            modelBuilder.Entity("Domain.Model.Inventario", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -151,7 +151,7 @@ namespace Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("ValorAtualContrato")
+                    b.Property<decimal>("ValorAtualInventario")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -181,7 +181,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UnidadeDemandanteId");
 
-                    b.ToTable("Contratos", (string)null);
+                    b.ToTable("Inventario", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Model.Empenho", b =>
@@ -263,13 +263,13 @@ namespace Persistence.Migrations
                     b.ToTable("Equipes", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Model.EquipeContrato", b =>
+            modelBuilder.Entity("Domain.Model.EquipeInventario", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -305,13 +305,13 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("InventarioId");
 
                     b.HasIndex("PortariaId");
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("EquipesContrato", (string)null);
+                    b.ToTable("EquipesInventario", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Model.ExercicioAnual", b =>
@@ -323,7 +323,7 @@ namespace Persistence.Migrations
                     b.Property<int>("Ano")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -337,7 +337,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId", "Ano")
+                    b.HasIndex("InventarioId", "Ano")
                         .IsUnique();
 
                     b.ToTable("ExerciciosAnuais", (string)null);
@@ -700,7 +700,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -738,7 +738,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("InventarioId");
 
                     b.ToTable("Notificacoes", (string)null);
                 });
@@ -807,7 +807,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -838,7 +838,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("InventarioId");
 
                     b.ToTable("Portarias", (string)null);
                 });
@@ -877,13 +877,13 @@ namespace Persistence.Migrations
                     b.ToTable("ProcessosPagamento", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Model.ProcuradorContrato", b =>
+            modelBuilder.Entity("Domain.Model.ProcuradorInventario", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("ContratoId")
+                    b.Property<Guid>("InventarioId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -912,9 +912,9 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContratoId");
+                    b.HasIndex("InventarioId");
 
-                    b.ToTable("ProcuradoresContrato", (string)null);
+                    b.ToTable("ProcuradoresInventario", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Model.RestoPagar", b =>
@@ -1069,19 +1069,19 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Aditivo", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("Aditivos")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
                 });
 
-            modelBuilder.Entity("Domain.Model.Contrato", b =>
+            modelBuilder.Entity("Domain.Model.Inventario", b =>
                 {
                     b.HasOne("Domain.Model.Fornecedor", "Fornecedor")
-                        .WithMany("Contratos")
+                        .WithMany("Inventario")
                         .HasForeignKey("FornecedorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1107,26 +1107,26 @@ namespace Persistence.Migrations
                     b.Navigation("ExercicioAnual");
                 });
 
-            modelBuilder.Entity("Domain.Model.EquipeContrato", b =>
+            modelBuilder.Entity("Domain.Model.EquipeInventario", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("Equipe")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Model.Portaria", "Portaria")
-                        .WithMany("EquipesContrato")
+                        .WithMany("EquipesInventario")
                         .HasForeignKey("PortariaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Model.Usuario", "Usuario")
-                        .WithMany("EquipesContrato")
+                        .WithMany("EquipesInventario")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
 
                     b.Navigation("Portaria");
 
@@ -1135,13 +1135,13 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.ExercicioAnual", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("ExerciciosAnuais")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
                 });
 
             modelBuilder.Entity("Domain.Model.GlosaNotaFiscal", b =>
@@ -1227,13 +1227,13 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Notificacao", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("Notificacoes")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
                 });
 
             modelBuilder.Entity("Domain.Model.Pagamento", b =>
@@ -1249,13 +1249,13 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Portaria", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("Portarias")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
                 });
 
             modelBuilder.Entity("Domain.Model.ProcessoPagamento", b =>
@@ -1269,15 +1269,15 @@ namespace Persistence.Migrations
                     b.Navigation("ExercicioAnual");
                 });
 
-            modelBuilder.Entity("Domain.Model.ProcuradorContrato", b =>
+            modelBuilder.Entity("Domain.Model.ProcuradorInventario", b =>
                 {
-                    b.HasOne("Domain.Model.Contrato", "Contrato")
+                    b.HasOne("Domain.Model.Inventario", "Inventario")
                         .WithMany("Procuradores")
-                        .HasForeignKey("ContratoId")
+                        .HasForeignKey("InventarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Contrato");
+                    b.Navigation("Inventario");
                 });
 
             modelBuilder.Entity("Domain.Model.RestoPagar", b =>
@@ -1311,7 +1311,7 @@ namespace Persistence.Migrations
                     b.Navigation("Equipe");
                 });
 
-            modelBuilder.Entity("Domain.Model.Contrato", b =>
+            modelBuilder.Entity("Domain.Model.Inventario", b =>
                 {
                     b.Navigation("Aditivos");
 
@@ -1347,7 +1347,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Fornecedor", b =>
                 {
-                    b.Navigation("Contratos");
+                    b.Navigation("Inventario");
                 });
 
             modelBuilder.Entity("Domain.Model.ItemInventariado", b =>
@@ -1372,7 +1372,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Portaria", b =>
                 {
-                    b.Navigation("EquipesContrato");
+                    b.Navigation("EquipesInventario");
                 });
 
             modelBuilder.Entity("Domain.Model.ProcessoPagamento", b =>
@@ -1387,7 +1387,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Usuario", b =>
                 {
-                    b.Navigation("EquipesContrato");
+                    b.Navigation("EquipesInventario");
 
                     b.Navigation("ItensInventariados");
                 });

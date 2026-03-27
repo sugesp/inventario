@@ -28,8 +28,8 @@ builder.Services.AddHttpContextAccessor();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
-var jwtIssuer = jwtSection["Issuer"] ?? "Contratos.API";
-var jwtAudience = jwtSection["Audience"] ?? "Contratos.App";
+var jwtIssuer = jwtSection["Issuer"] ?? "Inventario.API";
+var jwtAudience = jwtSection["Audience"] ?? "Inventario.App";
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -52,6 +52,11 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddHttpClient("MapaCnpj", client =>
 {
     client.BaseAddress = new Uri("https://mapacnpj.seunegocionanuvem.com.br/api/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient("PatrimonioPublico", client =>
+{
+    client.BaseAddress = new Uri("https://e-estado.ro.gov.br/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 builder.Services.AddScoped<IAuthService, AuthService>();

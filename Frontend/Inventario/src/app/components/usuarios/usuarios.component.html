@@ -5,27 +5,17 @@
         <div class="list-header-copy">
           <span class="list-header-eyebrow">Gestão de acesso</span>
           <h2 class="list-header-title">Usuários</h2>
-          <p class="list-header-subtitle">Cadastros podem ficar pendentes até que um administrador defina perfil e libere o acesso.</p>
+          <p class="list-header-subtitle">Cadastros podem ficar pendentes até que um administrador defina perfil e
+            libere o acesso.</p>
         </div>
         <button class="btn btn-standard-new" type="button" (click)="openModal()">Novo usuário</button>
       </div>
       <div class="list-toolbar">
         <div class="search-box">
-          <input
-            class="form-control"
-            type="text"
-            name="usuarioTerm"
-            [ngModel]="term"
+          <input class="form-control" type="text" name="usuarioTerm" [ngModel]="term"
             (ngModelChange)="onTermChange($event)"
-            placeholder="Buscar por nome, email, CPF, perfil, status ou equipe"
-          />
-          <button
-            *ngIf="term"
-            class="search-clear"
-            type="button"
-            (click)="clearSearch()"
-            aria-label="Limpar busca"
-          >
+            placeholder="Buscar por nome, email, CPF, perfil, status ou equipe" />
+          <button *ngIf="term" class="search-clear" type="button" (click)="clearSearch()" aria-label="Limpar busca">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
@@ -61,13 +51,9 @@
               </td>
               <td class="text-end">
                 <div class="actions-dropdown">
-                  <button
-                    class="btn btn-sm btn-standard-action usuarios-action-button"
-                    type="button"
-                    (click)="toggleActions(usuario.id)"
-                    [attr.aria-label]="'Ações do usuário ' + usuario.nome"
-                    title="Ações"
-                  >
+                  <button class="btn btn-sm btn-standard-action usuarios-action-button" type="button"
+                    (click)="toggleActions(usuario.id)" [attr.aria-label]="'Ações do usuário ' + usuario.nome"
+                    title="Ações">
                     <i class="fa-solid fa-ellipsis-vertical usuarios-action-icon" aria-hidden="true"></i>
                     <span class="usuarios-action-label">Ações</span>
                   </button>
@@ -75,11 +61,13 @@
                     <button class="actions-menu-item" type="button" (click)="edit(usuario)">Editar</button>
                     <button class="actions-menu-item" type="button" (click)="updateStatus(usuario, 'Ativo')"
                       [disabled]="updatingStatusUserId === usuario.id || usuario.status === 'Ativo'">
-                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Ativo' ? 'Atualizando...' : 'Ativar' }}
+                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Ativo' ? 'Atualizando...' : 'Ativar'
+                      }}
                     </button>
                     <button class="actions-menu-item" type="button" (click)="updateStatus(usuario, 'Desativado')"
                       [disabled]="updatingStatusUserId === usuario.id || usuario.status === 'Desativado'">
-                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Desativado' ? 'Atualizando...' : 'Desativar' }}
+                      {{ updatingStatusUserId === usuario.id && usuario.status !== 'Desativado' ? 'Atualizando...' :
+                      'Desativar' }}
                     </button>
                     <button class="actions-menu-item" type="button" (click)="resetPassword(usuario)"
                       [disabled]="resettingUserId === usuario.id">
@@ -98,11 +86,13 @@
       <div class="list-pagination" *ngIf="!loading">
         <span class="list-pagination-summary">{{ totalCount }} registro(s) encontrados.</span>
         <div class="list-pagination-actions">
-          <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber <= 1">
+          <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousPage()"
+            [disabled]="pageNumber <= 1">
             Anterior
           </button>
           <span class="list-pagination-label">{{ pageLabel }}</span>
-          <button class="btn btn-outline-secondary" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages || totalPages === 0">
+          <button class="btn btn-outline-secondary" type="button" (click)="goToNextPage()"
+            [disabled]="pageNumber >= totalPages || totalPages === 0">
             Próxima
           </button>
         </div>
@@ -139,7 +129,7 @@
             <label class="form-label">Perfil</label>
             <select class="form-select" name="usuarioPerfil" [(ngModel)]="form.perfil" required>
               <option value="Operador">Operador</option>
-              <option value="Contratos">Contratos</option>
+              <option value="Inventario">Inventario</option>
               <option value="Financeiro">Financeiro</option>
               <option value="Controle Interno">Controle Interno</option>
               <option value="Administrador">Administrador</option>
@@ -163,10 +153,12 @@
           <div class="col-md-12">
             <div class="alert alert-info mb-0">
               <ng-container *ngIf="!editingUserId; else editingHint">
-                O usuário será criado com a senha padrão <strong>12345678</strong>. Você também pode deixá-lo como <strong>pendente</strong> até concluir a liberação.
+                O usuário será criado com a senha padrão <strong>12345678</strong>. Você também pode deixá-lo como
+                <strong>pendente</strong> até concluir a liberação.
               </ng-container>
               <ng-template #editingHint>
-                A edição não altera a senha atual do usuário. Use a ação <strong>Resetar senha</strong> quando necessário.
+                A edição não altera a senha atual do usuário. Use a ação <strong>Resetar senha</strong> quando
+                necessário.
               </ng-template>
             </div>
           </div>

@@ -31,6 +31,24 @@ public class ItensInventariadosController : ControllerBase
         return entity is null ? NotFound() : Ok(entity);
     }
 
+    [HttpGet("consulta-publica/{tombamento}")]
+    public async Task<ActionResult<ConsultaPublicaBemDto>> ConsultarResumoPublico(string tombamento, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var resumo = await _service.ConsultarResumoPublicoAsync(tombamento, cancellationToken);
+            return resumo is null ? NotFound() : Ok(resumo);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (HttpRequestException)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = "Não foi possível consultar a base pública do tombamento." });
+        }
+    }
+
     [HttpPost]
     [RequestSizeLimit(50_000_000)]
     public async Task<ActionResult<ItemInventariadoDto>> Create(

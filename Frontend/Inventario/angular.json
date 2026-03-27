@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Contratos": {
+    "Inventario": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -24,7 +24,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/contratos",
+            "outputPath": "dist/inventario",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -82,10 +82,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Contratos:build:production"
+              "buildTarget": "Inventario:build:production"
             },
             "development": {
-              "buildTarget": "Contratos:build:development"
+              "buildTarget": "Inventario:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -93,7 +93,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "Contratos:build"
+            "buildTarget": "Inventario:build"
           }
         },
         "test": {

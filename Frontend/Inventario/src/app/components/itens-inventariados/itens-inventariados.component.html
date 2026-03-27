@@ -1,7 +1,401 @@
-<section class="card">
-  <div class="card-body">
-    <span class="list-header-eyebrow">Inventário</span>
-    <h2 class="list-header-title">Itens Inventariados</h2>
-    <p class="text-muted mb-0">Tela base criada. O próximo passo é ligar o cadastro completo com upload de fotos.</p>
+<div class="inventario-grid">
+  <section class="hero-card">
+    <span class="list-header-eyebrow">Fluxo de inventário</span>
+    <h2 class="list-header-title">Inventariar item</h2>
+    <p class="hero-copy">
+      Escolha o local, identifique o item, confira os dados e registre as fotos obrigatórias antes de concluir.
+    </p>
+  </section>
+
+  <section class="step-card" *ngIf="isLocalStep">
+    <div class="step-head">
+      <span class="step-number">1</span>
+      <div>
+        <h3>Escolha o local</h3>
+        <p>O item será vinculado ao local selecionado.</p>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="locaisDisponiveis.length === 0 && !loadingLocais">
+      Nenhum local disponível para inventário.
+    </div>
+
+    <div class="local-card-grid" *ngIf="locaisDisponiveis.length > 0">
+      <button
+        class="local-card"
+        type="button"
+        *ngFor="let local of locaisDisponiveis"
+        [class.local-card-selected]="selectedLocalId === local.id"
+        (click)="selectLocal(local.id)"
+      >
+        <span class="local-card-eyebrow">{{ local.equipeDescricao }}</span>
+        <strong class="local-card-title">{{ local.nome }}</strong>
+        <span class="local-card-action">Selecionar local</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isCaptureStep">
+    <div class="step-head">
+      <span class="step-number">2</span>
+      <div>
+        <h3>Leia o tombamento</h3>
+        <p>Escolha como deseja continuar: leitura do QR code ou preenchimento manual.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Local escolhido</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ localSelecionado.equipeDescricao }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToLocalStep()">Trocar local</button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <input
+          #identificationInput
+          class="d-none"
+          type="file"
+          accept="image/*"
+          [disabled]="readingCode"
+          (change)="onIdentificationPhotoSelected($event)"
+        />
+
+        <div class="capture-choice-grid">
+          <button class="btn btn-primary capture-choice-button" type="button" (click)="startQrFlow()" [disabled]="readingCode || scannerStarting || processingPhoto">
+            {{ scannerStarting ? 'Abrindo câmera...' : 'Ler QR code' }}
+          </button>
+          <button class="btn btn-outline-secondary capture-choice-button" type="button" (click)="startManualFlow()" [disabled]="readingCode || scannerStarting || processingPhoto">
+            Preencher manualmente
+          </button>
+        </div>
+
+        <div class="scan-feedback" *ngIf="!canUseLiveScanner">
+          Neste navegador, o botão de QR code abrirá a câmera ou a seleção de imagem para leitura da etiqueta.
+        </div>
+
+        <div class="scan-feedback" *ngIf="processingPhoto">Preparando a foto para evitar falhas de memória...</div>
+        <div class="scan-feedback" *ngIf="readingCode">Lendo código da imagem...</div>
+        <div class="scan-feedback" *ngIf="!readingCode && codeReadMessage">{{ codeReadMessage }}</div>
+        <div class="scan-feedback" *ngIf="scannerMessage">{{ scannerMessage }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isDetailsStep">
+    <div class="step-head">
+      <span class="step-number">3</span>
+      <div>
+        <h3>Conclua o inventário</h3>
+        <p>Confira os dados do tombamento e valide se o resumo condiz com o equipamento inventariado.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Local escolhido</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ localSelecionado.equipeDescricao }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar ao tombamento</button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Tombamento lido</label>
+        <input class="form-control" [(ngModel)]="form.tombamentoNovo" (ngModelChange)="persistState()" (blur)="onTombamentoNovoBlur()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tombamento antigo</label>
+        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Descrição do item</label>
+        <input class="form-control" [(ngModel)]="form.descricao" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observação</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao" (ngModelChange)="persistState()"></textarea>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="consultaPublicaEmAndamento">Consultando dados públicos do bem...</div>
+    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem }}</div>
+
+    <div class="summary-card public-summary-card" *ngIf="consultaPublicaResumo">
+      <div>
+        <span class="selected-local-label">Resumo do equipamento</span>
+        <strong>{{ consultaPublicaResumo.tipo || 'Equipamento' }}</strong>
+        <span>{{ consultaPublicaResumo.descricao || 'Descrição não localizada na consulta pública.' }}</span>
+      </div>
+      <div>
+        <strong>Tombamento</strong>
+        <span>{{ consultaPublicaResumo.tombamento || form.tombamentoNovo || '-' }}</span>
+      </div>
+      <div>
+        <strong>Tombamento antigo</strong>
+        <span>{{ consultaPublicaResumo.tombamentoAntigo || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="step-actions" *ngIf="consultaPublicaResumo && aguardandoConfirmacaoResumo">
+      <button class="btn btn-outline-secondary" type="button" (click)="confirmarResumo(false)">
+        Não condiz, vou ajustar
+      </button>
+      <button class="btn btn-primary" type="button" (click)="confirmarResumo(true)">
+        Sim, a descrição condiz
+      </button>
+    </div>
+
+    <div class="step-actions" *ngIf="!aguardandoConfirmacaoResumo">
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Limpar fluxo</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="consultaPublicaEmAndamento">
+        Continuar para as fotos
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isPhotoEtiquetaStep">
+    <div class="step-head">
+      <span class="step-number">4</span>
+      <div>
+        <h3>{{ identificationStepTitle }}</h3>
+        <p>{{ identificationStepDescription }}</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Etapa 1 de 3 fotos</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos dados</button>
+    </div>
+
+    <input
+      #etiquetaPhotoInput
+      class="d-none"
+      type="file"
+      accept="image/*"
+      (change)="onEtiquetaPhotoSelected($event)"
+    />
+
+    <div class="photo-step-card">
+      <div class="photo-step-status" [class.is-complete]="!!etiquetaPhoto">
+        {{ etiquetaPhoto ? 'Foto registrada' : 'Aguardando foto' }}
+      </div>
+
+      <div class="photo-step-preview" *ngIf="etiquetaPhoto; else semEtiquetaPhoto">
+        <img [src]="etiquetaPhoto.previewUrl" [alt]="identificationStepTitle" />
+      </div>
+
+      <ng-template #semEtiquetaPhoto>
+        <div class="photo-step-empty">
+          Tire uma foto nítida para identificar corretamente o item no inventário.
+        </div>
+      </ng-template>
+
+      <div class="photo-step-actions">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('etiqueta')" [disabled]="processingPhoto || photoCaptureStarting">
+          {{ etiquetaPhoto ? 'Refazer foto' : 'Abrir câmera' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" *ngIf="etiquetaPhoto" (click)="removeEtiquetaPhoto()">
+          Remover
+        </button>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()" [disabled]="!etiquetaPhoto || processingPhoto">
+        Continuar
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isPhotoFrontalStep">
+    <div class="step-head">
+      <span class="step-number">5</span>
+      <div>
+        <h3>Foto da parte frontal do item</h3>
+        <p>Registre a parte frontal do equipamento de forma completa e bem iluminada.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Etapa 2 de 3 fotos</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
+      </div>
+    </div>
+
+    <input
+      #frontalPhotoInput
+      class="d-none"
+      type="file"
+      accept="image/*"
+      (change)="onFrontalPhotoSelected($event)"
+    />
+
+    <div class="photo-step-card">
+      <div class="photo-step-status" [class.is-complete]="!!frontalPhoto">
+        {{ frontalPhoto ? 'Foto registrada' : 'Aguardando foto' }}
+      </div>
+
+      <div class="photo-step-preview" *ngIf="frontalPhoto; else semFrontalPhoto">
+        <img [src]="frontalPhoto.previewUrl" alt="Foto frontal do item" />
+      </div>
+
+      <ng-template #semFrontalPhoto>
+        <div class="photo-step-empty">
+          Posicione o item inteiro na imagem para facilitar a conferência posterior.
+        </div>
+      </ng-template>
+
+      <div class="photo-step-actions">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('frontal')" [disabled]="processingPhoto || photoCaptureStarting">
+          {{ frontalPhoto ? 'Refazer foto' : 'Abrir câmera' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" *ngIf="frontalPhoto" (click)="removeFrontalPhoto()">
+          Remover
+        </button>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoEtiquetaStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoTraseiraStep()" [disabled]="!frontalPhoto || processingPhoto">
+        Continuar
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isPhotoTraseiraStep">
+    <div class="step-head">
+      <span class="step-number">6</span>
+      <div>
+        <h3>Foto da parte traseira do item</h3>
+        <p>Registre a parte traseira do equipamento para concluir o inventário.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Etapa 3 de 3 fotos</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
+      </div>
+    </div>
+
+    <input
+      #traseiraPhotoInput
+      class="d-none"
+      type="file"
+      accept="image/*"
+      (change)="onTraseiraPhotoSelected($event)"
+    />
+
+    <div class="photo-step-card">
+      <div class="photo-step-status" [class.is-complete]="!!traseiraPhoto">
+        {{ traseiraPhoto ? 'Foto registrada' : 'Aguardando foto' }}
+      </div>
+
+      <div class="photo-step-preview" *ngIf="traseiraPhoto; else semTraseiraPhoto">
+        <img [src]="traseiraPhoto.previewUrl" alt="Foto traseira do item" />
+      </div>
+
+      <ng-template #semTraseiraPhoto>
+        <div class="photo-step-empty">
+          Finalize com a parte traseira do item para completar o conjunto mínimo de evidências.
+        </div>
+      </ng-template>
+
+      <div class="photo-step-actions">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('traseira')" [disabled]="processingPhoto || photoCaptureStarting">
+          {{ traseiraPhoto ? 'Refazer foto' : 'Abrir câmera' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" *ngIf="traseiraPhoto" (click)="removeTraseiraPhoto()">
+          Remover
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div>
+        <strong>Status do envio</strong>
+        <span>Inventariado</span>
+      </div>
+      <div>
+        <strong>Local selecionado</strong>
+        <span>{{ localSelecionado?.nome || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="saveBlockingReasons.length > 0">
+      Falta concluir:
+      {{ saveBlockingReasons.join(' ') }}
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoFrontalStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="submit()" [disabled]="saving || processingPhoto">
+        {{ saving ? 'Salvando...' : 'Cadastrar item inventariado' }}
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<div class="scanner-backdrop" *ngIf="scannerOpen"></div>
+<div class="scanner-modal" *ngIf="scannerOpen">
+  <div class="scanner-card">
+    <div class="scanner-header">
+      <div>
+        <h3>Leitor de tombamento</h3>
+        <p>Aponte a câmera para o QR code da etiqueta.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeScanner()"></button>
+    </div>
+
+    <div class="scanner-body">
+      <video #scannerVideo class="scanner-video" muted autoplay playsinline></video>
+      <div class="scanner-frame"></div>
+    </div>
+
+    <div class="scanner-footer">
+      <button class="btn btn-secondary w-100" type="button" (click)="closeScanner()">Fechar câmera</button>
+    </div>
   </div>
-</section>
+</div>
+
+<div class="scanner-backdrop" *ngIf="photoCaptureOpen"></div>
+<div class="scanner-modal" *ngIf="photoCaptureOpen">
+  <div class="scanner-card">
+    <div class="scanner-header">
+      <div>
+        <h3>Capturar foto</h3>
+        <p>Enquadre a imagem e toque em capturar.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closePhotoCapture()"></button>
+    </div>
+
+    <div class="scanner-body">
+      <video #photoCaptureVideo class="scanner-video" muted autoplay playsinline></video>
+    </div>
+
+    <div class="scanner-footer">
+      <div class="scan-feedback scan-feedback-light" *ngIf="photoCaptureError">{{ photoCaptureError }}</div>
+      <div class="photo-step-actions">
+        <button class="btn btn-primary w-100" type="button" (click)="capturePhoto()" [disabled]="processingPhoto">
+          {{ processingPhoto ? 'Processando foto...' : 'Capturar foto' }}
+        </button>
+        <button class="btn btn-secondary w-100" type="button" (click)="closePhotoCapture()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -13,6 +13,5 @@ public class Usuario : BaseEntity
     public bool MustChangePassword { get; set; } = true;
 
     public Equipe? Equipe { get; set; }
-    public ICollection<EquipeContrato> EquipesContrato { get; set; } = new List<EquipeContrato>();
     public ICollection<ItemInventariado> ItensInventariados { get; set; } = new List<ItemInventariado>();
 }

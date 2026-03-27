@@ -1,13 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY Contratos.sln ./
+COPY Inventario.sln ./
 COPY API/API.csproj API/
 COPY Application/Application.csproj Application/
 COPY Domain/Domain.csproj Domain/
 COPY Persistence/Persistence.csproj Persistence/
 
-RUN dotnet restore Contratos.sln
+RUN dotnet restore Inventario.sln
 
 COPY . .
 RUN dotnet publish API/API.csproj -c Release -o /app/publish /p:UseAppHost=false

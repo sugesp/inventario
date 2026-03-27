@@ -104,10 +104,10 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("users/contratos")]
-    public async Task<ActionResult<IEnumerable<UsuarioResponsavelDto>>> GetContratoUsers(CancellationToken cancellationToken)
+    [HttpGet("users/inventario")]
+    public async Task<ActionResult<IEnumerable<UsuarioResponsavelDto>>> GetInventarioUsers(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetContratoUsersAsync(cancellationToken));
+        return Ok(await _service.GetInventarioUsersAsync(cancellationToken));
     }
 
     [Authorize]

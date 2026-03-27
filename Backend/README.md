@@ -1,11 +1,11 @@
-# Contratos Backend (Base)
+# Inventario Backend (Base)
 
 Estrutura inicial em camadas para evoluir o projeto:
 
 - `API`: controllers, configuração HTTP e injeção de dependências.
 - `Application`: serviços e DTOs.
 - `Domain`: entidades e regras de domínio.
-- `Persistence`: contexto EF Core, contratos de persistência e repositórios.
+- `Persistence`: contexto EF Core, inventario de persistência e repositórios.
 
 ## Estrutura criada
 

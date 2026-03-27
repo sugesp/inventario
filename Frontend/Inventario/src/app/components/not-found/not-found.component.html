@@ -7,18 +7,11 @@
     </p>
 
     <div class="not-found-actions">
-      <a
-        class="btn btn-primary btn-standard-new"
-        [routerLink]="authService.isAuthenticated ? '/dashboard' : '/auth'"
-      >
+      <a class="btn btn-primary btn-standard-new" [routerLink]="authService.isAuthenticated ? '/dashboard' : '/auth'">
         {{ authService.isAuthenticated ? 'Voltar ao dashboard' : 'Ir para o login' }}
       </a>
-      <a
-        *ngIf="authService.isAuthenticated"
-        class="btn btn-standard-action"
-        routerLink="/contratos"
-      >
-        Ver contratos
+      <a *ngIf="authService.isAuthenticated" class="btn btn-standard-action" routerLink="/inventario">
+        Ver inventario
       </a>
     </div>
   </article>
