@@ -24,7 +24,7 @@ interface SelectedPhoto {
   previewUrl: string;
 }
 
-type InventoryStep = 'local' | 'capture' | 'details' | 'classificacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
+type InventoryStep = 'local' | 'capture' | 'details' | 'classificacao' | 'conservacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
 type PhotoTarget = 'etiqueta' | 'frontal' | 'traseira';
 
 interface ItemInventarioForm {
@@ -32,6 +32,7 @@ interface ItemInventarioForm {
   tombamentoAntigo: string;
   descricao: string;
   status: string;
+  estadoConservacao: string;
   observacao: string;
 }
 
@@ -157,6 +158,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.activeStep === 'classificacao';
   }
 
+  get isConservationStep(): boolean {
+    return this.activeStep === 'conservacao';
+  }
+
   get isPhotoEtiquetaStep(): boolean {
     return this.activeStep === 'photoEtiqueta';
   }
@@ -173,6 +178,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return !!this.selectedLocalId
       && !!this.form.descricao.trim()
       && !!this.form.status.trim()
+      && !!this.form.estadoConservacao.trim()
       && !!this.etiquetaPhoto
       && !!this.frontalPhoto
       && !!this.traseiraPhoto;
@@ -191,6 +197,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     if (!this.form.status.trim()) {
       reasons.push('Selecione a classificação do item.');
+    }
+
+    if (!this.form.estadoConservacao.trim()) {
+      reasons.push('Selecione o estado de conservação do item.');
     }
 
     if (!this.etiquetaPhoto) {
@@ -232,6 +242,19 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get classificacaoSelecionadaLabel(): string {
     return this.classificacaoOptions.find((item) => item.value === this.form.status)?.label ?? this.form.status ?? '';
+  }
+
+  get conservacaoOptions(): Array<{ value: string; label: string; description: string }> {
+    return [
+      { value: 'BOM', label: 'BOM', description: 'Item com bom estado de conservação.' },
+      { value: 'EXCELENTE', label: 'EXCELENTE', description: 'Item muito bem conservado.' },
+      { value: 'REGULAR', label: 'REGULAR', description: 'Item com sinais moderados de uso.' },
+      { value: 'PESSIMO', label: 'PÉSSIMO', description: 'Item em estado crítico de conservação.' },
+    ];
+  }
+
+  get conservacaoSelecionadaLabel(): string {
+    return this.conservacaoOptions.find((item) => item.value === this.form.estadoConservacao)?.label ?? this.form.estadoConservacao ?? '';
   }
 
   loadLocais(): void {
@@ -468,6 +491,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     payload.append('tombamentoAntigo', this.form.tombamentoAntigo.trim());
     payload.append('descricao', this.form.descricao.trim());
     payload.append('status', this.form.status.trim());
+    payload.append('estadoConservacao', this.form.estadoConservacao.trim());
     payload.append('observacao', this.form.observacao.trim());
     payload.append('fotos', this.etiquetaPhoto!.file, this.etiquetaPhoto!.file.name);
     payload.append('fotos', this.frontalPhoto!.file, this.frontalPhoto!.file.name);
@@ -536,11 +560,20 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   goToPhotoEtiquetaStep(): void {
-    if (!this.form.status.trim()) {
+    if (!this.form.estadoConservacao.trim()) {
       return;
     }
 
     this.activeStep = 'photoEtiqueta';
+    this.persistState();
+  }
+
+  goToConservationStep(): void {
+    if (!this.form.status.trim()) {
+      return;
+    }
+
+    this.activeStep = 'conservacao';
     this.persistState();
   }
 
@@ -675,6 +708,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       tombamentoAntigo: '',
       descricao: '',
       status: '',
+      estadoConservacao: '',
       observacao: '',
     };
   }
@@ -987,6 +1021,43 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
+  selecionarEstadoConservacao(estadoConservacao: string): void {
+    if (!this.conservacaoOptions.some((item) => item.value === estadoConservacao)) {
+      return;
+    }
+
+    this.form.estadoConservacao = estadoConservacao;
+    this.persistState();
+  }
+
+  getClassificacaoCardTone(value: string): 'success' | 'info' | 'warning' | 'danger' {
+    switch (value) {
+      case 'SERVIVEL':
+        return 'success';
+      case 'OBSOLETO':
+        return 'warning';
+      case 'INSERVIVEL':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  }
+
+  getConservacaoCardTone(value: string): 'success' | 'info' | 'warning' | 'danger' {
+    switch (value) {
+      case 'EXCELENTE':
+        return 'success';
+      case 'BOM':
+        return 'info';
+      case 'REGULAR':
+        return 'warning';
+      case 'PESSIMO':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  }
+
   onTombamentoNovoBlur(): void {
     const tombamentoNormalizado = this.normalizeScannedValue(this.form.tombamentoNovo);
     if (!tombamentoNormalizado) {
@@ -1049,6 +1120,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
         tombamentoAntigo: state.form?.tombamentoAntigo ?? '',
         descricao: state.form?.descricao ?? '',
         status: state.form?.status ?? '',
+        estadoConservacao: state.form?.estadoConservacao ?? '',
         observacao: state.form?.observacao ?? '',
       };
       this.consultaPublicaMensagem = state.consultaPublicaMensagem ?? '';

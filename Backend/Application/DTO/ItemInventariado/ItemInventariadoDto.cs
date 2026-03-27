@@ -13,6 +13,7 @@ public class ItemInventariadoDto
     public Guid UsuarioId { get; set; }
     public string UsuarioNome { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public string EstadoConservacao { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; }
     public IReadOnlyCollection<ItemInventarioFotoDto> Fotos { get; set; } = Array.Empty<ItemInventarioFotoDto>();

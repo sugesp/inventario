@@ -28,13 +28,13 @@ export class DashboardComponent implements OnInit {
     {
       title: 'Inventariar item',
       description: 'Siga o fluxo completo de conferência, classificação e fotos para cadastrar um bem.',
-      route: '/itens-inventariados',
+      route: '/inventariar',
       icon: 'fa-box-archive',
     },
     {
       title: 'Listagem de itens',
       description: 'Acompanhe todos os itens inventariados já registrados no sistema.',
-      route: '/itens-inventariados/lista',
+      route: '/lista-inventariados',
       icon: 'fa-table-list',
       adminOnly: true,
     },

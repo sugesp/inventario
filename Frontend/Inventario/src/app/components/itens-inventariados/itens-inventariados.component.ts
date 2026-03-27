@@ -21,7 +21,7 @@ export class ItensInventariadosComponent implements OnInit {
   constructor(
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadItensInventariados();

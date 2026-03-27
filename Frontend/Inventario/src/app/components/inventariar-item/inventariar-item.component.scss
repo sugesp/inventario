@@ -100,6 +100,62 @@
   box-shadow: 0 14px 24px rgba(26, 52, 79, 0.08);
 }
 
+.local-card-success {
+  background: linear-gradient(180deg, #f3fbf5 0%, #ffffff 100%);
+  border-color: #b8dfc2;
+}
+
+.local-card-success .local-card-action {
+  color: #2f6b3f;
+}
+
+.local-card-info {
+  background: linear-gradient(180deg, #f2f8ff 0%, #ffffff 100%);
+  border-color: #bad3ef;
+}
+
+.local-card-info .local-card-action {
+  color: #2e6fb0;
+}
+
+.local-card-warning {
+  background: linear-gradient(180deg, #fff8ec 0%, #ffffff 100%);
+  border-color: #f0d39b;
+}
+
+.local-card-warning .local-card-action {
+  color: #b7791f;
+}
+
+.local-card-danger {
+  background: linear-gradient(180deg, #fff4f2 0%, #ffffff 100%);
+  border-color: #efb8b1;
+}
+
+.local-card-danger .local-card-action {
+  color: #c05647;
+}
+
+.local-card-success.local-card-selected {
+  border-color: #5eb574;
+  box-shadow: 0 14px 24px rgba(47, 107, 63, 0.14);
+}
+
+.local-card-info.local-card-selected {
+  border-color: #5c96cf;
+  box-shadow: 0 14px 24px rgba(46, 111, 176, 0.14);
+}
+
+.local-card-warning.local-card-selected {
+  border-color: #d69e2e;
+  box-shadow: 0 14px 24px rgba(183, 121, 31, 0.14);
+}
+
+.local-card-danger.local-card-selected {
+  border-color: #dd6b55;
+  box-shadow: 0 14px 24px rgba(192, 86, 71, 0.14);
+}
+
 .local-card-eyebrow {
   color: #5a7692;
   text-transform: uppercase;

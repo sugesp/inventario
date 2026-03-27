@@ -17,6 +17,7 @@ export interface ItemInventariado {
   usuarioId: string;
   usuarioNome: string;
   status: string;
+  estadoConservacao: string;
   observacao: string;
   dataInventario: string;
   fotos: ItemInventarioFoto[];

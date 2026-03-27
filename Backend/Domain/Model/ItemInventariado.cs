@@ -8,6 +8,7 @@ public class ItemInventariado : BaseEntity
     public Guid LocalId { get; set; }
     public Guid UsuarioId { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string EstadoConservacao { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; } = DateTime.UtcNow;
 

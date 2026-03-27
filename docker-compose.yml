@@ -33,7 +33,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - inventario_uploads:/var/www/uploads:ro
+      - ./resources/inventario_uploads:/var/www/uploads:ro
     depends_on:
       - backend
       - frontend

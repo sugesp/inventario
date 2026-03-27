@@ -195,6 +195,7 @@
         class="local-card"
         type="button"
         *ngFor="let option of classificacaoOptions"
+        [ngClass]="'local-card-' + getClassificacaoCardTone(option.value)"
         [class.local-card-selected]="form.status === option.value"
         (click)="selecionarClassificacao(option.value)"
       >
@@ -206,7 +207,49 @@
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="!form.status">
+      <button class="btn btn-primary" type="button" (click)="goToConservationStep()" [disabled]="!form.status">
+        Continuar para conservação
+      </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isConservationStep">
+    <div class="step-head">
+      <span class="step-number">5</span>
+      <div>
+        <h3>Estado de conservação</h3>
+        <p>Escolha o estado de conservação do item antes de registrar as fotos.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Item em conferência</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'classificacao'">Voltar à classificação</button>
+    </div>
+
+    <div class="local-card-grid">
+      <button
+        class="local-card"
+        type="button"
+        *ngFor="let option of conservacaoOptions"
+        [ngClass]="'local-card-' + getConservacaoCardTone(option.value)"
+        [class.local-card-selected]="form.estadoConservacao === option.value"
+        (click)="selecionarEstadoConservacao(option.value)"
+      >
+        <span class="local-card-eyebrow">Conservação</span>
+        <strong class="local-card-title">{{ option.label }}</strong>
+        <span class="local-card-action">{{ option.description }}</span>
+      </button>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'classificacao'">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="!form.estadoConservacao">
         Continuar para as fotos
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -215,7 +258,7 @@
 
   <section class="step-card" *ngIf="isPhotoEtiquetaStep">
     <div class="step-head">
-      <span class="step-number">5</span>
+      <span class="step-number">6</span>
       <div>
         <h3>{{ identificationStepTitle }}</h3>
         <p>{{ identificationStepDescription }}</p>
@@ -228,7 +271,7 @@
         <strong>{{ localSelecionado.nome }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'classificacao'">Voltar à classificação</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'conservacao'">Voltar à conservação</button>
     </div>
 
     <input
@@ -265,7 +308,7 @@
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'classificacao'">Etapa anterior</button>
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'conservacao'">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()" [disabled]="!etiquetaPhoto || processingPhoto">
         Continuar
       </button>
@@ -275,7 +318,7 @@
 
   <section class="step-card" *ngIf="isPhotoFrontalStep">
     <div class="step-head">
-      <span class="step-number">6</span>
+      <span class="step-number">7</span>
       <div>
         <h3>Foto da parte frontal do item</h3>
         <p>Registre a parte frontal do equipamento de forma completa e bem iluminada.</p>
@@ -334,7 +377,7 @@
 
   <section class="step-card" *ngIf="isPhotoTraseiraStep">
     <div class="step-head">
-      <span class="step-number">7</span>
+      <span class="step-number">8</span>
       <div>
         <h3>Foto da parte traseira do item</h3>
         <p>Registre a parte traseira do equipamento para concluir o inventário.</p>
@@ -386,6 +429,10 @@
       <div>
         <strong>Classificação</strong>
         <span>{{ classificacaoSelecionadaLabel || '-' }}</span>
+      </div>
+      <div>
+        <strong>Estado de conservação</strong>
+        <span>{{ conservacaoSelecionadaLabel || '-' }}</span>
       </div>
       <div>
         <strong>Local selecionado</strong>

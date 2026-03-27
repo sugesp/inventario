@@ -18,8 +18,8 @@ const routes: Routes = [
   { path: 'usuarios', component: UsuariosComponent, canActivate: [AdminGuard], data: { title: 'Usuários' } },
   { path: 'equipes', component: EquipesComponent, canActivate: [AdminGuard], data: { title: 'Equipes' } },
   { path: 'locais', component: LocaisComponent, canActivate: [AdminGuard], data: { title: 'Locais' } },
-  { path: 'itens-inventariados', component: InventariarItemComponent, canActivate: [AuthGuard], data: { title: 'Inventariar item' } },
-  { path: 'itens-inventariados/lista', component: ItensInventariadosComponent, canActivate: [AdminGuard], data: { title: 'Itens inventariados' } },
+  { path: 'inventariar', component: InventariarItemComponent, canActivate: [AuthGuard], data: { title: 'Inventariar item' } },
+  { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [AdminGuard], data: { title: 'Itens inventariados' } },
   { path: '**', component: NotFoundComponent, data: { title: 'Pagina nao encontrada' } },
 ];
 

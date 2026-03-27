@@ -62,6 +62,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
             entity.Property(x => x.Descricao).HasMaxLength(500).IsRequired();
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Observacao).HasMaxLength(2000);
             entity.HasOne(x => x.Local)
                 .WithMany(x => x.ItensInventariados)

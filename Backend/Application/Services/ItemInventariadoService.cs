@@ -96,6 +96,7 @@ public class ItemInventariadoService : IItemInventariadoService
             LocalId = dto.LocalId,
             UsuarioId = dto.UsuarioId ?? usuarioAutenticadoId,
             Status = NormalizeClassificationStatus(dto.Status)!,
+            EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!,
             Observacao = dto.Observacao?.Trim() ?? string.Empty,
             DataInventario = dto.DataInventario ?? DateTime.UtcNow
         };
@@ -135,6 +136,7 @@ public class ItemInventariadoService : IItemInventariadoService
         entity.LocalId = dto.LocalId;
         entity.UsuarioId = dto.UsuarioId ?? entity.UsuarioId;
         entity.Status = NormalizeClassificationStatus(dto.Status)!;
+        entity.EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!;
         entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
         entity.DataInventario = dto.DataInventario ?? entity.DataInventario;
         entity.UpdatedAt = DateTime.UtcNow;
@@ -212,6 +214,16 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("Selecione uma classificação válida para o item.");
         }
 
+        if (string.IsNullOrWhiteSpace(dto.EstadoConservacao))
+        {
+            throw new InvalidOperationException("O estado de conservação do item é obrigatório.");
+        }
+
+        if (NormalizeConservationState(dto.EstadoConservacao) is null)
+        {
+            throw new InvalidOperationException("Selecione um estado de conservação válido para o item.");
+        }
+
         var localExiste = await _context.Locais.AnyAsync(
             x => x.Id == dto.LocalId && x.DeletedAt == null,
             cancellationToken
@@ -262,6 +274,25 @@ public class ItemInventariadoService : IItemInventariadoService
         };
     }
 
+    private static string? NormalizeConservationState(string? state)
+    {
+        if (string.IsNullOrWhiteSpace(state))
+        {
+            return null;
+        }
+
+        var normalized = RemoveDiacritics(state).Trim().ToUpperInvariant();
+
+        return normalized switch
+        {
+            "BOM" => "BOM",
+            "EXCELENTE" => "EXCELENTE",
+            "REGULAR" => "REGULAR",
+            "PESSIMO" => "PÉSSIMO",
+            _ => null
+        };
+    }
+
     private static string RemoveDiacritics(string value)
     {
         var normalized = value.Normalize(NormalizationForm.FormD);
@@ -284,6 +315,7 @@ public class ItemInventariadoService : IItemInventariadoService
             UsuarioId = entity.UsuarioId,
             UsuarioNome = entity.Usuario?.Nome ?? string.Empty,
             Status = entity.Status,
+            EstadoConservacao = entity.EstadoConservacao,
             Observacao = entity.Observacao,
             DataInventario = entity.DataInventario,
             Fotos = entity.Fotos
