@@ -2,6 +2,7 @@ using Application.Contract;
 using Application.Services;
 using Domain.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Persistence.Context;
@@ -65,7 +66,26 @@ builder.Services.AddScoped<IEquipeService, EquipeService>();
 builder.Services.AddScoped<ILocalService, LocalService>();
 builder.Services.AddScoped<IItemInventariadoService, ItemInventariadoService>();
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors.Select(error => error.ErrorMessage).ToArray()
+                );
+
+            return new BadRequestObjectResult(new
+            {
+                message = "Dados inválidos enviados para a API.",
+                errors
+            });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>

@@ -33,6 +33,10 @@
         <span class="local-card-action">Selecionar local</span>
       </button>
     </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
   </section>
 
   <section class="step-card" *ngIf="isCaptureStep">
@@ -83,6 +87,10 @@
         <div class="scan-feedback" *ngIf="scannerMessage">{{ scannerMessage }}</div>
       </div>
     </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
   </section>
 
   <section class="step-card" *ngIf="isDetailsStep">
@@ -131,6 +139,7 @@
       <button class="btn btn-primary" type="button" (click)="confirmarResumo(true)">
         Conferido, editar dados
       </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
 
     <div class="row g-3" *ngIf="!aguardandoConfirmacaoResumo">
@@ -200,6 +209,7 @@
       <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="!form.status">
         Continuar para as fotos
       </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
   </section>
 
@@ -259,6 +269,7 @@
       <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()" [disabled]="!etiquetaPhoto || processingPhoto">
         Continuar
       </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
   </section>
 
@@ -317,6 +328,7 @@
       <button class="btn btn-primary" type="button" (click)="goToPhotoTraseiraStep()" [disabled]="!frontalPhoto || processingPhoto">
         Continuar
       </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
   </section>
 
@@ -373,7 +385,7 @@
     <div class="summary-card">
       <div>
         <strong>Classificação</strong>
-        <span>{{ form.status || '-' }}</span>
+        <span>{{ classificacaoSelecionadaLabel || '-' }}</span>
       </div>
       <div>
         <strong>Local selecionado</strong>
@@ -391,6 +403,7 @@
       <button class="btn btn-primary" type="button" (click)="submit()" [disabled]="saving || processingPhoto">
         {{ saving ? 'Salvando...' : 'Cadastrar item inventariado' }}
       </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
   </section>
 

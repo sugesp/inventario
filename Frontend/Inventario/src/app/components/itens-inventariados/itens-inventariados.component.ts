@@ -50,7 +50,7 @@ interface PersistedInventoryState {
   styleUrl: './itens-inventariados.component.scss',
 })
 export class ItensInventariadosComponent implements OnInit, OnDestroy {
-  private static readonly CLASSIFICACOES = ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO'] as const;
+  private static readonly CLASSIFICACOES = ['SERVIVEL', 'INSERVIVEL', 'OBSOLETO'] as const;
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
   private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 1920;
   private static readonly UPLOAD_IMAGE_QUALITY = 0.82;
@@ -223,10 +223,14 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
 
   get classificacaoOptions(): Array<{ value: string; label: string; description: string }> {
     return [
-      { value: 'SERVÍVEL', label: 'SERVÍVEL', description: 'Item em condições de uso.' },
-      { value: 'INSERVÍVEL', label: 'INSERVÍVEL', description: 'Item sem condição de uso.' },
+      { value: 'SERVIVEL', label: 'SERVÍVEL', description: 'Item em condições de uso.' },
+      { value: 'INSERVIVEL', label: 'INSERVÍVEL', description: 'Item sem condição de uso.' },
       { value: 'OBSOLETO', label: 'OBSOLETO', description: 'Item defasado ou sem utilidade operacional.' },
     ];
+  }
+
+  get classificacaoSelecionadaLabel(): string {
+    return this.classificacaoOptions.find((item) => item.value === this.form.status)?.label ?? this.form.status ?? '';
   }
 
   loadLocais(): void {
@@ -477,7 +481,16 @@ export class ItensInventariadosComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.saving = false;
-        this.toastr.error(error?.error?.message ?? 'Não foi possível salvar o item inventariado.');
+        const validationErrors = error?.error?.errors
+          ? Object.values(error.error.errors).flat().filter((item): item is string => typeof item === 'string')
+          : [];
+        const message =
+          validationErrors[0]
+          ?? error?.error?.message
+          ?? error?.error?.title
+          ?? (typeof error?.error === 'string' ? error.error : null)
+          ?? 'Não foi possível salvar o item inventariado.';
+        this.toastr.error(message);
       },
     });
   }

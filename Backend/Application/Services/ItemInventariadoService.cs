@@ -4,20 +4,15 @@ using Domain.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
+using System.Globalization;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Application.Services;
 
 public class ItemInventariadoService : IItemInventariadoService
 {
-    private static readonly HashSet<string> StatusPermitidos = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "SERVÍVEL",
-        "INSERVÍVEL",
-        "OBSOLETO"
-    };
-
     private readonly AppDbContext _context;
     private readonly IFileStorageService _fileStorageService;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -95,13 +90,13 @@ public class ItemInventariadoService : IItemInventariadoService
 
         var entity = new ItemInventariado
         {
-            TombamentoNovo = dto.TombamentoNovo.Trim(),
-            TombamentoAntigo = dto.TombamentoAntigo.Trim(),
-            Descricao = dto.Descricao.Trim(),
+            TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty,
+            TombamentoAntigo = dto.TombamentoAntigo?.Trim() ?? string.Empty,
+            Descricao = dto.Descricao?.Trim() ?? string.Empty,
             LocalId = dto.LocalId,
             UsuarioId = dto.UsuarioId ?? usuarioAutenticadoId,
-            Status = dto.Status.Trim(),
-            Observacao = dto.Observacao.Trim(),
+            Status = NormalizeClassificationStatus(dto.Status)!,
+            Observacao = dto.Observacao?.Trim() ?? string.Empty,
             DataInventario = dto.DataInventario ?? DateTime.UtcNow
         };
 
@@ -134,13 +129,13 @@ public class ItemInventariadoService : IItemInventariadoService
 
         await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, cancellationToken);
 
-        entity.TombamentoNovo = dto.TombamentoNovo.Trim();
-        entity.TombamentoAntigo = dto.TombamentoAntigo.Trim();
-        entity.Descricao = dto.Descricao.Trim();
+        entity.TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty;
+        entity.TombamentoAntigo = dto.TombamentoAntigo?.Trim() ?? string.Empty;
+        entity.Descricao = dto.Descricao?.Trim() ?? string.Empty;
         entity.LocalId = dto.LocalId;
         entity.UsuarioId = dto.UsuarioId ?? entity.UsuarioId;
-        entity.Status = dto.Status.Trim();
-        entity.Observacao = dto.Observacao.Trim();
+        entity.Status = NormalizeClassificationStatus(dto.Status)!;
+        entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
         entity.DataInventario = dto.DataInventario ?? entity.DataInventario;
         entity.UpdatedAt = DateTime.UtcNow;
 
@@ -212,7 +207,7 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("O status do item é obrigatório.");
         }
 
-        if (!StatusPermitidos.Contains(dto.Status.Trim()))
+        if (NormalizeClassificationStatus(dto.Status) is null)
         {
             throw new InvalidOperationException("Selecione uma classificação válida para o item.");
         }
@@ -247,6 +242,31 @@ public class ItemInventariadoService : IItemInventariadoService
             CaminhoRelativo = saved.CaminhoRelativo,
             Url = saved.Url
         };
+    }
+
+    private static string? NormalizeClassificationStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        var normalized = RemoveDiacritics(status).Trim().ToUpperInvariant();
+
+        return normalized switch
+        {
+            "SERVIVEL" => "SERVÍVEL",
+            "INSERVIVEL" => "INSERVÍVEL",
+            "OBSOLETO" => "OBSOLETO",
+            _ => null
+        };
+    }
+
+    private static string RemoveDiacritics(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var buffer = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+        return new string(buffer.ToArray()).Normalize(NormalizationForm.FormC);
     }
 
     private static ItemInventariadoDto MapToDto(ItemInventariado entity)
