@@ -49,7 +49,11 @@ public class FileStorageService : IFileStorageService
         }
 
         var normalizedPath = relativePath.Trim().TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
-        var absolutePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", normalizedPath);
+        var uploadsPrefix = $"uploads{Path.DirectorySeparatorChar}";
+        var relativeToRoot = normalizedPath.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase)
+            ? normalizedPath[uploadsPrefix.Length..]
+            : normalizedPath;
+        var absolutePath = Path.Combine(_rootPath, relativeToRoot);
         if (File.Exists(absolutePath))
         {
             File.Delete(absolutePath);
