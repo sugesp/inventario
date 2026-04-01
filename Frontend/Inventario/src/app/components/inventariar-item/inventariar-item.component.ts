@@ -24,8 +24,9 @@ interface SelectedPhoto {
   previewUrl: string;
 }
 
-type InventoryStep = 'local' | 'capture' | 'details' | 'classificacao' | 'conservacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
+type InventoryStep = 'local' | 'capture' | 'manualLookup' | 'details' | 'classificacao' | 'conservacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
 type PhotoTarget = 'etiqueta' | 'frontal' | 'traseira';
+type IdentificationMode = 'qr' | 'manual' | null;
 
 interface ItemInventarioForm {
   tombamentoNovo: string;
@@ -39,6 +40,7 @@ interface ItemInventarioForm {
 interface PersistedInventoryState {
   selectedLocalId: string;
   activeStep: InventoryStep;
+  identificationMode: IdentificationMode;
   form: ItemInventarioForm;
   consultaPublicaMensagem: string;
   consultaPublicaResumo: ConsultaPublicaBem | null;
@@ -87,6 +89,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   consultaPublicaMensagem = '';
   consultaPublicaResumo: ConsultaPublicaBem | null = null;
   aguardandoConfirmacaoResumo = false;
+  identificationMode: IdentificationMode = null;
   private scannerStream: MediaStream | null = null;
   private scannerFrameId: number | null = null;
   private scannerDetector: InstanceType<NonNullable<typeof window.BarcodeDetector>> | null = null;
@@ -148,6 +151,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get isCaptureStep(): boolean {
     return this.activeStep === 'capture';
+  }
+
+  get isManualLookupStep(): boolean {
+    return this.activeStep === 'manualLookup';
   }
 
   get isDetailsStep(): boolean {
@@ -280,6 +287,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     this.clearConsultaPublica();
+    this.identificationMode = 'qr';
     this.codeReadMessage = '';
     await this.readCodeFromFile(file);
     this.activeStep = 'details';
@@ -291,6 +299,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     if (!this.canAdvanceToScan || this.scannerStarting || this.readingCode) {
       return;
     }
+
+    this.identificationMode = 'qr';
 
     if (this.canUseLiveScanner) {
       void this.openScanner();
@@ -306,7 +316,33 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     this.clearConsultaPublica();
+    this.identificationMode = 'manual';
     this.codeReadMessage = '';
+    this.activeStep = 'manualLookup';
+    this.persistState();
+  }
+
+  continuarSemPatrimonioEEstado(): void {
+    this.clearConsultaPublica();
+    this.identificationMode = 'manual';
+    this.codeReadMessage = 'Preencha os dados do item manualmente.';
+    this.form.tombamentoNovo = '';
+    this.activeStep = 'details';
+    this.persistState();
+  }
+
+  buscarPatrimonioManual(): void {
+    const tombamento = this.normalizeScannedValue(this.form.tombamentoNovo);
+
+    if (tombamento.length !== 9) {
+      this.toastr.warning('Informe o patrimônio no formato 000.000.000 para consultar.');
+      return;
+    }
+
+    this.identificationMode = 'manual';
+    this.form.tombamentoNovo = this.formatTombamentoValue(tombamento);
+    this.codeReadMessage = 'Patrimônio informado manualmente. Consultando dados do bem.';
+    this.consultarResumoPublico();
     this.activeStep = 'details';
     this.persistState();
   }
@@ -530,6 +566,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.traseiraPhoto = null;
     this.clearConsultaPublica();
     this.codeReadMessage = '';
+    this.identificationMode = null;
     this.activeStep = this.selectedLocalId ? 'capture' : 'local';
     this.form = this.createEmptyForm();
     this.persistState();
@@ -537,6 +574,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   selectLocal(localId: string): void {
     this.selectedLocalId = localId;
+    this.identificationMode = null;
     this.activeStep = 'capture';
     this.clearConsultaPublica();
     this.codeReadMessage = '';
@@ -556,6 +594,16 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.closeScanner();
     this.activeStep = 'capture';
+    this.persistState();
+  }
+
+  goToManualLookupStep(): void {
+    if (!this.canAdvanceToScan) {
+      return;
+    }
+
+    this.closeScanner();
+    this.activeStep = 'manualLookup';
     this.persistState();
   }
 
@@ -743,6 +791,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       .then((rawValue) => {
         if (rawValue) {
           this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
+          this.identificationMode = 'qr';
           this.codeReadMessage = 'Tombamento identificado automaticamente pela câmera.';
           this.consultarResumoPublico();
           this.activeStep = 'details';
@@ -1092,6 +1141,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     const state: PersistedInventoryState = {
       selectedLocalId: this.selectedLocalId,
       activeStep: this.activeStep,
+      identificationMode: this.identificationMode,
       form: { ...this.form },
       consultaPublicaMensagem: this.consultaPublicaMensagem,
       consultaPublicaResumo: this.consultaPublicaResumo,
@@ -1115,6 +1165,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       const state = JSON.parse(raw) as PersistedInventoryState;
       this.selectedLocalId = state.selectedLocalId ?? '';
       this.activeStep = state.activeStep ?? 'local';
+      this.identificationMode = state.identificationMode ?? null;
       this.form = {
         tombamentoNovo: state.form?.tombamentoNovo ?? '',
         tombamentoAntigo: state.form?.tombamentoAntigo ?? '',

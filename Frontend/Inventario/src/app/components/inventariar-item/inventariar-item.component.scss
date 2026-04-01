@@ -76,6 +76,15 @@
   min-height: 52px;
 }
 
+.manual-lookup-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #d8dde6;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
 .local-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

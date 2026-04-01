@@ -93,6 +93,54 @@
     </div>
   </section>
 
+  <section class="step-card" *ngIf="isManualLookupStep">
+    <div class="step-head">
+      <span class="step-number">2.1</span>
+      <div>
+        <h3>Informe o patrimônio</h3>
+        <p>Digite o patrimônio no padrão e-Estado para consultar o item. Se ele não possuir esse padrão, siga para o preenchimento totalmente manual.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Local escolhido</span>
+        <strong>{{ localSelecionado.nome }}</strong>
+        <small>{{ localSelecionado.equipeDescricao }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar</button>
+    </div>
+
+    <div class="manual-lookup-card">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Patrimônio (E-Estado)</label>
+          <input
+            class="form-control"
+            [ngModel]="form.tombamentoNovo"
+            (ngModelChange)="onTombamentoNovoChange($event)"
+            placeholder="000.000.000"
+            inputmode="numeric"
+          />
+        </div>
+      </div>
+
+      <div class="scan-feedback">
+        Ao informar um patrimônio válido, a busca seguirá o mesmo processo usado na leitura por QR code.
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="continuarSemPatrimonioEEstado()">
+        Não possui patrimônio e-Estado
+      </button>
+      <button class="btn btn-primary" type="button" (click)="buscarPatrimonioManual()" [disabled]="consultaPublicaEmAndamento">
+        Buscar patrimônio
+      </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
+  </section>
+
   <section class="step-card" *ngIf="isDetailsStep">
     <div class="step-head">
       <span class="step-number">3</span>
@@ -113,7 +161,13 @@
         <strong>{{ localSelecionado.nome }}</strong>
         <small>{{ localSelecionado.equipeDescricao }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar ao tombamento</button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        type="button"
+        (click)="identificationMode === 'manual' ? goToManualLookupStep() : goToCaptureStep()"
+      >
+        Voltar ao tombamento
+      </button>
     </div>
 
     <div class="summary-card public-summary-card" *ngIf="consultaPublicaResumo">
