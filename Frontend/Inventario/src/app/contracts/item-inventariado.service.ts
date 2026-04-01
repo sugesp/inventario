@@ -18,6 +18,12 @@ export class ItemInventariadoService {
     return this.http.get<ConsultaPublicaBem>(`${this.baseUrl}/consulta-publica/${encodeURIComponent(tombamento)}`);
   }
 
+  getFoto(itemId: string, fotoId: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${itemId}/fotos/${fotoId}`, {
+      responseType: 'blob',
+    });
+  }
+
   create(payload: FormData): Observable<ItemInventariado> {
     return this.http.post<ItemInventariado>(this.baseUrl, payload);
   }

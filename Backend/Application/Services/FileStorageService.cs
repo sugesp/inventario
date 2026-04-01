@@ -41,6 +41,27 @@ public class FileStorageService : IFileStorageService
         return (fileName, relativePath, $"/{relativePath}");
     }
 
+    public Task<(Stream Stream, string ContentType, string FileName)?> OpenReadAsync(
+        string relativePath,
+        string? downloadFileName = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var absolutePath = ResolveAbsolutePath(relativePath);
+        if (!File.Exists(absolutePath))
+        {
+            return Task.FromResult<(Stream Stream, string ContentType, string FileName)?>(null);
+        }
+
+        var stream = File.OpenRead(absolutePath);
+        var fileName = string.IsNullOrWhiteSpace(downloadFileName) ? Path.GetFileName(absolutePath) : downloadFileName.Trim();
+        var contentType = GetContentType(fileName);
+
+        return Task.FromResult<(Stream Stream, string ContentType, string FileName)?>((stream, contentType, fileName));
+    }
+
     public void Delete(string relativePath)
     {
         if (string.IsNullOrWhiteSpace(relativePath))
@@ -48,15 +69,37 @@ public class FileStorageService : IFileStorageService
             return;
         }
 
+        var absolutePath = ResolveAbsolutePath(relativePath);
+        if (File.Exists(absolutePath))
+        {
+            File.Delete(absolutePath);
+        }
+    }
+
+    private string ResolveAbsolutePath(string relativePath)
+    {
         var normalizedPath = relativePath.Trim().TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
         var uploadsPrefix = $"uploads{Path.DirectorySeparatorChar}";
         var relativeToRoot = normalizedPath.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase)
             ? normalizedPath[uploadsPrefix.Length..]
             : normalizedPath;
-        var absolutePath = Path.Combine(_rootPath, relativeToRoot);
-        if (File.Exists(absolutePath))
+        return Path.Combine(_rootPath, relativeToRoot);
+    }
+
+    private static string GetContentType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).Trim().ToLowerInvariant();
+
+        return extension switch
         {
-            File.Delete(absolutePath);
-        }
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".bmp" => "image/bmp",
+            ".svg" => "image/svg+xml",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
     }
 }

@@ -124,6 +124,8 @@
     </div>
 
     <div class="fotos-body" *ngIf="selectedItemFotos.fotos.length > 0; else semFotosModal">
+      <div class="scan-feedback mt-0" *ngIf="loadingFotos">Carregando fotos do item...</div>
+
       <div class="foto-principal" *ngIf="selectedFoto">
         <img [src]="getFotoUrl(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
       </div>

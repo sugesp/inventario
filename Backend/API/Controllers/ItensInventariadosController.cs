@@ -49,6 +49,18 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
+    [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
+    public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)
+    {
+        var foto = await _service.GetFotoAsync(id, fotoId, cancellationToken);
+        if (foto is null)
+        {
+            return NotFound();
+        }
+
+        return File(foto.Value.Stream, foto.Value.ContentType);
+    }
+
     [HttpPost]
     [RequestSizeLimit(50_000_000)]
     public async Task<ActionResult<ItemInventariadoDto>> Create(

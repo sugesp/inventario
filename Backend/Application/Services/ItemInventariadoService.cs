@@ -79,6 +79,31 @@ public class ItemInventariadoService : IItemInventariadoService
         };
     }
 
+    public async Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
+        Guid itemId,
+        Guid fotoId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var foto = await _context.ItensInventariadosFotos
+            .AsNoTracking()
+            .Where(x => x.Id == fotoId && x.ItemInventariadoId == itemId && x.DeletedAt == null)
+            .Select(x => new
+            {
+                x.NomeOriginal,
+                x.CaminhoRelativo,
+                ItemDeletedAt = x.ItemInventariado!.DeletedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (foto is null || foto.ItemDeletedAt != null)
+        {
+            return null;
+        }
+
+        return await _fileStorageService.OpenReadAsync(foto.CaminhoRelativo, foto.NomeOriginal, cancellationToken);
+    }
+
     public async Task<ItemInventariadoDto> CreateAsync(
         ItemInventariadoFormDto dto,
         IEnumerable<IFormFile> fotos,

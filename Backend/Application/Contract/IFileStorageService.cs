@@ -9,5 +9,10 @@ public interface IFileStorageService
         string folder,
         CancellationToken cancellationToken = default
     );
+    Task<(Stream Stream, string ContentType, string FileName)?> OpenReadAsync(
+        string relativePath,
+        string? downloadFileName = null,
+        CancellationToken cancellationToken = default
+    );
     void Delete(string relativePath);
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { environment } from '../../../environments/environment';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ItemInventariado, ItemInventarioFoto } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 
@@ -17,6 +18,8 @@ export class ItensInventariadosComponent implements OnInit {
   selectedEquipeFilter = '';
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
+  loadingFotos = false;
+  fotoObjectUrls: Record<string, string> = {};
 
   constructor(
     private readonly itemInventariadoService: ItemInventariadoService,
@@ -42,13 +45,49 @@ export class ItensInventariadosComponent implements OnInit {
   }
 
   openFotos(item: ItemInventariado): void {
+    this.releaseFotoObjectUrls();
     this.selectedItemFotos = item;
     this.selectedFoto = item.fotos[0] ?? null;
+    this.loadingFotos = item.fotos.length > 0;
+
+    if (!item.fotos.length) {
+      return;
+    }
+
+    forkJoin(
+      item.fotos.map((foto) =>
+        this.itemInventariadoService.getFoto(item.id, foto.id).pipe(
+          map((blob) => ({ fotoId: foto.id, url: URL.createObjectURL(blob), failed: false })),
+          catchError(() => of({ fotoId: foto.id, url: '', failed: true }))
+        )
+      )
+    ).subscribe({
+      next: (results) => {
+        this.loadingFotos = false;
+        this.fotoObjectUrls = results.reduce<Record<string, string>>((acc, result) => {
+          if (result.url) {
+            acc[result.fotoId] = result.url;
+          }
+
+          return acc;
+        }, {});
+
+        if (results.some((result) => result.failed)) {
+          this.toastr.warning('Algumas fotos não puderam ser carregadas.');
+        }
+      },
+      error: () => {
+        this.loadingFotos = false;
+        this.toastr.error('Não foi possível carregar as fotos do item.');
+      },
+    });
   }
 
   closeFotos(): void {
     this.selectedItemFotos = null;
     this.selectedFoto = null;
+    this.loadingFotos = false;
+    this.releaseFotoObjectUrls();
   }
 
   get localOptions(): string[] {
@@ -81,30 +120,11 @@ export class ItensInventariadosComponent implements OnInit {
       return '';
     }
 
-    const rawPath = foto.url?.trim() || foto.caminhoRelativo?.trim() || '';
-    if (!rawPath) {
-      return '';
-    }
+    return this.fotoObjectUrls[foto.id] || '';
+  }
 
-    if (rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
-      return rawPath;
-    }
-
-    const normalizedPath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
-    const apiBaseUrl = environment.apiBaseUrl?.trim();
-
-    if (apiBaseUrl) {
-      try {
-        const apiUrl = apiBaseUrl.startsWith('http://') || apiBaseUrl.startsWith('https://')
-          ? new URL(apiBaseUrl)
-          : new URL(apiBaseUrl, window.location.origin);
-
-        return `${apiUrl.origin}${normalizedPath}`;
-      } catch {
-        return normalizedPath;
-      }
-    }
-
-    return normalizedPath;
+  private releaseFotoObjectUrls(): void {
+    Object.values(this.fotoObjectUrls).forEach((url) => URL.revokeObjectURL(url));
+    this.fotoObjectUrls = {};
   }
 }
