@@ -21,6 +21,8 @@ import { LocaisComponent } from './components/locais/locais.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { SearchableSelectComponent } from './components/shared/searchable-select/searchable-select.component';
+import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
+import { TransferenciasComponent } from './components/transferencias/transferencias.component';
 import { LoadingInterceptor } from './core/loading/loading.interceptor';
 
 registerLocaleData(localePt);
@@ -37,6 +39,8 @@ registerLocaleData(localePt);
     LocaisComponent,
     InventariarItemComponent,
     ItensInventariadosComponent,
+    TransferirItensComponent,
+    TransferenciasComponent,
   ],
   imports: [
     BrowserModule,

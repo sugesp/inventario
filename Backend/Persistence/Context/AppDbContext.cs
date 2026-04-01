@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<Local> Locais { get; set; }
     public DbSet<ItemInventariado> ItensInventariados { get; set; }
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
+    public DbSet<Transferencia> Transferencias { get; set; }
+    public DbSet<TransferenciaItem> TransferenciasItens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +86,42 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.ItemInventariado)
                 .WithMany(x => x.Fotos)
                 .HasForeignKey(x => x.ItemInventariadoId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Transferencia>(entity =>
+        {
+            entity.ToTable("Transferencias");
+            entity.Property(x => x.ResponsavelDestino).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.IdSeiTermo).HasMaxLength(120);
+            entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Observacao).HasMaxLength(2000);
+            entity.HasOne(x => x.LocalDestino)
+                .WithMany(x => x.TransferenciasDestino)
+                .HasForeignKey(x => x.LocalDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.CriadoPorUsuario)
+                .WithMany(x => x.TransferenciasCriadas)
+                .HasForeignKey(x => x.CriadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.FinalizadoPorUsuario)
+                .WithMany(x => x.TransferenciasFinalizadas)
+                .HasForeignKey(x => x.FinalizadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TransferenciaItem>(entity =>
+        {
+            entity.ToTable("TransferenciasItens");
+            entity.Property(x => x.TombamentoNovo).HasMaxLength(120);
+            entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
+            entity.Property(x => x.Descricao).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.StatusItem).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Condicao).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Observacao).HasMaxLength(2000);
+            entity.HasOne(x => x.Transferencia)
+                .WithMany(x => x.Itens)
+                .HasForeignKey(x => x.TransferenciaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

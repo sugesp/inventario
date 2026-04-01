@@ -1,0 +1,86 @@
+<div class="inventario-grid">
+  <section class="hero-card">
+    <div class="hero-header">
+      <div>
+        <span class="list-header-eyebrow">Transferências</span>
+        <h2 class="list-header-title">Controle de transferências</h2>
+      </div>
+      <a class="btn btn-primary" routerLink="/transferir">Nova transferência</a>
+    </div>
+    <p class="hero-copy">
+      Acompanhe as movimentações de itens entre setores, revise os rascunhos e conclua as entregas.
+    </p>
+  </section>
+
+  <section class="step-card">
+    <div class="step-head">
+      <span class="step-number">T</span>
+      <div>
+        <h3>Transferências cadastradas</h3>
+        <p>Abra uma transferência para continuar a conferência ou concluir no computador.</p>
+      </div>
+    </div>
+
+    <div class="step-actions step-actions-start">
+      <button class="btn btn-outline-secondary" type="button" (click)="loadTransferencias()" [disabled]="loading">
+        {{ loading ? 'Atualizando...' : 'Atualizar listagem' }}
+      </button>
+    </div>
+
+    <div class="filters-grid" *ngIf="!loading && transferencias.length > 0">
+      <div>
+        <label class="form-label">Filtrar por status</label>
+        <select class="form-select" [(ngModel)]="selectedStatus">
+          <option value="">Todos</option>
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="loading">Carregando transferências...</div>
+    <div class="empty-state" *ngIf="!loading && transferencias.length === 0">
+      Nenhuma transferência foi cadastrada até o momento.
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && filteredTransferencias.length > 0">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Destino</th>
+            <th>Responsável</th>
+            <th>Status</th>
+            <th>ID SEI Termo</th>
+            <th>Data entrega</th>
+            <th>Itens</th>
+            <th>Criado por</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let transferencia of filteredTransferencias">
+            <td>{{ transferencia.localDestinoNome || '-' }}</td>
+            <td>{{ transferencia.responsavelDestino || '-' }}</td>
+            <td>{{ transferencia.status || '-' }}</td>
+            <td>{{ transferencia.idSeiTermo || '-' }}</td>
+            <td>{{ transferencia.dataEntrega ? (transferencia.dataEntrega | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ transferencia.itens.length }}</td>
+            <td>{{ transferencia.criadoPorUsuarioNome || '-' }}</td>
+            <td>{{ transferencia.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="actions-cell">
+              <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">Abrir</a>
+              <button
+                *ngIf="authService.isAdmin"
+                class="btn btn-sm btn-outline-danger"
+                type="button"
+                (click)="deleteTransferencia(transferencia.id)"
+              >
+                Excluir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

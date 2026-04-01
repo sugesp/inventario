@@ -9,6 +9,8 @@ import { InventariarItemComponent } from './components/inventariar-item/inventar
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LocaisComponent } from './components/locais/locais.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
+import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
+import { TransferenciasComponent } from './components/transferencias/transferencias.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
 
 const routes: Routes = [
@@ -20,6 +22,9 @@ const routes: Routes = [
   { path: 'locais', component: LocaisComponent, canActivate: [AdminGuard], data: { title: 'Locais' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [AuthGuard], data: { title: 'Inventariar item' } },
   { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [AdminGuard], data: { title: 'Itens inventariados' } },
+  { path: 'transferir', component: TransferirItensComponent, canActivate: [AuthGuard], data: { title: 'Nova transferência' } },
+  { path: 'transferencias', component: TransferenciasComponent, canActivate: [AuthGuard], data: { title: 'Transferências' } },
+  { path: 'transferencias/:id', component: TransferirItensComponent, canActivate: [AuthGuard], data: { title: 'Editar transferência' } },
   { path: '**', component: NotFoundComponent, data: { title: 'Pagina nao encontrada' } },
 ];
 

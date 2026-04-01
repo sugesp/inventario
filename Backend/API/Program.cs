@@ -65,6 +65,7 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IEquipeService, EquipeService>();
 builder.Services.AddScoped<ILocalService, LocalService>();
 builder.Services.AddScoped<IItemInventariadoService, ItemInventariadoService>();
+builder.Services.AddScoped<ITransferenciaService, TransferenciaService>();
 
 builder.Services
     .AddControllers()

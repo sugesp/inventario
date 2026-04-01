@@ -203,7 +203,7 @@
       </div>
       <div class="col-md-6">
         <label class="form-label">Tombamento antigo</label>
-        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="persistState()" />
+        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="onTombamentoAntigoChange($event)" />
       </div>
       <div class="col-md-8">
         <label class="form-label">Descrição do item</label>

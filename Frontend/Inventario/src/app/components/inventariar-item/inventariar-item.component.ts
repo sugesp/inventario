@@ -1030,7 +1030,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
           this.aguardandoConfirmacaoResumo = true;
           this.consultaPublicaMensagem = 'Confira abaixo se a descrição condiz com o equipamento inventariado.';
           this.form.tombamentoNovo = this.formatTombamentoValue(resumo.tombamento || tombamento);
-          this.form.tombamentoAntigo = resumo.tombamentoAntigo || this.form.tombamentoAntigo;
+          this.form.tombamentoAntigo = this.normalizeTombamentoAntigoValue(resumo.tombamentoAntigo || this.form.tombamentoAntigo);
           if (resumo.descricao) {
             this.form.descricao = resumo.descricao;
           }
@@ -1058,6 +1058,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   onTombamentoNovoChange(value: string): void {
     this.form.tombamentoNovo = this.formatTombamentoValue(value);
+    this.persistState();
+  }
+
+  onTombamentoAntigoChange(value: string): void {
+    this.form.tombamentoAntigo = this.normalizeTombamentoAntigoValue(value);
     this.persistState();
   }
 
@@ -1124,6 +1129,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.form.tombamentoNovo = this.formatTombamentoValue(tombamentoNormalizado);
     this.persistState();
     this.consultarResumoPublico();
+  }
+
+  private normalizeTombamentoAntigoValue(value: string | null | undefined): string {
+    return (value ?? '').replace(/\./g, '').trim();
   }
 
   private clearConsultaPublica(): void {

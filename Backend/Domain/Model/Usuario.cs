@@ -14,4 +14,6 @@ public class Usuario : BaseEntity
 
     public Equipe? Equipe { get; set; }
     public ICollection<ItemInventariado> ItensInventariados { get; set; } = new List<ItemInventariado>();
+    public ICollection<Transferencia> TransferenciasCriadas { get; set; } = new List<Transferencia>();
+    public ICollection<Transferencia> TransferenciasFinalizadas { get; set; } = new List<Transferencia>();
 }

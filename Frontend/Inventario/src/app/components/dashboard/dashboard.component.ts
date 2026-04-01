@@ -39,6 +39,18 @@ export class DashboardComponent implements OnInit {
       adminOnly: true,
     },
     {
+      title: 'Nova transferência',
+      description: 'Leia os tombamentos, monte a remessa no celular e conclua a entrega depois no computador.',
+      route: '/transferir',
+      icon: 'fa-right-left',
+    },
+    {
+      title: 'Transferências',
+      description: 'Acompanhe rascunhos, pendências e entregas concluídas entre setores.',
+      route: '/transferencias',
+      icon: 'fa-truck-ramp-box',
+    },
+    {
       title: 'Usuários',
       description: 'Gerencie acessos e perfis das pessoas que vão operar o inventário.',
       route: '/usuarios',

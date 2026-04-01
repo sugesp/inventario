@@ -33,6 +33,14 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar item</span>
         </a>
+        <a class="menu-item" routerLink="/transferir" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-right-left"></i></span>
+          <span>Nova transferência</span>
+        </a>
+        <a class="menu-item" routerLink="/transferencias" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-truck-ramp-box"></i></span>
+          <span>Transferências</span>
+        </a>
         <div class="menu-divider" *ngIf="authService.isAdmin"></div>
       </div>
 
