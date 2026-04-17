@@ -253,6 +253,10 @@
 }
 
 @media print {
+  .inventario-grid {
+    display: none !important;
+  }
+
   .laudo-modal-backdrop,
   .laudo-modal-header {
     display: none !important;
