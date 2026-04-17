@@ -18,6 +18,12 @@ public class LaudosTecnicosController : ControllerBase
         _service = service;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<LaudoTecnicoDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        return Ok(await _service.GetAllAsync(cancellationToken));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LaudoTecnicoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

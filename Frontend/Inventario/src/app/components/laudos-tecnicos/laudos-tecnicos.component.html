@@ -1,0 +1,194 @@
+<div class="inventario-grid">
+  <section class="hero-card">
+    <div class="hero-header">
+      <div>
+        <span class="list-header-eyebrow">GTI</span>
+        <h2 class="list-header-title">Laudos Técnicos</h2>
+      </div>
+      <a class="btn btn-primary" routerLink="/laudo-tecnico">Novo laudo</a>
+    </div>
+    <p class="hero-copy">
+      Consulte os laudos já cadastrados e abra os detalhes em uma visualização preparada para leitura e impressão.
+    </p>
+  </section>
+
+  <section class="step-card">
+    <div class="step-head">
+      <span class="step-number">L</span>
+      <div>
+        <h3>Listagem de laudos</h3>
+        <p>Filtre os registros e abra o modal para visualizar o documento completo.</p>
+      </div>
+    </div>
+
+    <div class="step-actions step-actions-start">
+      <button class="btn btn-outline-secondary" type="button" (click)="loadLaudos()" [disabled]="loading">
+        {{ loading ? 'Atualizando...' : 'Atualizar listagem' }}
+      </button>
+    </div>
+
+    <div class="filters-grid" *ngIf="!loading && laudos.length > 0">
+      <div>
+        <label class="form-label">Filtrar por classificação</label>
+        <select class="form-select" [(ngModel)]="selectedClassificacao">
+          <option value="">Todas</option>
+          <option *ngFor="let classificacao of classificacaoOptions" [value]="classificacao">{{ classificacao }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Filtrar por conclusão</label>
+        <select class="form-select" [(ngModel)]="selectedConclusao">
+          <option value="">Todas</option>
+          <option *ngFor="let conclusao of conclusaoOptions" [value]="conclusao">{{ conclusao }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="loading">Carregando laudos tecnicos...</div>
+    <div class="empty-state" *ngIf="!loading && laudos.length === 0">
+      Nenhum laudo tecnico foi cadastrado ate o momento.
+    </div>
+    <div class="empty-state" *ngIf="!loading && laudos.length > 0 && filteredLaudos.length === 0">
+      Nenhum laudo encontrado com os filtros selecionados.
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && filteredLaudos.length > 0">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Equipamento</th>
+            <th>Patrimônio</th>
+            <th>Classificação</th>
+            <th>Conclusão</th>
+            <th>Responsável técnico</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let laudo of filteredLaudos">
+            <td>{{ laudo.dataAvaliacao ? (laudo.dataAvaliacao | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ laudo.tipoEquipamento || '-' }}</td>
+            <td>{{ laudo.patrimonio || laudo.numeroSerie || '-' }}</td>
+            <td>{{ laudo.classificacaoTecnica || '-' }}</td>
+            <td>{{ laudo.conclusaoCondicao || '-' }}</td>
+            <td>{{ laudo.responsavelTecnicoNome || '-' }}</td>
+            <td>{{ laudo.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="actions-cell">
+              <button class="btn btn-sm btn-outline-primary" type="button" (click)="openDetails(laudo.id)">
+                Ver detalhes
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="laudo-modal-backdrop" *ngIf="activeLaudo || loadingModal" (click)="closeModal()"></div>
+<div class="laudo-modal" *ngIf="activeLaudo || loadingModal" (click)="closeModal()">
+  <div class="laudo-modal-card" (click)="$event.stopPropagation()">
+    <div class="laudo-modal-header">
+      <div>
+        <span class="list-header-eyebrow">Visualização</span>
+        <h3>{{ loadingModal ? 'Carregando laudo...' : 'Laudo Técnico de TI' }}</h3>
+      </div>
+      <div class="modal-header-actions">
+        <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLaudo" (click)="printActiveLaudo()">
+          Imprimir
+        </button>
+        <button class="btn-close" type="button" aria-label="Fechar" (click)="closeModal()"></button>
+      </div>
+    </div>
+
+    <div class="laudo-print-sheet" *ngIf="activeLaudo as laudo">
+      <div class="print-title-block">
+        <h4>LAUDO TÉCNICO DE TI - AVALIAÇÃO INDIVIDUAL</h4>
+        <p>Avaliacao individual para desfazimento de bens de informatica</p>
+      </div>
+
+      <section class="print-section">
+        <h5>1. Identificação</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Processo SEI:</strong> <span>{{ laudo.processoSei || '-' }}</span></div>
+          <div><strong>ID Devolução SEI:</strong> <span>{{ laudo.idDevolucaoSei || '-' }}</span></div>
+          <div><strong>Unidade Gestora:</strong> <span>{{ laudo.unidadeGestora || '-' }}</span></div>
+          <div><strong>Setor:</strong> <span>{{ laudo.setor || '-' }}</span></div>
+          <div><strong>Data da avaliação:</strong> <span>{{ laudo.dataAvaliacao ? (laudo.dataAvaliacao | date:'dd/MM/yyyy') : '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>2. Identificação do equipamento</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Tipo:</strong> <span>{{ laudo.tipoEquipamento || '-' }}<ng-container *ngIf="laudo.outroTipoEquipamento"> - {{ laudo.outroTipoEquipamento }}</ng-container></span></div>
+          <div><strong>Patrimônio:</strong> <span>{{ laudo.patrimonio || '-' }}</span></div>
+          <div><strong>Nº Série:</strong> <span>{{ laudo.numeroSerie || '-' }}</span></div>
+          <div><strong>Marca:</strong> <span>{{ laudo.marca || '-' }}</span></div>
+          <div><strong>Modelo:</strong> <span>{{ laudo.modelo || '-' }}</span></div>
+          <div><strong>Ano de aquisição:</strong> <span>{{ laudo.anoAquisicao || '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>3. Configuração / Especificação</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Processador:</strong> <span>{{ laudo.processador || '-' }}</span></div>
+          <div><strong>Memória:</strong> <span>{{ laudo.memoria || '-' }}</span></div>
+          <div><strong>Armazenamento:</strong> <span>{{ laudo.armazenamento || '-' }}</span></div>
+          <div><strong>Sistema operacional:</strong> <span>{{ laudo.sistemaOperacional || '-' }}</span></div>
+          <div class="full-row"><strong>Outros:</strong> <span>{{ laudo.outros || '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>4. Avaliação técnica</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Funcionamento:</strong> <span>{{ laudo.condicaoFuncionamento || '-' }}</span></div>
+          <div><strong>Conservação:</strong> <span>{{ laudo.estadoConservacao || '-' }}</span></div>
+          <div class="full-row"><strong>Descrição do funcionamento:</strong> <span>{{ laudo.descricaoFuncionamento || '-' }}</span></div>
+          <div class="full-row"><strong>Problemas identificados:</strong> <span>{{ formatList(laudo.problemasIdentificados) }}</span></div>
+          <div class="full-row"><strong>Outro problema:</strong> <span>{{ laudo.outroProblema || '-' }}</span></div>
+          <div class="full-row"><strong>Descrição técnica detalhada:</strong> <span>{{ laudo.descricaoTecnicaDetalhada || '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>5. Viabilidade técnica</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Possibilidade de reparo:</strong> <span>{{ laudo.possuiReparo === null ? '-' : (laudo.possuiReparo ? 'Sim' : 'Nao') }}</span></div>
+          <div><strong>Percentual estimado:</strong> <span>{{ laudo.percentualEstimado ?? '-' }}<ng-container *ngIf="laudo.percentualEstimado !== null && laudo.percentualEstimado !== undefined">%</ng-container></span></div>
+          <div><strong>Valor de mercado:</strong> <span>{{ laudo.valorEstimadoMercado !== null && laudo.valorEstimadoMercado !== undefined ? (laudo.valorEstimadoMercado | currency:'BRL':'symbol':'1.2-2') : '-' }}</span></div>
+          <div><strong>Custo de manutenção:</strong> <span>{{ laudo.custoEstimadoManutencao !== null && laudo.custoEstimadoManutencao !== undefined ? (laudo.custoEstimadoManutencao | currency:'BRL':'symbol':'1.2-2') : '-' }}</span></div>
+          <div class="full-row"><strong>Descrição do reparo:</strong> <span>{{ laudo.descricaoReparo || '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>6. Classificação e recomendação</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Classificação técnica:</strong> <span>{{ laudo.classificacaoTecnica || '-' }}</span></div>
+          <div><strong>Conclusão:</strong> <span>{{ laudo.conclusaoCondicao || '-' }}</span></div>
+          <div class="full-row"><strong>Justificativa técnica:</strong> <span>{{ laudo.justificativaTecnica || '-' }}</span></div>
+          <div class="full-row"><strong>Recomendação:</strong> <span>{{ formatList(laudo.recomendacoes) }}</span></div>
+          <div class="full-row"><strong>Sugestão de destinação:</strong> <span>{{ formatList(laudo.sugestoesDestinacao) }}</span></div>
+          <div class="full-row"><strong>Registro fotográfico:</strong> <span>{{ formatList(laudo.registroFotografico) }}</span></div>
+          <div><strong>Quantidade de fotos:</strong> <span>{{ laudo.quantidadeFotos ?? '-' }}</span></div>
+          <div><strong>Classificação final:</strong> <span>{{ laudo.classificacaoFinal || '-' }}</span></div>
+        </div>
+      </section>
+
+      <section class="print-section">
+        <h5>7. Responsável técnico</h5>
+        <div class="print-grid two-columns">
+          <div><strong>Nome:</strong> <span>{{ laudo.responsavelTecnicoNome || '-' }}</span></div>
+          <div><strong>Cargo:</strong> <span>{{ laudo.responsavelTecnicoCargo || '-' }}</span></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="scan-feedback" *ngIf="loadingModal">Carregando dados do laudo...</div>
+  </div>
+</div>

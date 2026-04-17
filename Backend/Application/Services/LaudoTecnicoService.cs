@@ -18,6 +18,17 @@ public class LaudoTecnicoService : ILaudoTecnicoService
         _context = context;
     }
 
+    public async Task<IEnumerable<LaudoTecnicoDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var entities = await _context.LaudosTecnicos
+            .AsNoTracking()
+            .Where(x => x.DeletedAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(MapToDto);
+    }
+
     public async Task<LaudoTecnicoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await _context.LaudosTecnicos

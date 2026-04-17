@@ -1,0 +1,282 @@
+:host {
+  display: block;
+}
+
+.inventario-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.hero-card,
+.step-card {
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+}
+
+.hero-card {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf4fb 100%);
+}
+
+.hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.hero-copy {
+  margin: 0;
+  color: #61788f;
+  max-width: 900px;
+}
+
+.step-card {
+  padding: 22px;
+}
+
+.step-head {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.step-head h3 {
+  margin: 0 0 4px;
+  color: #21384f;
+}
+
+.step-head p {
+  margin: 0;
+  color: #61788f;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #edf4fb;
+  color: #295f96;
+  font-weight: 700;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.step-actions-start {
+  justify-content: flex-start;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.scan-feedback {
+  margin-top: 10px;
+  color: #5f7488;
+  font-size: 0.92rem;
+}
+
+.empty-state {
+  padding: 28px;
+  text-align: center;
+  color: #6b7f92;
+}
+
+.table-responsive {
+  border: 1px solid #e4eaf1;
+  border-radius: 12px;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.laudo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(19, 31, 43, 0.54);
+  z-index: 1080;
+}
+
+.laudo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.laudo-modal-card {
+  width: min(100%, 980px);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border-radius: 18px;
+  background: #eef3f8;
+  box-shadow: 0 28px 80px rgba(12, 26, 40, 0.32);
+}
+
+.laudo-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #dbe4ee;
+  background: rgba(248, 251, 255, 0.95);
+  backdrop-filter: blur(8px);
+}
+
+.laudo-modal-header h3 {
+  margin: 0;
+  color: #1f3954;
+  font-size: 1.35rem;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.laudo-print-sheet {
+  width: min(100%, 820px);
+  margin: 24px auto;
+  padding: 42px 46px;
+  border: 1px solid #d5dce5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(23, 39, 55, 0.08);
+}
+
+.print-title-block {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #d7e1eb;
+  text-align: center;
+}
+
+.print-title-block h4 {
+  margin: 0 0 6px;
+  color: #14293d;
+  font-size: 1.38rem;
+  font-weight: 800;
+}
+
+.print-title-block p {
+  margin: 0;
+  color: #667b90;
+  font-size: 0.94rem;
+}
+
+.print-section {
+  margin-bottom: 22px;
+}
+
+.print-section h5 {
+  margin: 0 0 10px;
+  color: #18334d;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.print-grid {
+  display: grid;
+  gap: 8px 16px;
+}
+
+.print-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.print-grid div {
+  color: #33485c;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.print-grid strong {
+  color: #12283d;
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767.98px) {
+  .hero-header,
+  .step-actions,
+  .laudo-modal-header,
+  .modal-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-grid,
+  .print-grid.two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+  }
+
+  .laudo-modal {
+    padding: 10px;
+  }
+
+  .laudo-print-sheet {
+    margin: 12px;
+    padding: 22px 18px;
+  }
+}
+
+@media print {
+  .laudo-modal-backdrop,
+  .laudo-modal-header {
+    display: none !important;
+  }
+
+  .laudo-modal {
+    position: static;
+    display: block;
+    padding: 0;
+  }
+
+  .laudo-modal-card {
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .laudo-print-sheet {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+}

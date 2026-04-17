@@ -8,6 +8,7 @@ import { EquipesComponent } from './components/equipes/equipes.component';
 import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.component';
+import { LaudosTecnicosComponent } from './components/laudos-tecnicos/laudos-tecnicos.component';
 import { LocaisComponent } from './components/locais/locais.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
@@ -25,6 +26,7 @@ const routes: Routes = [
   { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [AdminGuard], data: { title: 'Itens inventariados' } },
   { path: 'transferir', component: TransferirItensComponent, canActivate: [AuthGuard], data: { title: 'Nova transferência' } },
   { path: 'laudo-tecnico', component: LaudoTecnicoComponent, canActivate: [AuthGuard], data: { title: 'Laudo Técnico' } },
+  { path: 'laudos-tecnicos', component: LaudosTecnicosComponent, canActivate: [AuthGuard], data: { title: 'Laudos Técnicos' } },
   { path: 'transferencias', component: TransferenciasComponent, canActivate: [AuthGuard], data: { title: 'Transferências' } },
   { path: 'transferencias/:id', component: TransferirItensComponent, canActivate: [AuthGuard], data: { title: 'Editar transferência' } },
   { path: '**', component: NotFoundComponent, data: { title: 'Pagina nao encontrada' } },

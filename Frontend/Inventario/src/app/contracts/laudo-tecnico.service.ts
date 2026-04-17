@@ -10,6 +10,10 @@ export class LaudoTecnicoService {
 
   constructor(private readonly http: HttpClient) {}
 
+  getAll(): Observable<LaudoTecnico[]> {
+    return this.http.get<LaudoTecnico[]>(this.baseUrl);
+  }
+
   getById(id: string): Observable<LaudoTecnico> {
     return this.http.get<LaudoTecnico>(`${this.baseUrl}/${id}`);
   }
