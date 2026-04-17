@@ -1,0 +1,406 @@
+<div class="laudo-grid">
+  <section class="hero-card">
+    <span class="list-header-eyebrow">GTI</span>
+    <h2 class="list-header-title">Laudo Técnico</h2>
+    <p class="hero-copy">
+      Transformamos o laudo em um fluxo guiado por etapas para caber melhor no uso em campo, sem depender de um formulario longo com scroll.
+    </p>
+  </section>
+
+  <section class="step-card laudo-progress-card">
+    <div class="laudo-progress-copy">
+      <span class="selected-local-label">Etapa atual</span>
+      <strong>{{ currentStepIndex + 1 }} de {{ steps.length }}</strong>
+      <small>{{ steps[currentStepIndex].hint }}</small>
+    </div>
+    <div class="laudo-progress-track" aria-hidden="true">
+      <div class="laudo-progress-bar" [style.width.%]="progressPercentage"></div>
+    </div>
+    <div class="laudo-step-tabs">
+      <button
+        type="button"
+        class="laudo-step-tab"
+        *ngFor="let step of steps; let i = index"
+        [class.is-active]="isStepActive(step.key)"
+        (click)="setStep(step.key)"
+      >
+        <span>{{ i + 1 }}</span>
+        <div>
+          <strong>{{ step.label }}</strong>
+          <small>{{ step.hint }}</small>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('identificacao')">
+    <div class="step-head">
+      <span class="step-number">1</span>
+      <div>
+        <h3>Identificação</h3>
+        <p>Informações iniciais do processo e da unidade responsável pelo equipamento avaliado.</p>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Processo SEI nº</label>
+        <input class="form-control" [(ngModel)]="form.processoSei" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">ID devolução SEI</label>
+        <input class="form-control" [(ngModel)]="form.idDevolucaoSei" />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Unidade gestora</label>
+        <input class="form-control" [(ngModel)]="form.unidadeGestora" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Setor</label>
+        <input class="form-control" [(ngModel)]="form.setor" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Data da avaliação</label>
+        <input class="form-control" type="date" [(ngModel)]="form.dataAvaliacao" />
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('equipamento')">
+    <div class="step-head">
+      <span class="step-number">2</span>
+      <div>
+        <h3>Identificação do equipamento</h3>
+        <p>Defina o tipo do bem e registre os dados que ajudam a individualizar o equipamento.</p>
+      </div>
+    </div>
+
+    <div class="selection-grid">
+      <label class="choice-card" *ngFor="let option of equipmentTypes" [class.is-selected]="form.tipoEquipamento === option">
+        <input type="radio" name="tipoEquipamento" [value]="option" [(ngModel)]="form.tipoEquipamento" />
+        <span>{{ option }}</span>
+      </label>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-6" *ngIf="canShowOutroTipo">
+        <label class="form-label">Outro tipo</label>
+        <input class="form-control" [(ngModel)]="form.outroTipoEquipamento" placeholder="Descreva o equipamento" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Patrimônio</label>
+        <input class="form-control" [(ngModel)]="form.patrimonio" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Nº de série</label>
+        <input class="form-control" [(ngModel)]="form.numeroSerie" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Marca</label>
+        <input class="form-control" [(ngModel)]="form.marca" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Modelo</label>
+        <input class="form-control" [(ngModel)]="form.modelo" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Ano de aquisição</label>
+        <input class="form-control" [(ngModel)]="form.anoAquisicao" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Processador</label>
+        <input class="form-control" [(ngModel)]="form.processador" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Memória</label>
+        <input class="form-control" [(ngModel)]="form.memoria" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Armazenamento</label>
+        <input class="form-control" [(ngModel)]="form.armazenamento" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Sistema operacional</label>
+        <input class="form-control" [(ngModel)]="form.sistemaOperacional" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Outros detalhes</label>
+        <textarea class="form-control compact-textarea" rows="2" [(ngModel)]="form.outros"></textarea>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('avaliacao')">
+    <div class="step-head">
+      <span class="step-number">3</span>
+      <div>
+        <h3>Avaliação técnica</h3>
+        <p>Registre funcionamento, conservação e os problemas encontrados durante a análise.</p>
+      </div>
+    </div>
+
+    <div class="split-grid">
+      <div class="panel-box">
+        <span class="selected-local-label">Condição de funcionamento</span>
+        <div class="selection-grid vertical">
+          <label class="choice-card" *ngFor="let option of funcionamentoOptions" [class.is-selected]="form.condicaoFuncionamento === option">
+            <input type="radio" name="condicaoFuncionamento" [value]="option" [(ngModel)]="form.condicaoFuncionamento" />
+            <span>{{ option }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="panel-box">
+        <span class="selected-local-label">Estado de conservação</span>
+        <div class="selection-grid vertical two-columns">
+          <label class="choice-card" *ngFor="let option of conservacaoOptions" [class.is-selected]="form.estadoConservacao === option">
+            <input type="radio" name="estadoConservacao" [value]="option" [(ngModel)]="form.estadoConservacao" />
+            <span>{{ option }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label class="form-label">Descrição do funcionamento</label>
+        <textarea class="form-control compact-textarea" rows="2" [(ngModel)]="form.descricaoFuncionamento"></textarea>
+      </div>
+    </div>
+
+    <div class="panel-box mt-3">
+      <span class="selected-local-label">Problemas identificados</span>
+      <div class="selection-grid vertical two-columns">
+        <label class="choice-card checkbox-card" *ngFor="let option of problemasOptions" [class.is-selected]="isOptionSelected(form.problemasIdentificados, option)">
+          <input
+            type="checkbox"
+            [checked]="isOptionSelected(form.problemasIdentificados, option)"
+            (change)="toggleMultiSelect('problemasIdentificados', option, $any($event.target).checked)"
+          />
+          <span>{{ option }}</span>
+        </label>
+      </div>
+      <div class="mt-3" *ngIf="canShowOutroProblema">
+        <label class="form-label">Outro problema</label>
+        <input class="form-control" [(ngModel)]="form.outroProblema" />
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label class="form-label">Descrição técnica detalhada</label>
+        <textarea class="form-control detail-textarea" rows="4" [(ngModel)]="form.descricaoTecnicaDetalhada"></textarea>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('viabilidade')">
+    <div class="step-head">
+      <span class="step-number">4</span>
+      <div>
+        <h3>Viabilidade técnica</h3>
+        <p>Informe a possibilidade de reparo e, quando couber, a estimativa econômica do bem.</p>
+      </div>
+    </div>
+
+    <div class="selection-grid">
+      <label class="choice-card" [class.is-selected]="form.possuiReparo === 'SIM'">
+        <input type="radio" name="possuiReparo" value="SIM" [(ngModel)]="form.possuiReparo" />
+        <span>Possui reparo viável</span>
+      </label>
+      <label class="choice-card" [class.is-selected]="form.possuiReparo === 'NAO'">
+        <input type="radio" name="possuiReparo" value="NAO" [(ngModel)]="form.possuiReparo" />
+        <span>Sem reparo viável</span>
+      </label>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label class="form-label">Descrição da análise de reparo</label>
+        <textarea class="form-control compact-textarea" rows="2" [(ngModel)]="form.descricaoReparo"></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Valor estimado de mercado (R$)</label>
+        <input class="form-control" inputmode="decimal" [(ngModel)]="form.valorEstimadoMercado" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Custo de manutenção (R$)</label>
+        <input class="form-control" inputmode="decimal" [(ngModel)]="form.custoEstimadoManutencao" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Percentual estimado (%)</label>
+        <input class="form-control" inputmode="decimal" [(ngModel)]="form.percentualEstimado" />
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('recomendacao')">
+    <div class="step-head">
+      <span class="step-number">5</span>
+      <div>
+        <h3>Classificação e recomendação</h3>
+        <p>Consolide a conclusão técnica e o encaminhamento sugerido para a comissão.</p>
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <span class="selected-local-label">Classificação técnica do bem</span>
+      <div class="selection-grid vertical two-columns">
+        <label class="choice-card" *ngFor="let option of classificacaoOptions" [class.is-selected]="form.classificacaoTecnica === option">
+          <input type="radio" name="classificacaoTecnica" [value]="option" [(ngModel)]="form.classificacaoTecnica" />
+          <span>{{ option }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label class="form-label">Justificativa técnica</label>
+        <textarea class="form-control detail-textarea" rows="4" [(ngModel)]="form.justificativaTecnica"></textarea>
+      </div>
+    </div>
+
+    <div class="panel-box mt-3">
+      <span class="selected-local-label">Recomendação técnica</span>
+      <div class="selection-grid vertical">
+        <label class="choice-card checkbox-card" *ngFor="let option of recomendacaoOptions" [class.is-selected]="isOptionSelected(form.recomendacoes, option)">
+          <input
+            type="checkbox"
+            [checked]="isOptionSelected(form.recomendacoes, option)"
+            (change)="toggleMultiSelect('recomendacoes', option, $any($event.target).checked)"
+          />
+          <span>{{ option }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel-box mt-3" *ngIf="canShowSugestaoDestinacao">
+      <span class="selected-local-label">Sugestão de destinação</span>
+      <div class="selection-grid vertical two-columns">
+        <label class="choice-card checkbox-card" *ngFor="let option of destinacaoOptions" [class.is-selected]="isOptionSelected(form.sugestoesDestinacao, option)">
+          <input
+            type="checkbox"
+            [checked]="isOptionSelected(form.sugestoesDestinacao, option)"
+            (change)="toggleMultiSelect('sugestoesDestinacao', option, $any($event.target).checked)"
+          />
+          <span>{{ option }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel-box mt-3">
+      <span class="selected-local-label">Registro fotografico</span>
+      <div class="selection-grid vertical two-columns">
+        <label class="choice-card checkbox-card" *ngFor="let option of registroFotograficoOptions" [class.is-selected]="isOptionSelected(form.registroFotografico, option)">
+          <input
+            type="checkbox"
+            [checked]="isOptionSelected(form.registroFotografico, option)"
+            (change)="toggleMultiSelect('registroFotografico', option, $any($event.target).checked)"
+          />
+          <span>{{ option }}</span>
+        </label>
+      </div>
+      <div class="mt-3">
+        <label class="form-label">Quantidade de fotos</label>
+        <input class="form-control quantity-input" inputmode="numeric" [(ngModel)]="form.quantidadeFotos" />
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('conclusao')">
+    <div class="step-head">
+      <span class="step-number">6</span>
+      <div>
+        <h3>Conclusão e responsável técnico</h3>
+        <p>Fechamento final do laudo com os dados do técnico carregados automaticamente da sessão.</p>
+      </div>
+    </div>
+
+    <div class="selection-grid">
+      <label class="choice-card" *ngFor="let option of conclusaoOptions" [class.is-selected]="form.conclusaoCondicao === option">
+        <input type="radio" name="conclusaoCondicao" [value]="option" [(ngModel)]="form.conclusaoCondicao" />
+        <span>{{ option }}</span>
+      </label>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-6">
+        <label class="form-label">Classificação final</label>
+        <input class="form-control" [(ngModel)]="form.classificacaoFinal" placeholder="Opcional" />
+      </div>
+    </div>
+
+    <div class="summary-shell mt-3">
+      <div class="summary-overview">
+        <div class="summary-overview-card">
+          <span class="summary-overview-label">Responsável técnico</span>
+          <strong>{{ responsavelTecnicoNome }}</strong>
+        </div>
+        <div class="summary-overview-card">
+          <span class="summary-overview-label">Cargo</span>
+          <strong>{{ responsavelTecnicoCargo }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-outline-danger" type="button" (click)="resetDraft()">Limpar rascunho</button>
+      <button class="btn btn-success" type="button" (click)="submit()" [disabled]="saving || !canSubmit">
+        {{ saving ? 'Salvando...' : 'Salvar laudo' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="savedLaudo">
+    <div class="step-head">
+      <span class="step-number"><i class="fa-solid fa-check"></i></span>
+      <div>
+        <h3>Laudo salvo</h3>
+        <p>O registro foi criado no sistema e o rascunho local foi limpo.</p>
+      </div>
+    </div>
+
+    <div class="summary-card laudo-result-card">
+      <div>
+        <strong>ID do laudo</strong>
+        <span>{{ savedLaudo.id }}</span>
+      </div>
+      <div>
+        <strong>Responsável técnico</strong>
+        <span>{{ savedLaudo.responsavelTecnicoNome }}</span>
+      </div>
+      <div>
+        <strong>Classificação técnica</strong>
+        <span>{{ savedLaudo.classificacaoTecnica || '-' }}</span>
+      </div>
+      <div>
+        <strong>Conclusão</strong>
+        <span>{{ savedLaudo.conclusaoCondicao || '-' }}</span>
+      </div>
+    </div>
+  </section>
+</div>

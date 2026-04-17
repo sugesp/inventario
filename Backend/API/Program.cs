@@ -66,6 +66,7 @@ builder.Services.AddScoped<IEquipeService, EquipeService>();
 builder.Services.AddScoped<ILocalService, LocalService>();
 builder.Services.AddScoped<IItemInventariadoService, ItemInventariadoService>();
 builder.Services.AddScoped<ITransferenciaService, TransferenciaService>();
+builder.Services.AddScoped<ILaudoTecnicoService, LaudoTecnicoService>();
 
 builder.Services
     .AddControllers()

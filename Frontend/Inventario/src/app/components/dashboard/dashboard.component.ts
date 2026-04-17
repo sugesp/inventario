@@ -45,10 +45,10 @@ export class DashboardComponent implements OnInit {
       icon: 'fa-right-left',
     },
     {
-      title: 'Transferências',
-      description: 'Acompanhe rascunhos, pendências e entregas concluídas entre setores.',
-      route: '/transferencias',
-      icon: 'fa-truck-ramp-box',
+      title: 'Laudo Técnico',
+      description: 'Preencha o laudo individual por etapas, sem depender do PDF impresso.',
+      route: '/laudo-tecnico',
+      icon: 'fa-file-circle-check',
     },
     {
       title: 'Usuários',

@@ -1,0 +1,292 @@
+:host {
+  display: block;
+}
+
+.laudo-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.hero-card,
+.step-card {
+  background: #fff;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+}
+
+.hero-card {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf4fb 100%);
+}
+
+.hero-copy {
+  margin: 0;
+  color: #61788f;
+  max-width: 820px;
+}
+
+.step-card {
+  padding: 22px;
+}
+
+.laudo-progress-card {
+  display: grid;
+  gap: 16px;
+}
+
+.laudo-progress-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.laudo-progress-copy strong {
+  color: #21384f;
+  font-size: 1.15rem;
+}
+
+.laudo-progress-copy small {
+  color: #61788f;
+}
+
+.laudo-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #e5edf5;
+  overflow: hidden;
+}
+
+.laudo-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2b6cb0 0%, #58a6de 100%);
+  transition: width 0.2s ease;
+}
+
+.laudo-step-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.laudo-step-tab {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+  background: #fff;
+  color: #61788f;
+  text-align: left;
+}
+
+.laudo-step-tab span,
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #edf4fb;
+  color: #295f96;
+  font-weight: 700;
+}
+
+.laudo-step-tab strong {
+  display: block;
+  color: #21384f;
+  font-size: 0.95rem;
+}
+
+.laudo-step-tab small {
+  display: block;
+  color: #61788f;
+  font-size: 0.78rem;
+}
+
+.laudo-step-tab.is-active {
+  border-color: #8fb0d2;
+  box-shadow: 0 14px 24px rgba(26, 52, 79, 0.08);
+}
+
+.step-head {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.step-head h3 {
+  margin: 0 0 4px;
+  color: #21384f;
+}
+
+.step-head p {
+  margin: 0;
+  color: #61788f;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.selection-grid.vertical {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.selection-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  color: #21384f;
+  cursor: pointer;
+}
+
+.choice-card input {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.choice-card span {
+  font-weight: 600;
+}
+
+.choice-card.is-selected {
+  border-color: #89acd0;
+  box-shadow: 0 12px 22px rgba(41, 95, 150, 0.08);
+}
+
+.checkbox-card span {
+  font-weight: 500;
+}
+
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panel-box {
+  padding: 16px;
+  border: 1px solid #e4eaf1;
+  border-radius: 16px;
+  background: #f7fafc;
+}
+
+.selected-local-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #5a7692;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.compact-textarea {
+  min-height: 88px;
+}
+
+.detail-textarea {
+  min-height: 140px;
+}
+
+.quantity-input {
+  max-width: 180px;
+}
+
+.summary-shell,
+.summary-overview {
+  display: grid;
+  gap: 12px;
+}
+
+.summary-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.summary-overview-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #e4eaf1;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.summary-overview-label {
+  color: #5a7692;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.summary-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f7fafc;
+  border: 1px solid #e4eaf1;
+}
+
+.summary-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.summary-card strong {
+  color: #21384f;
+}
+
+.summary-card span {
+  color: #61788f;
+  overflow-wrap: anywhere;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+@media (max-width: 1200px) {
+  .laudo-step-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .step-card,
+  .hero-card {
+    padding: 18px;
+  }
+
+  .laudo-step-tabs,
+  .split-grid,
+  .selection-grid.two-columns,
+  .summary-overview,
+  .summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .laudo-step-tab {
+    min-height: auto;
+  }
+}

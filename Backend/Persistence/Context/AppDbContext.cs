@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
     public DbSet<Transferencia> Transferencias { get; set; }
     public DbSet<TransferenciaItem> TransferenciasItens { get; set; }
+    public DbSet<LaudoTecnico> LaudosTecnicos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -123,6 +124,50 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Itens)
                 .HasForeignKey(x => x.TransferenciaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LaudoTecnico>(entity =>
+        {
+            entity.ToTable("LaudosTecnicos");
+            entity.Property(x => x.ProcessoSei).HasMaxLength(120);
+            entity.Property(x => x.IdDevolucaoSei).HasMaxLength(120);
+            entity.Property(x => x.UnidadeGestora).HasMaxLength(200);
+            entity.Property(x => x.Setor).HasMaxLength(200);
+            entity.Property(x => x.TipoEquipamento).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.OutroTipoEquipamento).HasMaxLength(120);
+            entity.Property(x => x.Patrimonio).HasMaxLength(120);
+            entity.Property(x => x.NumeroSerie).HasMaxLength(120);
+            entity.Property(x => x.Marca).HasMaxLength(120);
+            entity.Property(x => x.Modelo).HasMaxLength(120);
+            entity.Property(x => x.AnoAquisicao).HasMaxLength(40);
+            entity.Property(x => x.Processador).HasMaxLength(120);
+            entity.Property(x => x.Memoria).HasMaxLength(120);
+            entity.Property(x => x.Armazenamento).HasMaxLength(120);
+            entity.Property(x => x.SistemaOperacional).HasMaxLength(120);
+            entity.Property(x => x.Outros).HasMaxLength(1000);
+            entity.Property(x => x.CondicaoFuncionamento).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.DescricaoFuncionamento).HasMaxLength(2000);
+            entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.ProblemasIdentificadosJson).HasColumnType("longtext").IsRequired();
+            entity.Property(x => x.OutroProblema).HasMaxLength(300);
+            entity.Property(x => x.DescricaoTecnicaDetalhada).HasMaxLength(4000);
+            entity.Property(x => x.DescricaoReparo).HasMaxLength(2000);
+            entity.Property(x => x.ValorEstimadoMercado).HasPrecision(12, 2);
+            entity.Property(x => x.CustoEstimadoManutencao).HasPrecision(12, 2);
+            entity.Property(x => x.PercentualEstimado).HasPrecision(6, 2);
+            entity.Property(x => x.ClassificacaoTecnica).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.JustificativaTecnica).HasMaxLength(4000).IsRequired();
+            entity.Property(x => x.RecomendacoesJson).HasColumnType("longtext").IsRequired();
+            entity.Property(x => x.SugestoesDestinacaoJson).HasColumnType("longtext").IsRequired();
+            entity.Property(x => x.RegistroFotograficoJson).HasColumnType("longtext").IsRequired();
+            entity.Property(x => x.ConclusaoCondicao).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.ClassificacaoFinal).HasMaxLength(200);
+            entity.Property(x => x.ResponsavelTecnicoNome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ResponsavelTecnicoCargo).HasMaxLength(80).IsRequired();
+            entity.HasOne(x => x.ResponsavelTecnicoUsuario)
+                .WithMany(x => x.LaudosTecnicos)
+                .HasForeignKey(x => x.ResponsavelTecnicoUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

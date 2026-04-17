@@ -23,32 +23,24 @@
       <div class="menu-group">
         <a class="menu-item" routerLink="/dashboard" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
-          <span>Dashboard</span>
+          <span>Dashboard / Inicio</span>
         </a>
-        <div class="menu-divider"></div>
       </div>
 
       <div class="menu-group">
+        <span class="menu-section-label">Comissao de Inventario</span>
         <a class="menu-item" routerLink="/inventariar" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
-          <span>Inventariar item</span>
+          <span>Inventariar</span>
         </a>
-        <a class="menu-item" routerLink="/transferir" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-right-left"></i></span>
-          <span>Nova transferência</span>
+        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/lista-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
+          <span>Itens Inventariados</span>
         </a>
-        <a class="menu-item" routerLink="/transferencias" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-truck-ramp-box"></i></span>
-          <span>Transferências</span>
-        </a>
-        <div class="menu-divider" *ngIf="authService.isAdmin"></div>
       </div>
 
       <div class="menu-group" *ngIf="authService.isAdmin">
-        <a class="menu-item" routerLink="/lista-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
-          <span>Lista de inventariados</span>
-        </a>
+        <span class="menu-section-label">Administrador</span>
         <a class="menu-item" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
           <span>Usuários</span>
@@ -60,6 +52,18 @@
         <a class="menu-item" routerLink="/locais" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
           <span>Locais</span>
+        </a>
+      </div>
+
+      <div class="menu-group">
+        <span class="menu-section-label">GTI</span>
+        <a class="menu-item" routerLink="/transferir" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-right-left"></i></span>
+          <span>Nova Transferencia</span>
+        </a>
+        <a class="menu-item" routerLink="/laudo-tecnico" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
+          <span>Laudo Técnico</span>
         </a>
       </div>
     </nav>
