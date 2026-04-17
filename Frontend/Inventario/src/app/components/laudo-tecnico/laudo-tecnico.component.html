@@ -8,28 +8,12 @@
   </section>
 
   <section class="step-card laudo-progress-card">
-    <div class="laudo-progress-copy">
-      <span class="selected-local-label">Etapa atual</span>
-      <strong>{{ currentStepIndex + 1 }} de {{ steps.length }}</strong>
-      <small>{{ steps[currentStepIndex].hint }}</small>
-    </div>
-    <div class="laudo-progress-track" aria-hidden="true">
-      <div class="laudo-progress-bar" [style.width.%]="progressPercentage"></div>
-    </div>
-    <div class="laudo-step-tabs">
-      <button
-        type="button"
-        class="laudo-step-tab"
-        *ngFor="let step of steps; let i = index"
-        [class.is-active]="isStepActive(step.key)"
-        (click)="setStep(step.key)"
-      >
-        <span>{{ i + 1 }}</span>
-        <div>
-          <strong>{{ step.label }}</strong>
-          <small>{{ step.hint }}</small>
-        </div>
-      </button>
+    <div class="laudo-progress-header">
+      <div class="laudo-progress-copy">
+        <h3>{{ steps[currentStepIndex].label }}</h3>
+        <small>{{ steps[currentStepIndex].hint }}</small>
+      </div>
+      <span class="laudo-step-badge">ETAPA {{ currentStepIndex + 1 }} DE {{ steps.length }}</span>
     </div>
   </section>
 

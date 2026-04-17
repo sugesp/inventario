@@ -30,59 +30,33 @@
 }
 
 .laudo-progress-card {
-  display: grid;
+  padding: 18px 22px;
+}
+
+.laudo-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 
 .laudo-progress-copy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
-.laudo-progress-copy strong {
+.laudo-progress-copy h3 {
+  margin: 0;
   color: #21384f;
-  font-size: 1.15rem;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .laudo-progress-copy small {
   color: #61788f;
+  font-size: 0.92rem;
 }
 
-.laudo-progress-track {
-  height: 10px;
-  border-radius: 999px;
-  background: #e5edf5;
-  overflow: hidden;
-}
-
-.laudo-progress-bar {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #2b6cb0 0%, #58a6de 100%);
-  transition: width 0.2s ease;
-}
-
-.laudo-step-tabs {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.laudo-step-tab {
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 10px;
-  align-items: center;
-  min-height: 72px;
-  padding: 12px 14px;
-  border: 1px solid #d8dde6;
-  border-radius: 14px;
-  background: #fff;
-  color: #61788f;
-  text-align: left;
-}
-
-.laudo-step-tab span,
 .step-number {
   display: inline-flex;
   align-items: center;
@@ -95,21 +69,19 @@
   font-weight: 700;
 }
 
-.laudo-step-tab strong {
-  display: block;
-  color: #21384f;
-  font-size: 0.95rem;
-}
-
-.laudo-step-tab small {
-  display: block;
-  color: #61788f;
+.laudo-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #e8f1fb;
+  color: #3470ad;
   font-size: 0.78rem;
-}
-
-.laudo-step-tab.is-active {
-  border-color: #8fb0d2;
-  box-shadow: 0 14px 24px rgba(26, 52, 79, 0.08);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .step-head {
@@ -266,19 +238,12 @@
   margin-top: 22px;
 }
 
-@media (max-width: 1200px) {
-  .laudo-step-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 768px) {
   .step-card,
   .hero-card {
     padding: 18px;
   }
 
-  .laudo-step-tabs,
   .split-grid,
   .selection-grid.two-columns,
   .summary-overview,
@@ -286,7 +251,8 @@
     grid-template-columns: 1fr;
   }
 
-  .laudo-step-tab {
-    min-height: auto;
+  .laudo-progress-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
