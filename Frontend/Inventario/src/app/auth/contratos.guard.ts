@@ -14,6 +14,6 @@ export class InventarioGuard implements CanActivate {
       return this.router.createUrlTree(['/auth']);
     }
 
-    return this.authService.canManageInventario ? true : this.router.createUrlTree(['/inventario']);
+    return this.authService.canManageInventario ? true : this.router.createUrlTree(['/dashboard']);
   }
 }
