@@ -35,10 +35,10 @@
 
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">Local de destino</label>
-        <select class="form-select" [(ngModel)]="form.localDestinoId">
+        <label class="form-label">Unidade administrativa de destino</label>
+        <select class="form-select" [(ngModel)]="form.unidadeAdministrativaDestinoId">
           <option value="">Selecione</option>
-          <option *ngFor="let local of locais" [value]="local.id">{{ local.nome }} - {{ local.equipeDescricao }}</option>
+          <option *ngFor="let unidade of unidadesAdministrativas" [value]="unidade.id">{{ unidade.sigla }} - {{ unidade.nome }}</option>
         </select>
       </div>
       <div class="col-md-6">
@@ -55,10 +55,10 @@
   </section>
 
   <section class="step-card" *ngIf="!loading && currentStep === 'itens'">
-    <div class="transfer-destination-inline transfer-destination-inline-outside" *ngIf="localSelecionado">
+    <div class="transfer-destination-inline transfer-destination-inline-outside" *ngIf="unidadeSelecionada">
       <div>
         <span class="selected-local-label">Destino selecionado</span>
-        <strong>{{ localSelecionado.nome }}</strong>
+        <strong>{{ unidadeSelecionada.sigla }} - {{ unidadeSelecionada.nome }}</strong>
         <small>{{ form.responsavelDestino || 'Responsável não informado' }}</small>
       </div>
       <button class="btn btn-outline-secondary btn-sm transfer-destination-button" type="button" (click)="goToDadosStep()">
@@ -158,7 +158,7 @@
       <div class="summary-overview">
         <div class="summary-overview-card">
           <span class="summary-overview-label">Destino</span>
-          <strong>{{ localSelecionado?.nome || '-' }}</strong>
+          <strong>{{ unidadeSelecionada ? (unidadeSelecionada.sigla + ' - ' + unidadeSelecionada.nome) : '-' }}</strong>
         </div>
         <div class="summary-overview-card">
           <span class="summary-overview-label">Responsável</span>

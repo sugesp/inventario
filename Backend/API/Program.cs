@@ -1,6 +1,7 @@
 using Application.Contract;
 using Application.Services;
 using Domain.Model;
+using Domain.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +65,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IEquipeService, EquipeService>();
 builder.Services.AddScoped<ILocalService, LocalService>();
+builder.Services.AddScoped<IComissaoService, ComissaoService>();
+builder.Services.AddScoped<IUnidadeAdministrativaService, UnidadeAdministrativaService>();
 builder.Services.AddScoped<IItemInventariadoService, ItemInventariadoService>();
 builder.Services.AddScoped<ITransferenciaService, TransferenciaService>();
 builder.Services.AddScoped<ILaudoTecnicoService, LaudoTecnicoService>();
@@ -126,12 +129,17 @@ static async Task SeedDefaultAdminAsync(IServiceProvider services)
     var usuarioExistente = await dbContext.Usuarios.FirstOrDefaultAsync(x => x.Cpf == cpf && x.DeletedAt == null);
     if (usuarioExistente is not null)
     {
+        if (!UsuarioPermissoes.HasPermission(usuarioExistente.PermissoesJson, UsuarioPermissoes.Administrador))
+        {
+            usuarioExistente.PermissoesJson = UsuarioPermissoes.Serialize([UsuarioPermissoes.Administrador]);
+        }
+
         if (usuarioExistente.MustChangePassword && !VerifyPassword("12345678", usuarioExistente.PasswordSalt, usuarioExistente.PasswordHash))
         {
             ApplyDefaultPassword(usuarioExistente);
-            await dbContext.SaveChangesAsync();
         }
 
+        await dbContext.SaveChangesAsync();
         return;
     }
 
@@ -140,7 +148,7 @@ static async Task SeedDefaultAdminAsync(IServiceProvider services)
         Nome = "sysadmin",
         Email = "sysadmin@local",
         Cpf = cpf,
-        Perfil = "Administrador"
+        PermissoesJson = UsuarioPermissoes.Serialize([UsuarioPermissoes.Administrador])
     };
 
     ApplyDefaultPassword(usuario);

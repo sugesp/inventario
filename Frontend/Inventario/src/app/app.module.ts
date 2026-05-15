@@ -13,6 +13,7 @@ import { AuthInterceptor } from './auth/auth.interceptor';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthComponent } from './components/auth/auth.component';
+import { ComissoesComponent } from './components/comissoes/comissoes.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EquipesComponent } from './components/equipes/equipes.component';
 import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
@@ -25,6 +26,7 @@ import { NotFoundComponent } from './components/not-found/not-found.component';
 import { SearchableSelectComponent } from './components/shared/searchable-select/searchable-select.component';
 import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
 import { TransferenciasComponent } from './components/transferencias/transferencias.component';
+import { UnidadesAdministrativasComponent } from './components/unidades-administrativas/unidades-administrativas.component';
 import { LoadingInterceptor } from './core/loading/loading.interceptor';
 
 registerLocaleData(localePt);
@@ -33,6 +35,7 @@ registerLocaleData(localePt);
   declarations: [
     AppComponent,
     AuthComponent,
+    ComissoesComponent,
     DashboardComponent,
     UsuariosComponent,
     NotFoundComponent,
@@ -45,6 +48,7 @@ registerLocaleData(localePt);
     LaudosTecnicosComponent,
     TransferirItensComponent,
     TransferenciasComponent,
+    UnidadesAdministrativasComponent,
   ],
   imports: [
     BrowserModule,

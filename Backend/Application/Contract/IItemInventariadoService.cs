@@ -17,12 +17,20 @@ public interface IItemInventariadoService
         ItemInventariadoFormDto dto,
         IEnumerable<IFormFile> fotos,
         Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     );
     Task<ItemInventariadoDto?> UpdateAsync(
         Guid id,
         ItemInventariadoFormDto dto,
         IEnumerable<IFormFile> novasFotos,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    );
+    Task<ItemInventariadoDto?> MarcarLancamentoEEstadoAsync(
+        Guid id,
+        bool lancado,
+        Guid usuarioId,
         CancellationToken cancellationToken = default
     );
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);

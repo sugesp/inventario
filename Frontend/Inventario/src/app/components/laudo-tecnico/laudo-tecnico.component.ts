@@ -129,7 +129,8 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
   }
 
   get responsavelTecnicoCargo(): string {
-    return this.authService.session?.perfil?.trim() || 'Usuario';
+    const labels = this.authService.permissionLabels;
+    return labels.length > 0 ? labels.join(', ') : 'Usuário';
   }
 
   get canGoBack(): boolean {

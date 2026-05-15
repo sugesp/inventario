@@ -1,0 +1,268 @@
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 40, 44, 0.55);
+  z-index: 1070;
+}
+
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal-card {
+  width: min(980px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+}
+
+.modal-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e3eaf2;
+}
+
+.modal-header-custom h4 {
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 700;
+}
+
+.list-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.comissao-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.comissao-tab {
+  border: 1px solid #d7e0ec;
+  background: #f5f8fc;
+  color: #40566f;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.comissao-tab.active {
+  background: #dfeaf8;
+  border-color: #adc4e4;
+  color: #1d3f6e;
+}
+
+.member-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.section-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #dde6f0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f5f8fc 100%);
+}
+
+.section-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.section-card-hint {
+  color: #66788a;
+  font-size: 0.94rem;
+}
+
+.inline-hint {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #edf4fb;
+  color: #3c5a77;
+  font-size: 0.94rem;
+}
+
+.team-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 280px) auto auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.team-list {
+  display: grid;
+  gap: 10px;
+}
+
+.team-copy {
+  min-width: 0;
+}
+
+.team-copy small {
+  display: block;
+  margin-top: 4px;
+  color: #6c7a89;
+}
+
+.team-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.team-actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.team-local-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.team-local-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #edf4fb;
+  color: #36536f;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.vinculo-list {
+  display: grid;
+  gap: 12px;
+}
+
+.vinculo-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.vinculo-copy {
+  min-width: 0;
+}
+
+.vinculo-copy small {
+  display: block;
+  color: #6c757d;
+}
+
+.member-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.member-card-static {
+  justify-content: space-between;
+  align-items: center;
+  cursor: default;
+}
+
+.modal-body-custom .member-grid {
+  margin-top: 4px;
+}
+
+.member-card input {
+  margin-top: 0.2rem;
+}
+
+.member-card small {
+  display: block;
+  color: #6c757d;
+}
+
+.member-copy {
+  min-width: 0;
+}
+
+.modal-card-large {
+  max-width: 920px;
+}
+
+.editor-footer {
+  margin-top: 24px;
+}
+
+.list-pagination-summary,
+.list-pagination-label {
+  color: #5b6f88;
+  font-size: 0.95rem;
+}
+
+.list-pagination-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .modal-custom {
+    padding: 10px;
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  .team-form {
+    grid-template-columns: 1fr;
+  }
+
+  .team-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .vinculo-item {
+    grid-template-columns: 1fr;
+  }
+
+  .member-card-static {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

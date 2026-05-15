@@ -18,12 +18,14 @@ public class TransferenciasController : ControllerBase
         _service = service;
     }
 
+    [Authorize(Roles = "Administrador,GTI.Gestor")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TransferenciaDto>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await _service.GetAllAsync(cancellationToken));
     }
 
+    [Authorize(Roles = "Administrador,GTI.Gestor")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TransferenciaDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ public class TransferenciasController : ControllerBase
         return transferencia is null ? NotFound() : Ok(transferencia);
     }
 
+    [Authorize(Roles = "Administrador,GTI.Gestor")]
     [HttpPost]
     public async Task<ActionResult<TransferenciaDto>> Create([FromBody] TransferenciaSaveDto dto, CancellationToken cancellationToken)
     {
@@ -45,6 +48,7 @@ public class TransferenciasController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,GTI.Gestor")]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<TransferenciaDto>> Update(Guid id, [FromBody] TransferenciaSaveDto dto, CancellationToken cancellationToken)
     {

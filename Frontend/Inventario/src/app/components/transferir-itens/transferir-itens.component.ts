@@ -6,8 +6,8 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { ConsultaPublicaBem } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
-import { Local } from '../../contracts/local.model';
-import { LocalService } from '../../contracts/local.service';
+import { UnidadeAdministrativa } from '../../contracts/unidade-administrativa.model';
+import { UnidadeAdministrativaService } from '../../contracts/unidade-administrativa.service';
 import { Transferencia, TransferenciaItem, TransferenciaPayload } from '../../contracts/transferencia.model';
 import { TransferenciaService } from '../../contracts/transferencia.service';
 
@@ -23,7 +23,7 @@ declare global {
 }
 
 interface TransferenciaForm {
-  localDestinoId: string;
+  unidadeAdministrativaDestinoId: string;
   responsavelDestino: string;
   idSeiTermo: string;
   dataEntrega: string;
@@ -63,7 +63,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   scannerMessage = '';
   codeReadMessage = '';
   consultaEmAndamento = false;
-  locais: Local[] = [];
+  unidadesAdministrativas: UnidadeAdministrativa[] = [];
   manualItem: DraftItem = this.createEmptyDraftItem();
   form: TransferenciaForm = this.createEmptyForm();
   itens: TransferenciaItem[] = [];
@@ -79,7 +79,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
     readonly authService: AuthService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly localService: LocalService,
+    private readonly unidadeAdministrativaService: UnidadeAdministrativaService,
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly transferenciaService: TransferenciaService,
     private readonly toastr: ToastrService
@@ -87,7 +87,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.transferenciaId = this.route.snapshot.paramMap.get('id');
-    this.loadLocais();
+    this.loadUnidadesAdministrativas();
     if (this.transferenciaId) {
       this.loadTransferencia(this.transferenciaId);
     }
@@ -103,8 +103,8 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       && !!navigator.mediaDevices?.getUserMedia;
   }
 
-  get localSelecionado(): Local | null {
-    return this.locais.find((item) => item.id === this.form.localDestinoId) ?? null;
+  get unidadeSelecionada(): UnidadeAdministrativa | null {
+    return this.unidadesAdministrativas.find((item) => item.id === this.form.unidadeAdministrativaDestinoId) ?? null;
   }
 
   get statusOptions(): string[] {
@@ -116,20 +116,20 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   get canSave(): boolean {
-    return !!this.form.localDestinoId && !!this.form.responsavelDestino.trim() && this.itens.length > 0;
+    return !!this.form.unidadeAdministrativaDestinoId && !!this.form.responsavelDestino.trim() && this.itens.length > 0;
   }
 
   get canAdvanceToItens(): boolean {
-    return !!this.form.localDestinoId;
+    return !!this.form.unidadeAdministrativaDestinoId;
   }
 
-  loadLocais(): void {
-    this.localService.getAll().subscribe({
+  loadUnidadesAdministrativas(): void {
+    this.unidadeAdministrativaService.getAll().subscribe({
       next: (data) => {
-        this.locais = [...data].sort((a, b) => a.nome.localeCompare(b.nome));
+        this.unidadesAdministrativas = [...data].sort((a, b) => a.nome.localeCompare(b.nome));
       },
       error: () => {
-        this.toastr.error('Não foi possível carregar os locais de destino.');
+        this.toastr.error('Não foi possível carregar as unidades administrativas de destino.');
       },
     });
   }
@@ -286,7 +286,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   goToItensStep(): void {
     if (!this.canAdvanceToItens) {
-      this.toastr.warning('Selecione o destino para continuar.');
+      this.toastr.warning('Selecione a unidade administrativa de destino para continuar.');
       return;
     }
 
@@ -340,7 +340,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   save(status?: string): void {
     if (!this.canSave) {
-      this.toastr.warning('Selecione o destino, o responsável e adicione ao menos um item.');
+      this.toastr.warning('Selecione a unidade administrativa, o responsável e adicione ao menos um item.');
       return;
     }
 
@@ -420,7 +420,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   private applyTransferencia(transferencia: Transferencia): void {
     this.form = {
-      localDestinoId: transferencia.localDestinoId,
+      unidadeAdministrativaDestinoId: transferencia.unidadeAdministrativaDestinoId,
       responsavelDestino: transferencia.responsavelDestino,
       idSeiTermo: transferencia.idSeiTermo,
       dataEntrega: transferencia.dataEntrega ? transferencia.dataEntrega.slice(0, 10) : '',
@@ -433,7 +433,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   private toPayload(nextStatus?: string): TransferenciaPayload {
     return {
-      localDestinoId: this.form.localDestinoId,
+      unidadeAdministrativaDestinoId: this.form.unidadeAdministrativaDestinoId,
       responsavelDestino: this.form.responsavelDestino.trim(),
       idSeiTermo: this.form.idSeiTermo.trim(),
       dataEntrega: this.form.dataEntrega || null,
@@ -464,7 +464,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   private createEmptyForm(): TransferenciaForm {
     return {
-      localDestinoId: '',
+      unidadeAdministrativaDestinoId: '',
       responsavelDestino: '',
       idSeiTermo: '',
       dataEntrega: '',

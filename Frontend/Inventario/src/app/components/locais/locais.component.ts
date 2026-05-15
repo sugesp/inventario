@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { Comissao } from '../../contracts/comissao.model';
+import { ComissaoService } from '../../contracts/comissao.service';
 import { Equipe } from '../../contracts/equipe.model';
 import { EquipeService } from '../../contracts/equipe.service';
 import { Local, LocalPayload } from '../../contracts/local.model';
@@ -13,8 +15,10 @@ import { LocalService } from '../../contracts/local.service';
 export class LocaisComponent implements OnInit {
   locais: Local[] = [];
   equipes: Equipe[] = [];
+  activeComissao: Comissao | null = null;
   loading = false;
   loadingEquipes = false;
+  loadingComissao = false;
   saving = false;
   showModal = false;
   editingId: string | null = null;
@@ -27,12 +31,30 @@ export class LocaisComponent implements OnInit {
   constructor(
     private readonly localService: LocalService,
     private readonly equipeService: EquipeService,
+    private readonly comissaoService: ComissaoService,
     private readonly toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
+    this.loadActiveComissao();
     this.loadEquipes();
     this.loadLocais();
+  }
+
+  get locaisAtivos(): Local[] {
+    if (!this.activeComissao) {
+      return [];
+    }
+
+    return this.locais.filter((item) => item.comissaoId === this.activeComissao?.id);
+  }
+
+  get equipesAtivas(): Equipe[] {
+    if (!this.activeComissao) {
+      return [];
+    }
+
+    return this.equipes.filter((item) => item.comissaoId === this.activeComissao?.id);
   }
 
   loadLocais(): void {
@@ -63,11 +85,25 @@ export class LocaisComponent implements OnInit {
     });
   }
 
+  loadActiveComissao(): void {
+    this.loadingComissao = true;
+    this.comissaoService.getActive().subscribe({
+      next: (data) => {
+        this.activeComissao = data;
+        this.loadingComissao = false;
+      },
+      error: () => {
+        this.activeComissao = null;
+        this.loadingComissao = false;
+      },
+    });
+  }
+
   openCreateModal(): void {
     this.editingId = null;
     this.form = {
       nome: '',
-      equipeId: this.equipes[0]?.id ?? '',
+      equipeId: this.equipesAtivas[0]?.id ?? '',
     };
     this.showModal = true;
   }
@@ -88,6 +124,11 @@ export class LocaisComponent implements OnInit {
   }
 
   submit(): void {
+    if (!this.activeComissao && !this.editingId) {
+      this.toastr.warning('Ative uma comissão antes de cadastrar locais.');
+      return;
+    }
+
     this.saving = true;
     const payload: LocalPayload = {
       nome: this.form.nome.trim(),

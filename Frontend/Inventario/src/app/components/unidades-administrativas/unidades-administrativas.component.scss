@@ -1,0 +1,35 @@
+.tree-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.85rem;
+  background: #fff;
+}
+
+.tree-toggle {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #eef2f5;
+}
+
+.tree-toggle-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+
+.tree-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

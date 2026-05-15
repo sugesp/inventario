@@ -21,6 +21,7 @@ public class LocalService : ILocalService
             .AsNoTracking()
             .Where(x => x.DeletedAt == null && x.Equipe != null && x.Equipe.DeletedAt == null)
             .Include(x => x.Equipe)
+                .ThenInclude(x => x!.Comissao)
             .OrderBy(x => x.Nome)
             .ToListAsync(cancellationToken);
 
@@ -32,6 +33,7 @@ public class LocalService : ILocalService
         var entity = await _context.Locais
             .AsNoTracking()
             .Include(x => x.Equipe)
+                .ThenInclude(x => x!.Comissao)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
@@ -118,7 +120,9 @@ public class LocalService : ILocalService
             Id = entity.Id,
             Nome = entity.Nome,
             EquipeId = entity.EquipeId,
-            EquipeDescricao = entity.Equipe?.Descricao ?? string.Empty
+            EquipeDescricao = entity.Equipe?.Descricao ?? string.Empty,
+            ComissaoId = entity.Equipe?.ComissaoId ?? Guid.Empty,
+            ComissaoAno = entity.Equipe?.Comissao?.Ano ?? 0
         };
     }
 }

@@ -7,7 +7,7 @@
     </p>
   </section>
 
-  <section class="stats-section" *ngIf="authService.isAdmin">
+  <section class="stats-section" *ngIf="authService.canManageInventario">
     <div class="section-heading">
       <span class="eyebrow">Estatísticas</span>
       <h3>Resumo do inventário</h3>

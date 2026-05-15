@@ -16,10 +16,17 @@ export interface ItemInventariado {
   equipeDescricao: string;
   usuarioId: string;
   usuarioNome: string;
+  comissaoId?: string | null;
+  comissaoAno?: number | null;
+  comissaoStatus?: string | null;
   status: string;
   estadoConservacao: string;
   observacao: string;
   dataInventario: string;
+  lancadoEEstado: boolean;
+  lancadoEEstadoPorUsuarioId?: string | null;
+  lancadoEEstadoPorUsuarioNome?: string | null;
+  lancadoEEstadoEm?: string | null;
   fotos: ItemInventarioFoto[];
 }
 

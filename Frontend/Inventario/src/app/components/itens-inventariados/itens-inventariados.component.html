@@ -8,7 +8,7 @@
       <a class="btn btn-primary" routerLink="/inventariar">Inventariar novo item</a>
     </div>
     <p class="hero-copy">
-      Listagem administrativa dos bens já cadastrados no sistema de inventário, com local, equipe, responsável e classificação.
+      Listagem administrativa dos bens já cadastrados no sistema de inventário, com acompanhamento do lançamento no E-Estado.
     </p>
   </section>
 
@@ -44,12 +44,21 @@
         </select>
       </div>
 
+      <div>
+        <label class="form-label">Filtrar por E-Estado</label>
+        <select class="form-select" [(ngModel)]="selectedLancamentoFilter">
+          <option value="todos">Todos os itens</option>
+          <option value="pendentes">Não lançados</option>
+          <option value="lancados">Lançados</option>
+        </select>
+      </div>
+
       <div class="filters-actions">
         <button
           class="btn btn-outline-secondary"
           type="button"
           (click)="clearFilters()"
-          [disabled]="!selectedLocalFilter && !selectedEquipeFilter"
+          [disabled]="!selectedLocalFilter && !selectedEquipeFilter && selectedLancamentoFilter === 'todos'"
         >
           Limpar filtros
         </button>
@@ -73,27 +82,55 @@
     <div class="table-responsive" *ngIf="!loadingItens && filteredItensInventariados.length > 0">
       <table class="table table-hover align-middle">
         <thead>
-          <tr>
-            <th>Tombamento</th>
-            <th>Tombamento antigo</th>
-            <th>Descrição</th>
+            <tr>
+              <th>Comissão</th>
+              <th>Tombamento</th>
+              <th>Tombamento antigo</th>
+              <th>Descrição</th>
             <th>Classificação</th>
             <th>Local</th>
             <th>Equipe</th>
             <th>Responsável</th>
+            <th>E-Estado</th>
             <th>Data</th>
             <th>Fotos</th>
+            <th class="text-end">Ações</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of filteredItensInventariados">
-            <td>{{ item.tombamentoNovo || '-' }}</td>
+            <td>{{ item.comissaoAno || '-' }}</td>
+            <td>
+              <div class="tombamento-cell">
+                <span>{{ item.tombamentoNovo || '-' }}</span>
+                <button
+                  class="btn btn-sm btn-copy"
+                  type="button"
+                  title="Copiar tombamento do E-Estado"
+                  aria-label="Copiar tombamento do E-Estado"
+                  (click)="copyTombamento(item)"
+                  [disabled]="!item.tombamentoNovo"
+                >
+                  <i class="fa fa-copy" aria-hidden="true"></i>
+                  <span>Copiar</span>
+                </button>
+              </div>
+            </td>
             <td>{{ item.tombamentoAntigo || '-' }}</td>
             <td>{{ item.descricao || '-' }}</td>
             <td>{{ item.status || '-' }}</td>
             <td>{{ item.localNome || '-' }}</td>
             <td>{{ item.equipeDescricao || '-' }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
+            <td>
+              <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado" [class.eestado-badge-pending]="!item.lancadoEEstado">
+                {{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}
+              </span>
+              <small class="eestado-meta" *ngIf="item.lancadoEEstado">
+                {{ item.lancadoEEstadoPorUsuarioNome || 'Usuário não informado' }}
+                <span *ngIf="item.lancadoEEstadoEm">em {{ item.lancadoEEstadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
+              </small>
+            </td>
             <td>{{ item.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
               <button
@@ -103,6 +140,18 @@
                 [disabled]="!item.fotos.length"
               >
                 {{ item.fotos.length ? ('Ver fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
+              </button>
+            </td>
+            <td class="text-end">
+              <button
+                class="btn btn-sm"
+                [class.btn-success]="!item.lancadoEEstado"
+                [class.btn-outline-secondary]="item.lancadoEEstado"
+                type="button"
+                (click)="marcarLancamentoEEstado(item, !item.lancadoEEstado)"
+                [disabled]="isUpdatingLancamento(item)"
+              >
+                {{ isUpdatingLancamento(item) ? 'Salvando...' : (item.lancadoEEstado ? 'Reabrir' : 'Marcar lançado') }}
               </button>
             </td>
           </tr>

@@ -5,7 +5,7 @@
         <div class="list-header-copy">
           <span class="list-header-eyebrow">Gestão de acesso</span>
           <h2 class="list-header-title">Usuários</h2>
-          <p class="list-header-subtitle">Cadastros podem ficar pendentes até que um administrador defina perfil e
+          <p class="list-header-subtitle">Cadastros podem ficar pendentes até que um administrador defina permissões e
             libere o acesso.</p>
         </div>
         <button class="btn btn-standard-new" type="button" (click)="openModal()">Novo usuário</button>
@@ -14,7 +14,7 @@
         <div class="search-box">
           <input class="form-control" type="text" name="usuarioTerm" [ngModel]="term"
             (ngModelChange)="onTermChange($event)"
-            placeholder="Buscar por nome, email, CPF, perfil, status ou equipe" />
+            placeholder="Buscar por nome, email, CPF, permissões ou status" />
           <button *ngIf="term" class="search-clear" type="button" (click)="clearSearch()" aria-label="Limpar busca">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
@@ -27,15 +27,13 @@
             <col class="col-cpf" />
             <col class="col-perfil" />
             <col class="col-perfil" />
-            <col class="col-perfil" />
             <col class="col-acoes" />
           </colgroup>
           <thead>
             <tr>
               <th>Nome</th>
               <th>CPF</th>
-              <th class="mobile-hidden-column">Equipe</th>
-              <th class="mobile-hidden-column">Perfil</th>
+              <th class="mobile-hidden-column">Permissões</th>
               <th class="mobile-hidden-column">Status</th>
               <th class="text-end"></th>
             </tr>
@@ -44,8 +42,7 @@
             <tr *ngFor="let usuario of usuarios" [class.row-active]="openActionsUserId === usuario.id">
               <td>{{ usuario.nome }}</td>
               <td>{{ usuario.cpf }}</td>
-              <td class="mobile-hidden-column">{{ usuario.equipeDescricao || '-' }}</td>
-              <td class="mobile-hidden-column">{{ usuario.perfil }}</td>
+              <td class="mobile-hidden-column">{{ getPermissionsLabel(usuario) }}</td>
               <td class="mobile-hidden-column">
                 <span [class]="getStatusBadgeClass(usuario.status)">{{ getStatusLabel(usuario.status) }}</span>
               </td>
@@ -78,7 +75,7 @@
               </td>
             </tr>
             <tr *ngIf="usuarios.length === 0">
-              <td colspan="6" class="text-center text-muted py-4">Nenhum usuário cadastrado.</td>
+              <td colspan="5" class="text-center text-muted py-4">Nenhum usuário cadastrado.</td>
             </tr>
           </tbody>
         </table>
@@ -116,24 +113,31 @@
             <label class="form-label">Nome</label>
             <input class="form-control" name="usuarioNome" [(ngModel)]="form.nome" required />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Email</label>
             <input class="form-control" name="usuarioEmail" [(ngModel)]="form.email" type="email" required />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">CPF</label>
             <input class="form-control" name="usuarioCpf" [(ngModel)]="form.cpf" (ngModelChange)="onCpfInput($event)"
               inputmode="numeric" maxlength="14" placeholder="000.000.000-00" [readonly]="!!editingUserId" required />
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Perfil</label>
-            <select class="form-select" name="usuarioPerfil" [(ngModel)]="form.perfil" required>
-              <option value="Operador">Operador</option>
-              <option value="Inventario">Inventario</option>
-              <option value="Financeiro">Financeiro</option>
-              <option value="Controle Interno">Controle Interno</option>
-              <option value="Administrador">Administrador</option>
-            </select>
+          <div class="col-12">
+            <label class="form-label">Permissões</label>
+            <div class="permissions-grid">
+              <label class="permission-card" *ngFor="let permissao of permissionOptions">
+                <input
+                  class="permission-checkbox"
+                  type="checkbox"
+                  [checked]="hasPermission(permissao.value)"
+                  (change)="togglePermission(permissao.value, $any($event.target).checked)"
+                />
+                <div class="permission-copy">
+                  <strong class="permission-title">{{ permissao.label }}</strong>
+                  <small class="permission-description">{{ permissao.description }}</small>
+                </div>
+              </label>
+            </div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Status</label>
@@ -141,13 +145,6 @@
               <option value="Ativo">Ativo</option>
               <option value="Pendente">Pendente</option>
               <option value="Desativado">Desativado</option>
-            </select>
-          </div>
-          <div class="col-md-8">
-            <label class="form-label">Equipe</label>
-            <select class="form-select" name="usuarioEquipeId" [(ngModel)]="form.equipeId">
-              <option [ngValue]="null">Nenhuma</option>
-              <option *ngFor="let equipe of equipes" [ngValue]="equipe.id">{{ equipe.descricao }}</option>
             </select>
           </div>
           <div class="col-md-12">

@@ -59,7 +59,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let transferencia of filteredTransferencias">
-            <td>{{ transferencia.localDestinoNome || '-' }}</td>
+            <td>{{ transferencia.unidadeAdministrativaDestinoSigla ? (transferencia.unidadeAdministrativaDestinoSigla + ' - ' + transferencia.unidadeAdministrativaDestinoNome) : (transferencia.unidadeAdministrativaDestinoNome || '-') }}</td>
             <td>{{ transferencia.responsavelDestino || '-' }}</td>
             <td>{{ transferencia.status || '-' }}</td>
             <td>{{ transferencia.idSeiTermo || '-' }}</td>

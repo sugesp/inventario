@@ -13,6 +13,9 @@ public class AppDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Equipe> Equipes { get; set; }
     public DbSet<Local> Locais { get; set; }
+    public DbSet<UnidadeAdministrativa> UnidadesAdministrativas { get; set; }
+    public DbSet<Comissao> Comissoes { get; set; }
+    public DbSet<ComissaoMembro> ComissoesMembros { get; set; }
     public DbSet<ItemInventariado> ItensInventariados { get; set; }
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
     public DbSet<Transferencia> Transferencias { get; set; }
@@ -28,14 +31,10 @@ public class AppDbContext : DbContext
             entity.ToTable("Usuarios");
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Cpf).IsUnique();
-            entity.HasOne(x => x.Equipe)
-                .WithMany()
-                .HasForeignKey(x => x.EquipeId)
-                .OnDelete(DeleteBehavior.Restrict);
             entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Email).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Cpf).HasMaxLength(11).IsRequired();
-            entity.Property(x => x.Perfil).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.PermissoesJson).HasColumnType("longtext").IsRequired();
             entity.Property(x => x.Status).HasMaxLength(20).IsRequired().HasDefaultValue("Ativo");
             entity.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
             entity.Property(x => x.PasswordSalt).HasMaxLength(500).IsRequired();
@@ -46,6 +45,10 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Equipes");
             entity.Property(x => x.Descricao).HasMaxLength(200).IsRequired();
+            entity.HasOne(x => x.Comissao)
+                .WithMany(x => x.Equipes)
+                .HasForeignKey(x => x.ComissaoId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Local>(entity =>
@@ -54,6 +57,48 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
             entity.HasOne(x => x.Equipe)
                 .WithMany(x => x.Locais)
+                .HasForeignKey(x => x.EquipeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UnidadeAdministrativa>(entity =>
+        {
+            entity.ToTable("UnidadesAdministrativas");
+            entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Sigla).HasMaxLength(40).IsRequired();
+            entity.HasOne(x => x.UnidadeSuperior)
+                .WithMany(x => x.UnidadesFilhas)
+                .HasForeignKey(x => x.UnidadeSuperiorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Comissao>(entity =>
+        {
+            entity.ToTable("Comissoes");
+            entity.HasIndex(x => x.Ano).IsUnique();
+            entity.Property(x => x.Ano).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            entity.HasOne(x => x.Presidente)
+                .WithMany(x => x.ComissoesPresididas)
+                .HasForeignKey(x => x.PresidenteId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ComissaoMembro>(entity =>
+        {
+            entity.ToTable("ComissoesMembros");
+            entity.HasIndex(x => new { x.ComissaoId, x.UsuarioId })
+                .IsUnique();
+            entity.HasOne(x => x.Comissao)
+                .WithMany(x => x.Membros)
+                .HasForeignKey(x => x.ComissaoId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Usuario)
+                .WithMany(x => x.ComissoesMembro)
+                .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Equipe)
+                .WithMany()
                 .HasForeignKey(x => x.EquipeId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -67,6 +112,10 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
             entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Observacao).HasMaxLength(2000);
+            entity.HasOne(x => x.LancadoEEstadoPorUsuario)
+                .WithMany()
+                .HasForeignKey(x => x.LancadoEEstadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.Local)
                 .WithMany(x => x.ItensInventariados)
                 .HasForeignKey(x => x.LocalId)
@@ -74,6 +123,10 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.Usuario)
                 .WithMany(x => x.ItensInventariados)
                 .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Comissao)
+                .WithMany(x => x.ItensInventariados)
+                .HasForeignKey(x => x.ComissaoId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -97,9 +150,9 @@ public class AppDbContext : DbContext
             entity.Property(x => x.IdSeiTermo).HasMaxLength(120);
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Observacao).HasMaxLength(2000);
-            entity.HasOne(x => x.LocalDestino)
+            entity.HasOne(x => x.UnidadeAdministrativaDestino)
                 .WithMany(x => x.TransferenciasDestino)
-                .HasForeignKey(x => x.LocalDestinoId)
+                .HasForeignKey(x => x.UnidadeAdministrativaDestinoId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.CriadoPorUsuario)
                 .WithMany(x => x.TransferenciasCriadas)

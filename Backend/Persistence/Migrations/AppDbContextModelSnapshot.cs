@@ -22,10 +22,85 @@ namespace Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Model.Comissao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("PresidenteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ano")
+                        .IsUnique();
+
+                    b.HasIndex("PresidenteId");
+
+                    b.ToTable("Comissoes", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Model.ComissaoMembro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ComissaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("EquipeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipeId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("ComissaoId", "UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("ComissoesMembros", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Model.Equipe", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("ComissaoId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -44,6 +119,8 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ComissaoId");
+
                     b.ToTable("Equipes", (string)null);
                 });
 
@@ -51,6 +128,9 @@ namespace Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("ComissaoId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -71,6 +151,15 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("varchar(80)");
+
+                    b.Property<bool>("LancadoEEstado")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LancadoEEstadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("LancadoEEstadoPorUsuarioId")
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("LocalId")
                         .HasColumnType("char(36)");
@@ -102,6 +191,10 @@ namespace Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ComissaoId");
+
+                    b.HasIndex("LancadoEEstadoPorUsuarioId");
 
                     b.HasIndex("LocalId");
 
@@ -413,9 +506,6 @@ namespace Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("varchar(120)");
 
-                    b.Property<Guid>("LocalDestinoId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Observacao")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -431,6 +521,9 @@ namespace Persistence.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("varchar(80)");
 
+                    b.Property<Guid>("UnidadeAdministrativaDestinoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -440,7 +533,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("FinalizadoPorUsuarioId");
 
-                    b.HasIndex("LocalDestinoId");
+                    b.HasIndex("UnidadeAdministrativaDestinoId");
 
                     b.ToTable("Transferencias", (string)null);
                 });
@@ -500,6 +593,41 @@ namespace Persistence.Migrations
                     b.ToTable("TransferenciasItens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Model.UnidadeAdministrativa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Sigla")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<Guid?>("UnidadeSuperiorId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UnidadeSuperiorId");
+
+                    b.ToTable("UnidadesAdministrativas", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Model.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -522,9 +650,6 @@ namespace Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<Guid?>("EquipeId")
-                        .HasColumnType("char(36)");
-
                     b.Property<bool>("MustChangePassword")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -545,10 +670,9 @@ namespace Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<string>("Perfil")
+                    b.Property<string>("PermissoesJson")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -568,13 +692,68 @@ namespace Persistence.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("EquipeId");
-
                     b.ToTable("Usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Model.Comissao", b =>
+                {
+                    b.HasOne("Domain.Model.Usuario", "Presidente")
+                        .WithMany("ComissoesPresididas")
+                        .HasForeignKey("PresidenteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Presidente");
+                });
+
+            modelBuilder.Entity("Domain.Model.ComissaoMembro", b =>
+                {
+                    b.HasOne("Domain.Model.Comissao", "Comissao")
+                        .WithMany("Membros")
+                        .HasForeignKey("ComissaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Model.Equipe", "Equipe")
+                        .WithMany()
+                        .HasForeignKey("EquipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Model.Usuario", "Usuario")
+                        .WithMany("ComissoesMembro")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Comissao");
+
+                    b.Navigation("Equipe");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Domain.Model.Equipe", b =>
+                {
+                    b.HasOne("Domain.Model.Comissao", "Comissao")
+                        .WithMany("Equipes")
+                        .HasForeignKey("ComissaoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Comissao");
                 });
 
             modelBuilder.Entity("Domain.Model.ItemInventariado", b =>
                 {
+                    b.HasOne("Domain.Model.Comissao", "Comissao")
+                        .WithMany("ItensInventariados")
+                        .HasForeignKey("ComissaoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Model.Usuario", "LancadoEEstadoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("LancadoEEstadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Model.Local", "Local")
                         .WithMany("ItensInventariados")
                         .HasForeignKey("LocalId")
@@ -586,6 +765,10 @@ namespace Persistence.Migrations
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Comissao");
+
+                    b.Navigation("LancadoEEstadoPorUsuario");
 
                     b.Navigation("Local");
 
@@ -638,9 +821,9 @@ namespace Persistence.Migrations
                         .HasForeignKey("FinalizadoPorUsuarioId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Domain.Model.Local", "LocalDestino")
+                    b.HasOne("Domain.Model.UnidadeAdministrativa", "UnidadeAdministrativaDestino")
                         .WithMany("TransferenciasDestino")
-                        .HasForeignKey("LocalDestinoId")
+                        .HasForeignKey("UnidadeAdministrativaDestinoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -648,7 +831,7 @@ namespace Persistence.Migrations
 
                     b.Navigation("FinalizadoPorUsuario");
 
-                    b.Navigation("LocalDestino");
+                    b.Navigation("UnidadeAdministrativaDestino");
                 });
 
             modelBuilder.Entity("Domain.Model.TransferenciaItem", b =>
@@ -662,14 +845,23 @@ namespace Persistence.Migrations
                     b.Navigation("Transferencia");
                 });
 
-            modelBuilder.Entity("Domain.Model.Usuario", b =>
+            modelBuilder.Entity("Domain.Model.UnidadeAdministrativa", b =>
                 {
-                    b.HasOne("Domain.Model.Equipe", "Equipe")
-                        .WithMany()
-                        .HasForeignKey("EquipeId")
+                    b.HasOne("Domain.Model.UnidadeAdministrativa", "UnidadeSuperior")
+                        .WithMany("UnidadesFilhas")
+                        .HasForeignKey("UnidadeSuperiorId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Equipe");
+                    b.Navigation("UnidadeSuperior");
+                });
+
+            modelBuilder.Entity("Domain.Model.Comissao", b =>
+                {
+                    b.Navigation("Equipes");
+
+                    b.Navigation("ItensInventariados");
+
+                    b.Navigation("Membros");
                 });
 
             modelBuilder.Entity("Domain.Model.Equipe", b =>
@@ -685,8 +877,6 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Model.Local", b =>
                 {
                     b.Navigation("ItensInventariados");
-
-                    b.Navigation("TransferenciasDestino");
                 });
 
             modelBuilder.Entity("Domain.Model.Transferencia", b =>
@@ -694,8 +884,19 @@ namespace Persistence.Migrations
                     b.Navigation("Itens");
                 });
 
+            modelBuilder.Entity("Domain.Model.UnidadeAdministrativa", b =>
+                {
+                    b.Navigation("TransferenciasDestino");
+
+                    b.Navigation("UnidadesFilhas");
+                });
+
             modelBuilder.Entity("Domain.Model.Usuario", b =>
                 {
+                    b.Navigation("ComissoesMembro");
+
+                    b.Navigation("ComissoesPresididas");
+
                     b.Navigation("ItensInventariados");
 
                     b.Navigation("LaudosTecnicos");

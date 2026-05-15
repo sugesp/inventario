@@ -3,6 +3,8 @@ export interface Local {
   nome: string;
   equipeId: string;
   equipeDescricao: string;
+  comissaoId: string;
+  comissaoAno: number;
 }
 
 export interface LocalPayload {

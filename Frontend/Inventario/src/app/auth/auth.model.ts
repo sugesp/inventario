@@ -1,3 +1,5 @@
+import { UserPermission } from './permissions';
+
 export interface LoginPayload {
   cpf: string;
   senha: string;
@@ -7,9 +9,8 @@ export interface RegisterPayload {
   nome: string;
   email: string;
   cpf: string;
-  perfil: 'Administrador' | 'Inventario' | 'Financeiro' | 'Controle Interno' | 'Operador';
+  permissoes: UserPermission[];
   status: 'Ativo' | 'Pendente' | 'Desativado';
-  equipeId?: string | null;
 }
 
 export interface PreRegisterPayload {
@@ -29,23 +30,20 @@ export interface UserSummary {
   nome: string;
   email: string;
   cpf: string;
-  perfil: string;
+  permissoes: string[];
   status: string;
-  equipeId?: string | null;
-  equipeDescricao?: string | null;
   mustChangePassword: boolean;
 }
 
 export interface AuthResponse {
+  userId: string;
   token: string;
   expiresAt: string;
   nome: string;
   email: string;
   cpf: string;
-  perfil: string;
+  permissoes: string[];
   status: string;
-  equipeId?: string | null;
-  equipeDescricao?: string | null;
   mustChangePassword: boolean;
 }
 

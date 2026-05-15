@@ -4,14 +4,22 @@
       <div class="list-header-copy">
         <span class="list-header-eyebrow">Cadastro base</span>
         <h2 class="list-header-title">Equipes</h2>
-        <p class="list-header-subtitle">Defina as equipes responsáveis pelos locais e pelo inventário.</p>
+        <p class="list-header-subtitle">Defina as equipes responsáveis pelos locais e pelo inventário dentro da comissão ativa.</p>
       </div>
       <button class="btn btn-standard-new" type="button" (click)="openCreateModal()">Nova equipe</button>
     </div>
 
-    <div class="table-card" *ngIf="equipes.length > 0; else semEquipes">
+    <div class="alert alert-warning mb-4" *ngIf="!loadingComissao && !activeComissao">
+      Nenhuma comissão ativa foi encontrada. Cadastre ou ative uma comissão antes de criar equipes.
+    </div>
+
+    <div class="alert alert-info mb-4" *ngIf="activeComissao">
+      Comissão ativa para cadastro: <strong>{{ activeComissao.ano }}</strong>.
+    </div>
+
+    <div class="table-card" *ngIf="equipesAtivas.length > 0; else semEquipes">
       <div class="table-head">
-        <span>{{ equipes.length }} equipe(s)</span>
+        <span>{{ equipesAtivas.length }} equipe(s)</span>
       </div>
 
       <div class="table-responsive">
@@ -19,12 +27,14 @@
           <thead>
             <tr>
               <th>Descrição</th>
+              <th>Comissão</th>
               <th class="text-end"></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of equipes">
+            <tr *ngFor="let item of equipesAtivas">
               <td>{{ item.descricao }}</td>
+              <td>{{ item.comissaoAno }}</td>
               <td class="text-end">
                 <div class="row-actions">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="edit(item)">Editar</button>
@@ -39,7 +49,7 @@
 </section>
 
 <ng-template #semEquipes>
-  <div class="empty-state" *ngIf="!loading">Nenhuma equipe cadastrada.</div>
+  <div class="empty-state" *ngIf="!loading">Nenhuma equipe cadastrada para a comissão ativa.</div>
 </ng-template>
 
 <div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>

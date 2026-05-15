@@ -16,10 +16,12 @@ export class ItensInventariadosComponent implements OnInit {
   loadingItens = false;
   selectedLocalFilter = '';
   selectedEquipeFilter = '';
+  selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
   loadingFotos = false;
   fotoObjectUrls: Record<string, string> = {};
+  updatingLancamentoIds = new Set<string>();
 
   constructor(
     private readonly itemInventariadoService: ItemInventariadoService,
@@ -102,13 +104,52 @@ export class ItensInventariadosComponent implements OnInit {
     return this.itensInventariados.filter((item) => {
       const matchesLocal = !this.selectedLocalFilter || item.localNome === this.selectedLocalFilter;
       const matchesEquipe = !this.selectedEquipeFilter || item.equipeDescricao === this.selectedEquipeFilter;
-      return matchesLocal && matchesEquipe;
+      const matchesLancamento =
+        this.selectedLancamentoFilter === 'todos'
+        || (this.selectedLancamentoFilter === 'lancados' && item.lancadoEEstado)
+        || (this.selectedLancamentoFilter === 'pendentes' && !item.lancadoEEstado);
+
+      return matchesLocal && matchesEquipe && matchesLancamento;
     });
   }
 
   clearFilters(): void {
     this.selectedLocalFilter = '';
     this.selectedEquipeFilter = '';
+    this.selectedLancamentoFilter = 'todos';
+  }
+
+  marcarLancamentoEEstado(item: ItemInventariado, lancado: boolean): void {
+    this.updatingLancamentoIds.add(item.id);
+    this.itemInventariadoService.marcarLancamentoEEstado(item.id, lancado).subscribe({
+      next: (updated) => {
+        this.updatingLancamentoIds.delete(item.id);
+        this.itensInventariados = this.itensInventariados.map((current) =>
+          current.id === updated.id ? updated : current
+        );
+        this.toastr.success(lancado ? 'Item marcado como lançado no E-Estado.' : 'Lançamento do E-Estado removido.');
+      },
+      error: (error) => {
+        this.updatingLancamentoIds.delete(item.id);
+        this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o lançamento no E-Estado.');
+      },
+    });
+  }
+
+  isUpdatingLancamento(item: ItemInventariado): boolean {
+    return this.updatingLancamentoIds.has(item.id);
+  }
+
+  copyTombamento(item: ItemInventariado): void {
+    const tombamento = item.tombamentoNovo?.trim();
+    if (!tombamento) {
+      this.toastr.warning('Este item não possui tombamento do E-Estado para copiar.');
+      return;
+    }
+
+    this.copyText(tombamento)
+      .then(() => this.toastr.success('Tombamento copiado.'))
+      .catch(() => this.toastr.error('Não foi possível copiar o tombamento.'));
   }
 
   selectFoto(foto: ItemInventarioFoto): void {
@@ -126,5 +167,21 @@ export class ItensInventariadosComponent implements OnInit {
   private releaseFotoObjectUrls(): void {
     Object.values(this.fotoObjectUrls).forEach((url) => URL.revokeObjectURL(url));
     this.fotoObjectUrls = {};
+  }
+
+  private async copyText(value: string): Promise<void> {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
   }
 }

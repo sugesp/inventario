@@ -18,12 +18,14 @@ public class ItensInventariadosController : ControllerBase
         _service = service;
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ItemInventariadoDto>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await _service.GetAllAsync(cancellationToken));
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemInventariadoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ public class ItensInventariadosController : ControllerBase
         return entity is null ? NotFound() : Ok(entity);
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet("consulta-publica/{tombamento}")]
     public async Task<ActionResult<ConsultaPublicaBemDto>> ConsultarResumoPublico(string tombamento, CancellationToken cancellationToken)
     {
@@ -49,6 +52,7 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
     public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)
     {
@@ -61,6 +65,19 @@ public class ItensInventariadosController : ControllerBase
         return File(foto.Value.Stream, foto.Value.ContentType);
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPatch("{id:guid}/lancamento-eestado")]
+    public async Task<ActionResult<ItemInventariadoDto>> MarcarLancamentoEEstado(
+        Guid id,
+        [FromBody] ItemInventariadoLancamentoEEstadoDto dto,
+        CancellationToken cancellationToken
+    )
+    {
+        var updated = await _service.MarcarLancamentoEEstadoAsync(id, dto.Lancado, GetUsuarioId(), cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpPost]
     [RequestSizeLimit(50_000_000)]
     public async Task<ActionResult<ItemInventariadoDto>> Create(
@@ -77,7 +94,7 @@ public class ItensInventariadosController : ControllerBase
 
             var usuarioAutenticadoId = GetUsuarioId();
             var form = await Request.ReadFormAsync(cancellationToken);
-            var created = await _service.CreateAsync(dto, form.Files, usuarioAutenticadoId, cancellationToken);
+            var created = await _service.CreateAsync(dto, form.Files, usuarioAutenticadoId, User.IsInRole("Administrador"), cancellationToken);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (InvalidOperationException ex)
@@ -93,6 +110,7 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpPut("{id:guid}")]
     [RequestSizeLimit(50_000_000)]
     public async Task<ActionResult<ItemInventariadoDto>> Update(
@@ -109,7 +127,7 @@ public class ItensInventariadosController : ControllerBase
             }
 
             var form = await Request.ReadFormAsync(cancellationToken);
-            var updated = await _service.UpdateAsync(id, dto, form.Files, cancellationToken);
+            var updated = await _service.UpdateAsync(id, dto, form.Files, true, cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)
@@ -125,6 +143,7 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {

@@ -10,8 +10,9 @@ export interface TransferenciaItem {
 
 export interface Transferencia {
   id: string;
-  localDestinoId: string;
-  localDestinoNome: string;
+  unidadeAdministrativaDestinoId: string;
+  unidadeAdministrativaDestinoNome: string;
+  unidadeAdministrativaDestinoSigla: string;
   criadoPorUsuarioId: string;
   criadoPorUsuarioNome: string;
   finalizadoPorUsuarioId?: string | null;
@@ -36,7 +37,7 @@ export interface TransferenciaItemPayload {
 }
 
 export interface TransferenciaPayload {
-  localDestinoId: string;
+  unidadeAdministrativaDestinoId: string;
   responsavelDestino: string;
   idSeiTermo: string;
   dataEntrega?: string | null;

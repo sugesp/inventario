@@ -3,8 +3,9 @@ namespace Application.DTO.Transferencia;
 public class TransferenciaDto
 {
     public Guid Id { get; set; }
-    public Guid LocalDestinoId { get; set; }
-    public string LocalDestinoNome { get; set; } = string.Empty;
+    public Guid UnidadeAdministrativaDestinoId { get; set; }
+    public string UnidadeAdministrativaDestinoNome { get; set; } = string.Empty;
+    public string UnidadeAdministrativaDestinoSigla { get; set; } = string.Empty;
     public Guid CriadoPorUsuarioId { get; set; }
     public string CriadoPorUsuarioNome { get; set; } = string.Empty;
     public Guid? FinalizadoPorUsuarioId { get; set; }

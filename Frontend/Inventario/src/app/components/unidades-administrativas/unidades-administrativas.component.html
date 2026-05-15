@@ -1,0 +1,78 @@
+<section class="card">
+  <div class="card-body">
+    <div class="list-header">
+      <div class="list-header-copy">
+        <span class="list-header-eyebrow">Destino das transferências</span>
+        <h2 class="list-header-title">Unidades Administrativas</h2>
+        <p class="list-header-subtitle">Estruture as unidades administrativas usadas como destino nas transferências.</p>
+      </div>
+      <button class="btn btn-standard-new" type="button" (click)="openCreateModal()">Nova unidade</button>
+    </div>
+
+    <div class="tree-card" *ngIf="unidades.length > 0; else semUnidades">
+      <div class="tree-node" *ngFor="let node of unidadesTree">
+        <div class="tree-item" [style.padding-left.rem]="node.depth * 1.25">
+          <button class="tree-toggle" type="button" *ngIf="hasChildren(node)" (click)="toggleNode(node.unidade.id)">
+            {{ isExpanded(node.unidade.id) ? '−' : '+' }}
+          </button>
+          <span class="tree-toggle tree-toggle-placeholder" *ngIf="!hasChildren(node)"></span>
+
+          <div class="tree-copy">
+            <strong>{{ node.unidade.sigla }}</strong>
+            <span>{{ node.unidade.nome }}</span>
+          </div>
+
+          <div class="row-actions">
+            <button class="btn btn-sm btn-standard-action" type="button" (click)="edit(node.unidade)">Editar</button>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(node.unidade)">Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<ng-template #semUnidades>
+  <div class="empty-state">Nenhuma unidade administrativa cadastrada.</div>
+</ng-template>
+
+<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
+<div class="modal-custom" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>{{ editingId ? 'Editar unidade administrativa' : 'Nova unidade administrativa' }}</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+
+    <form (ngSubmit)="submit()" #unidadeFormNg="ngForm">
+      <div class="modal-body-custom">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="unidadeNome" [(ngModel)]="form.nome" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Sigla</label>
+            <input class="form-control" name="unidadeSigla" [(ngModel)]="form.sigla" maxlength="40" required />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Unidade superior</label>
+            <select class="form-select" name="unidadeSuperiorId" [(ngModel)]="form.unidadeSuperiorId">
+              <option [ngValue]="null">Nenhuma</option>
+              <option *ngFor="let unidade of unidadesPaiDisponiveis" [ngValue]="unidade.id">
+                {{ unidade.sigla }} - {{ unidade.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" (click)="closeModal()">Fechar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="saving || !unidadeFormNg.form.valid">
+          {{ saving ? 'Salvando...' : 'Salvar unidade' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

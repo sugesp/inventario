@@ -7,6 +7,7 @@ public class ItemInventariadoFormDto
     public string? Descricao { get; set; }
     public Guid LocalId { get; set; }
     public Guid? UsuarioId { get; set; }
+    public Guid? ComissaoId { get; set; }
     public string? Status { get; set; }
     public string? EstadoConservacao { get; set; }
     public string? Observacao { get; set; }

@@ -4,20 +4,28 @@
       <div class="list-header-copy">
         <span class="list-header-eyebrow">Cadastro base</span>
         <h2 class="list-header-title">Locais</h2>
-        <p class="list-header-subtitle">Cadastre os locais e vincule a equipe responsável por cada área.</p>
+        <p class="list-header-subtitle">Cadastre os locais da comissão ativa e vincule a equipe responsável por cada área.</p>
       </div>
-      <button class="btn btn-standard-new" type="button" (click)="openCreateModal()" [disabled]="equipes.length === 0">
+      <button class="btn btn-standard-new" type="button" (click)="openCreateModal()" [disabled]="equipesAtivas.length === 0">
         Novo local
       </button>
     </div>
 
-    <div class="alert alert-warning" *ngIf="equipes.length === 0 && !loadingEquipes">
-      Cadastre pelo menos uma equipe antes de criar locais.
+    <div class="alert alert-warning" *ngIf="!loadingComissao && !activeComissao">
+      Nenhuma comissão ativa foi encontrada. Cadastre ou ative uma comissão antes de criar locais.
     </div>
 
-    <div class="table-card" *ngIf="locais.length > 0; else semLocais">
+    <div class="alert alert-info" *ngIf="activeComissao">
+      Comissão ativa para cadastro: <strong>{{ activeComissao.ano }}</strong>.
+    </div>
+
+    <div class="alert alert-warning" *ngIf="activeComissao && equipesAtivas.length === 0 && !loadingEquipes">
+      Cadastre pelo menos uma equipe na comissão ativa antes de criar locais.
+    </div>
+
+    <div class="table-card" *ngIf="locaisAtivos.length > 0; else semLocais">
       <div class="table-head">
-        <span>{{ locais.length }} local(is)</span>
+        <span>{{ locaisAtivos.length }} local(is)</span>
       </div>
 
       <div class="table-responsive">
@@ -26,13 +34,15 @@
             <tr>
               <th>Local</th>
               <th>Equipe responsável</th>
+              <th>Comissão</th>
               <th class="text-end"></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of locais">
+            <tr *ngFor="let item of locaisAtivos">
               <td>{{ item.nome }}</td>
               <td>{{ item.equipeDescricao }}</td>
+              <td>{{ item.comissaoAno }}</td>
               <td class="text-end">
                 <div class="row-actions">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="edit(item)">Editar</button>
@@ -47,7 +57,7 @@
 </section>
 
 <ng-template #semLocais>
-  <div class="empty-state" *ngIf="!loading">Nenhum local cadastrado.</div>
+  <div class="empty-state" *ngIf="!loading">Nenhum local cadastrado para a comissão ativa.</div>
 </ng-template>
 
 <div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
@@ -69,7 +79,7 @@
             <label class="form-label">Equipe responsável</label>
             <select class="form-select" name="localEquipeId" [(ngModel)]="form.equipeId" required>
               <option value="" disabled>Selecione</option>
-              <option *ngFor="let equipe of equipes" [value]="equipe.id">{{ equipe.descricao }}</option>
+              <option *ngFor="let equipe of equipesAtivas" [value]="equipe.id">{{ equipe.descricao }}</option>
             </select>
           </div>
         </div>

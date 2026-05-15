@@ -61,7 +61,8 @@ export class AppComponent {
   }
 
   get userRole(): string {
-    return this.authService.session?.perfil?.trim() || 'Usuario';
+    const labels = this.authService.permissionLabels;
+    return labels.length > 0 ? labels.join(', ') : 'Sem permissões';
   }
 
   get showShellLayout(): boolean {

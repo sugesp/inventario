@@ -27,13 +27,17 @@
         </a>
       </div>
 
-      <div class="menu-group">
+      <div class="menu-group" *ngIf="authService.canManageInventario || authService.canManageComissoes">
         <span class="menu-section-label">Comissao de Inventario</span>
-        <a class="menu-item" routerLink="/inventariar" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/inventariar" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar</span>
         </a>
-        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/lista-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canManageComissoes" routerLink="/comissoes" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
+          <span>Comissões</span>
+        </a>
+        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/lista-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
           <span>Itens Inventariados</span>
         </a>
@@ -45,31 +49,31 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
           <span>Usuários</span>
         </a>
-        <a class="menu-item" routerLink="/equipes" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-people-group"></i></span>
-          <span>Equipes</span>
-        </a>
         <a class="menu-item" routerLink="/locais" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
           <span>Locais</span>
         </a>
+        <a class="menu-item" routerLink="/unidades-administrativas" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-sitemap"></i></span>
+          <span>Unidades Administrativas</span>
+        </a>
       </div>
 
-      <div class="menu-group">
+      <div class="menu-group" *ngIf="authService.canAccessLaudos || authService.canAccessGtiGestor">
         <span class="menu-section-label">GTI</span>
-        <a class="menu-item" routerLink="/transferir" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canAccessGtiGestor" routerLink="/transferir" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-right-left"></i></span>
           <span>Nova Transferencia</span>
         </a>
-        <a class="menu-item" routerLink="/transferencias" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canAccessGtiGestor" routerLink="/transferencias" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-truck-ramp-box"></i></span>
           <span>Transferências</span>
         </a>
-        <a class="menu-item" routerLink="/laudo-tecnico" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canAccessGtiTecnico" routerLink="/laudo-tecnico" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
           <span>Laudo Técnico</span>
         </a>
-        <a class="menu-item" routerLink="/laudos-tecnicos" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canAccessLaudos" routerLink="/laudos-tecnicos" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></span>
           <span>Laudos Técnicos</span>
         </a>

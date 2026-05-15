@@ -1,6 +1,7 @@
 using Application.Contract;
 using Application.DTO.ItemInventariado;
 using Domain.Model;
+using Domain.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
@@ -108,10 +109,11 @@ public class ItemInventariadoService : IItemInventariadoService
         ItemInventariadoFormDto dto,
         IEnumerable<IFormFile> fotos,
         Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, cancellationToken);
 
         var entity = new ItemInventariado
         {
@@ -120,6 +122,7 @@ public class ItemInventariadoService : IItemInventariadoService
             Descricao = dto.Descricao?.Trim() ?? string.Empty,
             LocalId = dto.LocalId,
             UsuarioId = dto.UsuarioId ?? usuarioAutenticadoId,
+            ComissaoId = dto.ComissaoId,
             Status = NormalizeClassificationStatus(dto.Status)!,
             EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!,
             Observacao = dto.Observacao?.Trim() ?? string.Empty,
@@ -141,6 +144,7 @@ public class ItemInventariadoService : IItemInventariadoService
         Guid id,
         ItemInventariadoFormDto dto,
         IEnumerable<IFormFile> novasFotos,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     )
     {
@@ -153,13 +157,14 @@ public class ItemInventariadoService : IItemInventariadoService
             return null;
         }
 
-        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, cancellationToken);
 
         entity.TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty;
         entity.TombamentoAntigo = dto.TombamentoAntigo?.Trim() ?? string.Empty;
         entity.Descricao = dto.Descricao?.Trim() ?? string.Empty;
         entity.LocalId = dto.LocalId;
         entity.UsuarioId = dto.UsuarioId ?? entity.UsuarioId;
+        entity.ComissaoId = dto.ComissaoId ?? entity.ComissaoId;
         entity.Status = NormalizeClassificationStatus(dto.Status)!;
         entity.EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!;
         entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
@@ -211,6 +216,30 @@ public class ItemInventariadoService : IItemInventariadoService
         return await _context.SaveChangesAsync(cancellationToken) > 0;
     }
 
+    public async Task<ItemInventariadoDto?> MarcarLancamentoEEstadoAsync(
+        Guid id,
+        bool lancado,
+        Guid usuarioId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entity = await _context.ItensInventariados
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (entity is null)
+        {
+            return null;
+        }
+
+        entity.LancadoEEstado = lancado;
+        entity.LancadoEEstadoPorUsuarioId = lancado ? usuarioId : null;
+        entity.LancadoEEstadoEm = lancado ? DateTime.UtcNow : null;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(entity.Id, cancellationToken);
+    }
+
     private IQueryable<ItemInventariado> QueryBase()
     {
         return _context.ItensInventariados
@@ -219,10 +248,18 @@ public class ItemInventariadoService : IItemInventariadoService
             .Include(x => x.Local)
                 .ThenInclude(x => x!.Equipe)
             .Include(x => x.Usuario)
+            .Include(x => x.LancadoEEstadoPorUsuario)
+            .Include(x => x.Comissao)
             .Include(x => x.Fotos.Where(f => f.DeletedAt == null));
     }
 
-    private async Task ValidateAsync(ItemInventariadoFormDto dto, Guid usuarioId, CancellationToken cancellationToken)
+    private async Task ValidateAsync(
+        ItemInventariadoFormDto dto,
+        Guid usuarioId,
+        bool requireActiveComissao,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken
+    )
     {
         if (string.IsNullOrWhiteSpace(dto.Descricao))
         {
@@ -265,6 +302,46 @@ public class ItemInventariadoService : IItemInventariadoService
         if (!usuarioExiste)
         {
             throw new InvalidOperationException("Usuário responsável não encontrado.");
+        }
+
+        if (!dto.ComissaoId.HasValue || dto.ComissaoId == Guid.Empty)
+        {
+            if (requireActiveComissao)
+            {
+                throw new InvalidOperationException("Não existe comissão ativa disponível para vincular o inventário.");
+            }
+
+            return;
+        }
+
+        var comissaoAtivaExiste = await _context.Comissoes.AnyAsync(
+            x =>
+                x.Id == dto.ComissaoId.Value
+                && x.DeletedAt == null
+                && x.Status == "Ativa",
+            cancellationToken
+        );
+        if (!comissaoAtivaExiste)
+        {
+            throw new InvalidOperationException("A comissão informada não está ativa para receber novos inventários.");
+        }
+
+        if (usuarioAdministrador)
+        {
+            return;
+        }
+
+        var usuarioPodeInventariar = await _context.ComissoesMembros.AnyAsync(
+            x =>
+                x.ComissaoId == dto.ComissaoId.Value
+                && x.UsuarioId == usuarioId
+                && x.DeletedAt == null,
+            cancellationToken
+        );
+
+        if (!usuarioPodeInventariar)
+        {
+            throw new InvalidOperationException("Somente membros da comissão ativa podem realizar inventários.");
         }
     }
 
@@ -339,10 +416,17 @@ public class ItemInventariadoService : IItemInventariadoService
             EquipeDescricao = entity.Local?.Equipe?.Descricao ?? string.Empty,
             UsuarioId = entity.UsuarioId,
             UsuarioNome = entity.Usuario?.Nome ?? string.Empty,
+            ComissaoId = entity.ComissaoId,
+            ComissaoAno = entity.Comissao?.Ano,
+            ComissaoStatus = entity.Comissao?.Status,
             Status = entity.Status,
             EstadoConservacao = entity.EstadoConservacao,
             Observacao = entity.Observacao,
             DataInventario = entity.DataInventario,
+            LancadoEEstado = entity.LancadoEEstado,
+            LancadoEEstadoPorUsuarioId = entity.LancadoEEstadoPorUsuarioId,
+            LancadoEEstadoPorUsuarioNome = entity.LancadoEEstadoPorUsuario?.Nome,
+            LancadoEEstadoEm = entity.LancadoEEstadoEm,
             Fotos = entity.Fotos
                 .Where(x => x.DeletedAt == null)
                 .OrderBy(x => x.CreatedAt)

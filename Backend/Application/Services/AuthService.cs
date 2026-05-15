@@ -6,6 +6,7 @@ using Application.Contract;
 using Application.DTO.Auth;
 using Application.DTO.Common;
 using Domain.Model;
+using Domain.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Persistence.Contract;
@@ -20,17 +21,14 @@ public class AuthService : IAuthService
     private const string StatusAtivo = "Ativo";
     private const string StatusDesativado = "Desativado";
     private readonly IGenericRepository<Usuario> _usuarioRepository;
-    private readonly IGenericRepository<Equipe> _equipeRepository;
     private readonly IConfiguration _configuration;
 
     public AuthService(
         IGenericRepository<Usuario> usuarioRepository,
-        IGenericRepository<Equipe> equipeRepository,
         IConfiguration configuration
     )
     {
         _usuarioRepository = usuarioRepository;
-        _equipeRepository = equipeRepository;
         _configuration = configuration;
     }
 
@@ -56,16 +54,14 @@ public class AuthService : IAuthService
 
         var salt = RandomNumberGenerator.GetBytes(16);
         var hash = HashPassword(DefaultPassword, salt);
-        var equipeDescricao = await GetEquipeDescricaoAsync(dto.EquipeId, cancellationToken);
 
         var usuario = new Usuario
         {
             Nome = dto.Nome.Trim(),
             Email = email,
             Cpf = cpf,
-            Perfil = NormalizePerfil(dto.Perfil),
+            PermissoesJson = UsuarioPermissoes.Serialize(dto.Permissoes),
             Status = NormalizeStatus(dto.Status),
-            EquipeId = dto.EquipeId,
             PasswordHash = Convert.ToBase64String(hash),
             PasswordSalt = Convert.ToBase64String(salt),
             MustChangePassword = true
@@ -74,7 +70,7 @@ public class AuthService : IAuthService
         await _usuarioRepository.AddAsync(usuario, cancellationToken);
         await _usuarioRepository.SaveChangesAsync(cancellationToken);
 
-        return GenerateAuthResponse(usuario, equipeDescricao);
+        return GenerateAuthResponse(usuario);
     }
 
     public async Task<UsuarioDto> PreRegisterAsync(PreRegisterDto dto, CancellationToken cancellationToken = default)
@@ -108,7 +104,7 @@ public class AuthService : IAuthService
             Nome = dto.Nome.Trim(),
             Email = email,
             Cpf = cpf,
-            Perfil = "Operador",
+            PermissoesJson = UsuarioPermissoes.Serialize([]),
             Status = StatusPendente,
             PasswordHash = Convert.ToBase64String(hash),
             PasswordSalt = Convert.ToBase64String(salt),
@@ -124,7 +120,7 @@ public class AuthService : IAuthService
             Nome = usuario.Nome,
             Email = usuario.Email,
             Cpf = MaskCpf(usuario.Cpf),
-            Perfil = usuario.Perfil,
+            Permissoes = UsuarioPermissoes.Deserialize(usuario.PermissoesJson),
             Status = usuario.Status,
             MustChangePassword = usuario.MustChangePassword
         };
@@ -163,14 +159,11 @@ public class AuthService : IAuthService
         usuario.Nome = dto.Nome.Trim();
         usuario.Email = email;
         usuario.Cpf = cpf;
-        usuario.Perfil = NormalizePerfil(dto.Perfil);
+        usuario.PermissoesJson = UsuarioPermissoes.Serialize(dto.Permissoes);
         usuario.Status = NormalizeStatus(dto.Status);
-        usuario.EquipeId = dto.EquipeId;
 
         _usuarioRepository.Update(usuario);
         await _usuarioRepository.SaveChangesAsync(cancellationToken);
-
-        var equipeDescricao = await GetEquipeDescricaoAsync(usuario.EquipeId, cancellationToken);
 
         return new UsuarioDto
         {
@@ -178,10 +171,8 @@ public class AuthService : IAuthService
             Nome = usuario.Nome,
             Email = usuario.Email,
             Cpf = MaskCpf(usuario.Cpf),
-            Perfil = usuario.Perfil,
+            Permissoes = UsuarioPermissoes.Deserialize(usuario.PermissoesJson),
             Status = usuario.Status,
-            EquipeId = usuario.EquipeId,
-            EquipeDescricao = equipeDescricao,
             MustChangePassword = usuario.MustChangePassword
         };
     }
@@ -201,8 +192,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Seu cadastro ainda está pendente de aprovação do administrador.");
         }
 
-        var equipeDescricao = await GetEquipeDescricaoAsync(usuario.EquipeId, cancellationToken);
-        return GenerateAuthResponse(usuario, equipeDescricao);
+        return GenerateAuthResponse(usuario);
     }
 
     public async Task<AuthResponseDto> ChangePasswordAsync(
@@ -240,8 +230,7 @@ public class AuthService : IAuthService
         _usuarioRepository.Update(usuario);
         await _usuarioRepository.SaveChangesAsync(cancellationToken);
 
-        var equipeDescricao = await GetEquipeDescricaoAsync(usuario.EquipeId, cancellationToken);
-        return GenerateAuthResponse(usuario, equipeDescricao);
+        return GenerateAuthResponse(usuario);
     }
 
     public async Task ResetPasswordAsync(Guid usuarioId, CancellationToken cancellationToken = default)
@@ -271,7 +260,6 @@ public class AuthService : IAuthService
     public async Task<IEnumerable<UsuarioDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
         var usuarios = (await _usuarioRepository.GetAllAsync(cancellationToken)).ToList();
-        var equipes = (await _equipeRepository.GetAllAsync(cancellationToken)).ToDictionary(x => x.Id, x => x.Descricao);
         return usuarios
             .Where(x => !IsSystemAdminUser(x))
             .Select(x => new UsuarioDto
@@ -280,10 +268,8 @@ public class AuthService : IAuthService
                 Nome = x.Nome,
                 Email = x.Email,
                 Cpf = MaskCpf(x.Cpf),
-                Perfil = x.Perfil,
+                Permissoes = UsuarioPermissoes.Deserialize(x.PermissoesJson),
                 Status = x.Status,
-                EquipeId = x.EquipeId,
-                EquipeDescricao = x.EquipeId.HasValue ? equipes.GetValueOrDefault(x.EquipeId.Value) : null,
                 MustChangePassword = x.MustChangePassword
             })
             .OrderBy(x => x.Nome);
@@ -295,7 +281,6 @@ public class AuthService : IAuthService
     )
     {
         var usuarios = (await _usuarioRepository.GetAllAsync(cancellationToken)).ToList();
-        var equipes = (await _equipeRepository.GetAllAsync(cancellationToken)).ToDictionary(x => x.Id, x => x.Descricao);
         var data = usuarios
             .Where(x => !IsSystemAdminUser(x))
             .Select(x => new UsuarioDto
@@ -304,10 +289,8 @@ public class AuthService : IAuthService
                 Nome = x.Nome,
                 Email = x.Email,
                 Cpf = MaskCpf(x.Cpf),
-                Perfil = x.Perfil,
+                Permissoes = UsuarioPermissoes.Deserialize(x.PermissoesJson),
                 Status = x.Status,
-                EquipeId = x.EquipeId,
-                EquipeDescricao = x.EquipeId.HasValue ? equipes.GetValueOrDefault(x.EquipeId.Value) : null,
                 MustChangePassword = x.MustChangePassword
             })
             .AsEnumerable();
@@ -319,9 +302,8 @@ public class AuthService : IAuthService
             data = data.Where(x =>
                 ContainsTerm(x.Nome, term)
                 || ContainsTerm(x.Email, term)
-                || ContainsTerm(x.Perfil, term)
+                || x.Permissoes.Any(permissao => ContainsTerm(permissao, term))
                 || ContainsTerm(x.Status, term)
-                || ContainsTerm(x.EquipeDescricao, term)
                 || (!string.IsNullOrWhiteSpace(termDigits) && ContainsTerm(OnlyDigits(x.Cpf), termDigits))
             );
         }
@@ -335,7 +317,7 @@ public class AuthService : IAuthService
         var usuarios = await _usuarioRepository.GetAllAsync(cancellationToken);
         return usuarios
             .Where(x =>
-                string.Equals(x.Perfil, "Inventario", StringComparison.OrdinalIgnoreCase)
+                UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Inventario)
                 && string.Equals(x.Status, StatusAtivo, StringComparison.OrdinalIgnoreCase))
             .OrderBy(x => x.Nome)
             .Select(x => new UsuarioResponsavelDto
@@ -346,7 +328,38 @@ public class AuthService : IAuthService
             });
     }
 
-    private AuthResponseDto GenerateAuthResponse(Usuario usuario, string? equipeDescricao = null)
+    public async Task<PagedResult<UsuarioResponsavelDto>> GetPagedInventarioUsersAsync(
+        PageParams pageParams,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var usuarios = (await _usuarioRepository.GetAllAsync(cancellationToken))
+            .Where(x =>
+                UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Inventario)
+                && string.Equals(x.Status, StatusAtivo, StringComparison.OrdinalIgnoreCase))
+            .Select(x => new UsuarioResponsavelDto
+            {
+                Id = x.Id,
+                Nome = x.Nome,
+                Cpf = MaskCpf(x.Cpf)
+            })
+            .AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(pageParams.Term))
+        {
+            var term = pageParams.Term.Trim();
+            var termDigits = OnlyDigits(term);
+            usuarios = usuarios.Where(x =>
+                ContainsTerm(x.Nome, term)
+                || (!string.IsNullOrWhiteSpace(termDigits) && ContainsTerm(OnlyDigits(x.Cpf), termDigits))
+            );
+        }
+
+        usuarios = usuarios.OrderBy(x => x.Nome);
+        return PagedResult<UsuarioResponsavelDto>.Create(usuarios, pageParams);
+    }
+
+    private AuthResponseDto GenerateAuthResponse(Usuario usuario)
     {
         var jwtSection = _configuration.GetSection("Jwt");
         var secret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
@@ -354,17 +367,18 @@ public class AuthService : IAuthService
         var audience = jwtSection["Audience"] ?? "Inventario.App";
         var expiresMinutes = int.TryParse(jwtSection["ExpiresMinutes"], out var value) ? value : 480;
         var expiresAt = DateTime.UtcNow.AddMinutes(expiresMinutes);
+        var permissoes = UsuarioPermissoes.Deserialize(usuario.PermissoesJson);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
             new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, usuario.Email),
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
-            new Claim("cpf", usuario.Cpf),
-            new Claim(ClaimTypes.Role, usuario.Perfil),
-            new Claim("equipeId", usuario.EquipeId?.ToString() ?? string.Empty)
+            new Claim("cpf", usuario.Cpf)
         };
+
+        claims.AddRange(permissoes.Select(permissao => new Claim(ClaimTypes.Role, permissao)));
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
@@ -381,33 +395,16 @@ public class AuthService : IAuthService
 
         return new AuthResponseDto
         {
+            UserId = usuario.Id,
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             ExpiresAt = expiresAt,
             Nome = usuario.Nome,
             Email = usuario.Email,
             Cpf = MaskCpf(usuario.Cpf),
-            Perfil = usuario.Perfil,
+            Permissoes = permissoes,
             Status = usuario.Status,
-            EquipeId = usuario.EquipeId,
-            EquipeDescricao = equipeDescricao,
             MustChangePassword = usuario.MustChangePassword
         };
-    }
-
-    private async Task<string?> GetEquipeDescricaoAsync(Guid? equipeId, CancellationToken cancellationToken)
-    {
-        if (!equipeId.HasValue)
-        {
-            return null;
-        }
-
-        var equipe = await _equipeRepository.GetByIdAsync(equipeId.Value, cancellationToken);
-        if (equipe is null)
-        {
-            throw new InvalidOperationException("Equipe não encontrada.");
-        }
-
-        return equipe.Descricao;
     }
 
     private static string NormalizeCpf(string cpf)
@@ -442,28 +439,6 @@ public class AuthService : IAuthService
         }
 
         return $"{normalizedCpf[..3]}.***.***-{normalizedCpf[9..]}";
-    }
-
-    private static string NormalizePerfil(string perfil)
-    {
-        if (string.Equals(perfil, "Financeiro", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Financeiro";
-        }
-
-        if (string.Equals(perfil, "Controle Interno", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Controle Interno";
-        }
-
-        if (string.Equals(perfil, "Inventario", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Inventario";
-        }
-
-        return string.Equals(perfil, "Administrador", StringComparison.OrdinalIgnoreCase)
-            ? "Administrador"
-            : "Operador";
     }
 
     private static string NormalizeStatus(string status)

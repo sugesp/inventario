@@ -3,6 +3,8 @@ import jsQR from 'jsqr';
 import { ToastrService } from 'ngx-toastr';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
+import { Comissao } from '../../contracts/comissao.model';
+import { ComissaoService } from '../../contracts/comissao.service';
 import { ConsultaPublicaBem } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
@@ -68,8 +70,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   @ViewChild('traseiraPhotoInput') traseiraPhotoInput?: ElementRef<HTMLInputElement>;
 
   locais: Local[] = [];
+  activeComissao: Comissao | null = null;
   selectedLocalId = '';
   activeStep: InventoryStep = 'local';
+  loadingComissao = false;
   loadingLocais = false;
   saving = false;
   readingCode = false;
@@ -100,12 +104,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   constructor(
     readonly authService: AuthService,
+    private readonly comissaoService: ComissaoService,
     private readonly localService: LocalService,
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
+    this.loadActiveComissao();
     this.loadLocais();
     this.restoreState();
   }
@@ -119,12 +125,20 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   get locaisDisponiveis(): Local[] {
-    const equipeId = this.authService.session?.equipeId;
+    const locaisDaComissao = this.activeComissao
+      ? this.locais.filter((item) => item.comissaoId === this.activeComissao?.id)
+      : [];
+
+    const equipeId = this.activeComissao?.membros.find(
+      (item) => item.usuarioId === this.authService.session?.userId
+    )?.equipeId;
+
     if (!equipeId || this.authService.isAdmin) {
-      return this.locais;
+      return locaisDaComissao;
     }
 
-    return this.locais.filter((item) => item.equipeId === equipeId);
+    const locaisDaEquipe = locaisDaComissao.filter((item) => item.equipeId === equipeId);
+    return locaisDaEquipe.length > 0 ? locaisDaEquipe : locaisDaComissao;
   }
 
   get localSelecionado(): Local | null {
@@ -132,7 +146,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   get canAdvanceToScan(): boolean {
-    return !!this.selectedLocalId;
+    return !!this.selectedLocalId && !!this.activeComissao;
   }
 
   get canUseLiveScanner(): boolean {
@@ -196,6 +210,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     if (!this.selectedLocalId) {
       reasons.push('Selecione o local do item.');
+    }
+
+    if (!this.activeComissao) {
+      reasons.push('Nenhuma comissão ativa está disponível para este inventário.');
     }
 
     if (!this.form.descricao.trim()) {
@@ -275,6 +293,20 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       error: () => {
         this.loadingLocais = false;
         this.toastr.error('Não foi possível carregar os locais.');
+      },
+    });
+  }
+
+  loadActiveComissao(): void {
+    this.loadingComissao = true;
+    this.comissaoService.getActive().subscribe({
+      next: (data) => {
+        this.activeComissao = data;
+        this.loadingComissao = false;
+      },
+      error: () => {
+        this.activeComissao = null;
+        this.loadingComissao = false;
       },
     });
   }
@@ -522,6 +554,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     const payload = new FormData();
+    payload.append('comissaoId', this.activeComissao!.id);
     payload.append('localId', this.selectedLocalId);
     payload.append('tombamentoNovo', this.form.tombamentoNovo.trim());
     payload.append('tombamentoAntigo', this.form.tombamentoAntigo.trim());

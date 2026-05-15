@@ -4,8 +4,7 @@ import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 import { RegisterPayload, UserSummary } from '../../auth/auth.model';
-import { Equipe } from '../../contracts/equipe.model';
-import { EquipeService } from '../../contracts/equipe.service';
+import { getUserPermissionLabel, USER_PERMISSION_OPTIONS, UserPermission } from '../../auth/permissions';
 import { PageParams } from '../../shared/pagination.model';
 
 @Component({
@@ -15,9 +14,7 @@ import { PageParams } from '../../shared/pagination.model';
 })
 export class UsuariosComponent implements OnInit, OnDestroy {
   usuarios: UserSummary[] = [];
-  equipes: Equipe[] = [];
   loading = false;
-  loadingEquipes = false;
   saving = false;
   updatingStatusUserId: string | null = null;
   resettingUserId: string | null = null;
@@ -31,19 +28,18 @@ export class UsuariosComponent implements OnInit, OnDestroy {
   totalPages = 0;
   private readonly searchTermChanged$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
+  readonly permissionOptions = USER_PERMISSION_OPTIONS;
 
   form: RegisterPayload = {
     nome: '',
     email: '',
     cpf: '',
-    perfil: 'Operador',
+    permissoes: [],
     status: 'Ativo',
-    equipeId: null,
   };
 
   constructor(
     private readonly authService: AuthService,
-    private readonly equipeService: EquipeService,
     private readonly toastr: ToastrService
   ) {}
 
@@ -59,7 +55,6 @@ export class UsuariosComponent implements OnInit, OnDestroy {
         this.loadUsers();
       });
 
-    this.loadEquipes();
     this.loadUsers();
   }
 
@@ -82,9 +77,8 @@ export class UsuariosComponent implements OnInit, OnDestroy {
       nome: usuario.nome,
       email: usuario.email,
       cpf: usuario.cpf,
-      perfil: usuario.perfil as RegisterPayload['perfil'],
+      permissoes: [...usuario.permissoes] as UserPermission[],
       status: (usuario.status as RegisterPayload['status']) ?? 'Ativo',
-      equipeId: usuario.equipeId ?? null,
     };
     this.showModal = true;
   }
@@ -96,9 +90,8 @@ export class UsuariosComponent implements OnInit, OnDestroy {
       nome: '',
       email: '',
       cpf: '',
-      perfil: 'Operador',
+      permissoes: [],
       status: 'Ativo',
-      equipeId: null,
     };
   }
 
@@ -120,20 +113,6 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     }
 
     return 'status-badge status-badge-inactive';
-  }
-
-  loadEquipes(): void {
-    this.loadingEquipes = true;
-    this.equipeService.getAll().subscribe({
-      next: (data) => {
-        this.equipes = [...data].sort((a, b) => a.descricao.localeCompare(b.descricao));
-        this.loadingEquipes = false;
-      },
-      error: () => {
-        this.loadingEquipes = false;
-        this.toastr.error('Nao foi possivel carregar as equipes.');
-      },
-    });
   }
 
   loadUsers(): void {
@@ -292,9 +271,8 @@ export class UsuariosComponent implements OnInit, OnDestroy {
       nome: usuario.nome,
       email: usuario.email,
       cpf: usuario.cpf,
-      perfil: usuario.perfil as RegisterPayload['perfil'],
+      permissoes: [...usuario.permissoes] as UserPermission[],
       status,
-      equipeId: usuario.equipeId ?? null,
     };
 
     this.authService.updateUser(usuario.id, payload).subscribe({
@@ -312,5 +290,28 @@ export class UsuariosComponent implements OnInit, OnDestroy {
 
   private onlyDigits(value: string): string {
     return value.replace(/\D/g, '');
+  }
+
+  getPermissionsLabel(usuario: UserSummary): string {
+    if (usuario.permissoes.length === 0) {
+      return 'Sem permissões';
+    }
+
+    return usuario.permissoes.map((item) => getUserPermissionLabel(item)).join(', ');
+  }
+
+  hasPermission(permission: UserPermission): boolean {
+    return this.form.permissoes.includes(permission);
+  }
+
+  togglePermission(permission: UserPermission, checked: boolean): void {
+    const next = checked
+      ? [...this.form.permissoes, permission]
+      : this.form.permissoes.filter((item) => item !== permission);
+
+    this.form = {
+      ...this.form,
+      permissoes: [...new Set(next)] as UserPermission[],
+    };
   }
 }

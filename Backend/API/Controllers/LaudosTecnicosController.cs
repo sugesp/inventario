@@ -18,12 +18,14 @@ public class LaudosTecnicosController : ControllerBase
         _service = service;
     }
 
+    [Authorize(Roles = "Administrador,GTI.Tecnico,GTI.Gestor")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LaudoTecnicoDto>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await _service.GetAllAsync(cancellationToken));
     }
 
+    [Authorize(Roles = "Administrador,GTI.Tecnico,GTI.Gestor")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LaudoTecnicoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ public class LaudosTecnicosController : ControllerBase
         return laudo is null ? NotFound() : Ok(laudo);
     }
 
+    [Authorize(Roles = "Administrador,GTI.Tecnico")]
     [HttpPost]
     public async Task<ActionResult<LaudoTecnicoDto>> Create([FromBody] LaudoTecnicoSaveDto dto, CancellationToken cancellationToken)
     {

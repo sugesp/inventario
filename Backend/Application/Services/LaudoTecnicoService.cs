@@ -2,6 +2,7 @@ using System.Text.Json;
 using Application.Contract;
 using Application.DTO.LaudoTecnico;
 using Domain.Model;
+using Domain.Security;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 
@@ -91,7 +92,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             ClassificacaoFinal = dto.ClassificacaoFinal.Trim(),
             ResponsavelTecnicoUsuarioId = usuario.Id,
             ResponsavelTecnicoNome = usuario.Nome.Trim(),
-            ResponsavelTecnicoCargo = usuario.Perfil.Trim()
+            ResponsavelTecnicoCargo = BuildResponsavelTecnicoCargo(usuario)
         };
 
         _context.LaudosTecnicos.Add(entity);
@@ -212,6 +213,33 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };
+    }
+
+    private static string BuildResponsavelTecnicoCargo(Usuario usuario)
+    {
+        var permissoes = UsuarioPermissoes.Deserialize(usuario.PermissoesJson);
+
+        if (permissoes.Contains(UsuarioPermissoes.Administrador))
+        {
+            return UsuarioPermissoes.Administrador;
+        }
+
+        if (permissoes.Contains(UsuarioPermissoes.GtiTecnico))
+        {
+            return "GTI - Técnico";
+        }
+
+        if (permissoes.Contains(UsuarioPermissoes.GtiGestor))
+        {
+            return "GTI - Gestor";
+        }
+
+        if (permissoes.Contains(UsuarioPermissoes.Inventario))
+        {
+            return UsuarioPermissoes.Inventario;
+        }
+
+        return "Usuário";
     }
 
     private static string SerializeList(IEnumerable<string> values)

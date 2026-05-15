@@ -111,6 +111,16 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("users/inventario/paged")]
+    public async Task<ActionResult<PagedResult<UsuarioResponsavelDto>>> GetPagedInventarioUsers(
+        [FromQuery] PageParams pageParams,
+        CancellationToken cancellationToken
+    )
+    {
+        return Ok(await _service.GetPagedInventarioUsersAsync(pageParams, cancellationToken));
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     public async Task<ActionResult<AuthResponseDto>> ChangePassword(
         [FromBody] ChangePasswordDto dto,

@@ -44,7 +44,7 @@ public class TransferenciaService : ITransferenciaService
 
         var entity = new Transferencia
         {
-            LocalDestinoId = dto.LocalDestinoId,
+            UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId,
             CriadoPorUsuarioId = usuarioAutenticadoId,
             ResponsavelDestino = dto.ResponsavelDestino.Trim(),
             IdSeiTermo = dto.IdSeiTermo.Trim(),
@@ -78,7 +78,7 @@ public class TransferenciaService : ITransferenciaService
             return null;
         }
 
-        entity.LocalDestinoId = dto.LocalDestinoId;
+        entity.UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId;
         entity.ResponsavelDestino = dto.ResponsavelDestino.Trim();
         entity.IdSeiTermo = dto.IdSeiTermo.Trim();
         entity.DataEntrega = dto.DataEntrega;
@@ -131,7 +131,7 @@ public class TransferenciaService : ITransferenciaService
         return _context.Set<Transferencia>()
             .AsNoTracking()
             .Where(x => x.DeletedAt == null)
-            .Include(x => x.LocalDestino)
+            .Include(x => x.UnidadeAdministrativaDestino)
             .Include(x => x.CriadoPorUsuario)
             .Include(x => x.FinalizadoPorUsuario)
             .Include(x => x.Itens.Where(item => item.DeletedAt == null));
@@ -139,15 +139,18 @@ public class TransferenciaService : ITransferenciaService
 
     private async Task ValidateAsync(TransferenciaSaveDto dto, CancellationToken cancellationToken)
     {
-        if (dto.LocalDestinoId == Guid.Empty)
+        if (dto.UnidadeAdministrativaDestinoId == Guid.Empty)
         {
-            throw new InvalidOperationException("Selecione o local de destino.");
+            throw new InvalidOperationException("Selecione a unidade administrativa de destino.");
         }
 
-        var localExiste = await _context.Locais.AnyAsync(x => x.Id == dto.LocalDestinoId && x.DeletedAt == null, cancellationToken);
-        if (!localExiste)
+        var unidadeExiste = await _context.UnidadesAdministrativas.AnyAsync(
+            x => x.Id == dto.UnidadeAdministrativaDestinoId && x.DeletedAt == null,
+            cancellationToken
+        );
+        if (!unidadeExiste)
         {
-            throw new InvalidOperationException("Local de destino não encontrado.");
+            throw new InvalidOperationException("Unidade administrativa de destino não encontrada.");
         }
 
         if (string.IsNullOrWhiteSpace(dto.ResponsavelDestino))
@@ -204,8 +207,9 @@ public class TransferenciaService : ITransferenciaService
         return new TransferenciaDto
         {
             Id = entity.Id,
-            LocalDestinoId = entity.LocalDestinoId,
-            LocalDestinoNome = entity.LocalDestino?.Nome ?? string.Empty,
+            UnidadeAdministrativaDestinoId = entity.UnidadeAdministrativaDestinoId,
+            UnidadeAdministrativaDestinoNome = entity.UnidadeAdministrativaDestino?.Nome ?? string.Empty,
+            UnidadeAdministrativaDestinoSigla = entity.UnidadeAdministrativaDestino?.Sigla ?? string.Empty,
             CriadoPorUsuarioId = entity.CriadoPorUsuarioId,
             CriadoPorUsuarioNome = entity.CriadoPorUsuario?.Nome ?? string.Empty,
             FinalizadoPorUsuarioId = entity.FinalizadoPorUsuarioId,

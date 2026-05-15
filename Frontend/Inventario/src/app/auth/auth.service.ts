@@ -5,6 +5,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageParams, PagedResult } from '../shared/pagination.model';
 import { AuthResponse, AuthSession, ChangePasswordPayload, LoginPayload, PreRegisterPayload, RegisterPayload, UserSummary } from './auth.model';
+import { getUserPermissionLabel, UserPermission } from './permissions';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -36,17 +37,35 @@ export class AuthService {
   }
 
   get isAdmin(): boolean {
-    return this.session?.perfil === 'Administrador';
+    return this.hasPermission('Administrador');
   }
 
   get canManageInventario(): boolean {
-    return this.session?.perfil === 'Administrador' || this.session?.perfil === 'Inventario';
+    return this.isAdmin || this.hasPermission('Inventario');
   }
 
-  get canManageFinanceiro(): boolean {
-    return this.session?.perfil === 'Administrador'
-      || this.session?.perfil === 'Inventario'
-      || this.session?.perfil === 'Financeiro';
+  get canManageComissoes(): boolean {
+    return this.isAdmin || this.hasPermission('Inventario');
+  }
+
+  get canAccessGtiTecnico(): boolean {
+    return this.isAdmin || this.hasPermission('GTI.Tecnico');
+  }
+
+  get canAccessGtiGestor(): boolean {
+    return this.isAdmin || this.hasPermission('GTI.Gestor');
+  }
+
+  get canAccessLaudos(): boolean {
+    return this.canAccessGtiTecnico || this.canAccessGtiGestor;
+  }
+
+  get permissionLabels(): string[] {
+    return (this.session?.permissoes ?? []).map((item) => getUserPermissionLabel(item));
+  }
+
+  hasPermission(permission: UserPermission): boolean {
+    return this.session?.permissoes?.includes(permission) ?? false;
   }
 
   login(payload: LoginPayload): Observable<AuthResponse> {
@@ -83,6 +102,16 @@ export class AuthService {
 
   getInventarioUsers(): Observable<Array<{ id: string; nome: string; cpf: string }>> {
     return this.http.get<Array<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/inventario`);
+  }
+
+  getPagedInventarioUsers(params: PageParams): Observable<PagedResult<{ id: string; nome: string; cpf: string }>> {
+    return this.http.get<PagedResult<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/inventario/paged`, {
+      params: {
+        pageNumber: params.pageNumber,
+        pageSize: params.pageSize,
+        term: params.term,
+      },
+    });
   }
 
   changePassword(payload: ChangePasswordPayload): Observable<AuthResponse> {

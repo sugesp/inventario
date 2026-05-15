@@ -9,7 +9,7 @@ interface DashboardShortcut {
   description: string;
   route: string;
   icon: string;
-  adminOnly?: boolean;
+  visible: () => boolean;
 }
 
 interface DashboardCountCard {
@@ -30,46 +30,42 @@ export class DashboardComponent implements OnInit {
       description: 'Siga o fluxo completo de conferência, classificação e fotos para cadastrar um bem.',
       route: '/inventariar',
       icon: 'fa-box-archive',
+      visible: () => this.authService.canManageInventario,
     },
     {
       title: 'Listagem de itens',
       description: 'Acompanhe todos os itens inventariados já registrados no sistema.',
       route: '/lista-inventariados',
       icon: 'fa-table-list',
-      adminOnly: true,
+      visible: () => this.authService.canManageInventario,
     },
     {
       title: 'Nova transferência',
       description: 'Leia os tombamentos, monte a remessa no celular e conclua a entrega depois no computador.',
       route: '/transferir',
       icon: 'fa-right-left',
+      visible: () => this.authService.canAccessGtiGestor,
     },
     {
       title: 'Laudo Técnico',
       description: 'Preencha o laudo individual por etapas, sem depender do PDF impresso.',
       route: '/laudo-tecnico',
       icon: 'fa-file-circle-check',
+      visible: () => this.authService.canAccessGtiTecnico,
     },
     {
       title: 'Usuários',
       description: 'Gerencie acessos e perfis das pessoas que vão operar o inventário.',
       route: '/usuarios',
       icon: 'fa-users',
-      adminOnly: true,
-    },
-    {
-      title: 'Equipes',
-      description: 'Organize as equipes responsáveis pelos locais e pelos levantamentos.',
-      route: '/equipes',
-      icon: 'fa-people-group',
-      adminOnly: true,
+      visible: () => this.authService.isAdmin,
     },
     {
       title: 'Locais',
       description: 'Estruture os locais inventariados e vincule cada um à equipe responsável.',
       route: '/locais',
       icon: 'fa-location-dot',
-      adminOnly: true,
+      visible: () => this.authService.isAdmin,
     },
   ];
 
@@ -83,13 +79,13 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.authService.isAdmin) {
+    if (this.authService.canManageInventario) {
       this.loadDashboardStats();
     }
   }
 
   get visibleShortcuts(): DashboardShortcut[] {
-    return this.shortcuts.filter((item) => !item.adminOnly || this.authService.isAdmin);
+    return this.shortcuts.filter((item) => item.visible());
   }
 
   get totalInventariados(): number {
