@@ -199,16 +199,11 @@ public class ComissaoService : IComissaoService
             }
         }
 
-        var membros = dto.Membros
+        var membros = (dto.Membros ?? new List<ComissaoMembroSaveDto>())
             .Where(x => x.UsuarioId != Guid.Empty)
             .GroupBy(x => x.UsuarioId)
             .Select(x => x.Last())
             .ToList();
-
-        if (membros.Count == 0)
-        {
-            throw new InvalidOperationException("Informe ao menos um membro para a comissão.");
-        }
 
         var membroIds = membros.Select(x => x.UsuarioId).ToHashSet();
 
