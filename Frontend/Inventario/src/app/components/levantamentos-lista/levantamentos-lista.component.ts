@@ -105,12 +105,13 @@ export class LevantamentosListaComponent implements OnInit {
       </tr>
     `).join('');
 
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=800');
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
     if (!printWindow) {
       this.toastr.error('Não foi possível abrir a janela de impressão do PDF.');
       return;
     }
 
+    printWindow.document.open();
     printWindow.document.write(`
       <!DOCTYPE html>
       <html lang="pt-BR">
@@ -156,8 +157,11 @@ export class LevantamentosListaComponent implements OnInit {
       </html>
     `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+
+    window.setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 350);
   }
 
   private formatDateTime(value: string | null | undefined): string {
