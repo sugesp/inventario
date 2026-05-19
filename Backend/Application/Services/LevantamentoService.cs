@@ -88,12 +88,20 @@ public class LevantamentoService : ILevantamentoService
         }
 
         var tombamentoNormalizado = NormalizeDigits(dto.Tombamento);
-        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        var tombamentoAntigoInformado = NormalizeOptionalTombamentoAntigo(dto.TombamentoAntigo);
+        var descricaoInformada = dto.Descricao?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado) && string.IsNullOrWhiteSpace(tombamentoAntigoInformado))
         {
-            throw new InvalidOperationException("Informe um tombamento válido para confirmação.");
+            throw new InvalidOperationException("Informe o tombamento do E-Estado ou o tombamento antigo para confirmação.");
         }
 
-        var tombamentoFormatado = FormatTombamento(tombamentoNormalizado);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado) && string.IsNullOrWhiteSpace(descricaoInformada))
+        {
+            throw new InvalidOperationException("Informe a descrição do item quando houver apenas tombamento antigo.");
+        }
+
+        var tombamentoFormatado = BuildStoredTombamentoKey(tombamentoNormalizado, tombamentoAntigoInformado);
         var jaExiste = await _context.LevantamentosItens.AnyAsync(
             x => x.LevantamentoId == levantamentoId && x.DeletedAt == null && x.Tombamento == tombamentoFormatado,
             cancellationToken
@@ -104,13 +112,19 @@ public class LevantamentoService : ILevantamentoService
             throw new InvalidOperationException("Esse tombamento já foi confirmado neste levantamento.");
         }
 
-        var resumo = await _itemInventariadoService.ConsultarResumoPublicoAsync(tombamentoNormalizado, cancellationToken);
+        var resumo = string.IsNullOrWhiteSpace(tombamentoNormalizado)
+            ? null
+            : await _itemInventariadoService.ConsultarResumoPublicoAsync(tombamentoNormalizado, cancellationToken);
         var item = new LevantamentoItem
         {
             LevantamentoId = levantamentoId,
-            Tombamento = FormatTombamento(resumo?.Tombamento ?? tombamentoNormalizado),
-            TombamentoAntigo = NormalizeOptionalTombamentoAntigo(resumo?.TombamentoAntigo),
-            Descricao = (resumo?.Descricao ?? resumo?.Tipo ?? string.Empty).Trim(),
+            Tombamento = !string.IsNullOrWhiteSpace(tombamentoNormalizado)
+                ? FormatTombamento(resumo?.Tombamento ?? tombamentoNormalizado)
+                : BuildStoredTombamentoKey(string.Empty, tombamentoAntigoInformado),
+            TombamentoAntigo = !string.IsNullOrWhiteSpace(tombamentoAntigoInformado)
+                ? tombamentoAntigoInformado
+                : NormalizeOptionalTombamentoAntigo(resumo?.TombamentoAntigo),
+            Descricao = (resumo?.Descricao ?? resumo?.Tipo ?? descricaoInformada).Trim(),
             Tipo = resumo?.Tipo?.Trim() ?? string.Empty,
             UrlConsulta = resumo?.UrlConsulta?.Trim() ?? BuildConsultaUrl(tombamentoNormalizado),
             ConfirmadoPorUsuarioId = usuarioAutenticadoId,
@@ -161,7 +175,7 @@ public class LevantamentoService : ILevantamentoService
         return new LevantamentoItemDto
         {
             Id = entity.Id,
-            Tombamento = entity.Tombamento,
+            Tombamento = ParseDisplayTombamento(entity.Tombamento),
             TombamentoAntigo = entity.TombamentoAntigo,
             Descricao = entity.Descricao,
             Tipo = entity.Tipo,
@@ -213,6 +227,28 @@ public class LevantamentoService : ILevantamentoService
 
     private static string BuildConsultaUrl(string tombamento)
     {
+        if (string.IsNullOrWhiteSpace(tombamento))
+        {
+            return string.Empty;
+        }
+
         return $"https://e-estado.ro.gov.br/publico/bens/{NormalizeDigits(tombamento)}";
+    }
+
+    private static string BuildStoredTombamentoKey(string? tombamentoNovo, string? tombamentoAntigo)
+    {
+        var tombamentoNormalizado = NormalizeDigits(tombamentoNovo);
+        if (!string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        {
+            return FormatTombamento(tombamentoNormalizado);
+        }
+
+        var tombamentoAntigoNormalizado = NormalizeOptionalTombamentoAntigo(tombamentoAntigo);
+        return $"ANTIGO:{tombamentoAntigoNormalizado}";
+    }
+
+    private static string ParseDisplayTombamento(string value)
+    {
+        return value.StartsWith("ANTIGO:", StringComparison.OrdinalIgnoreCase) ? string.Empty : value;
     }
 }

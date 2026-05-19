@@ -128,8 +128,16 @@
         <label class="form-label">Tombamento manual</label>
         <input class="form-control" [(ngModel)]="manualTombamento" placeholder="000.000.000" />
       </div>
+      <div>
+        <label class="form-label">Tombamento antigo</label>
+        <input class="form-control" [(ngModel)]="manualTombamentoAntigo" placeholder="Opcional" />
+      </div>
+      <div>
+        <label class="form-label">Descrição do item</label>
+        <input class="form-control" [(ngModel)]="manualDescricao" placeholder="Obrigatória quando houver apenas tombamento antigo" />
+      </div>
       <div class="manual-confirm-action">
-        <button class="btn btn-outline-secondary" type="button" (click)="confirmManualTombamento()" [disabled]="consultaEmAndamento || !manualTombamento.trim()">
+        <button class="btn btn-outline-secondary" type="button" (click)="confirmManualTombamento()" [disabled]="consultaEmAndamento || (!manualTombamento.trim() && !manualTombamentoAntigo.trim())">
           Informar tombamento
         </button>
       </div>

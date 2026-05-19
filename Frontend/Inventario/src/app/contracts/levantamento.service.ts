@@ -22,7 +22,7 @@ export class LevantamentoService {
     return this.http.post<Levantamento>(this.baseUrl, payload);
   }
 
-  confirmarItem(levantamentoId: string, tombamento: string): Observable<LevantamentoItem> {
-    return this.http.post<LevantamentoItem>(`${this.baseUrl}/${levantamentoId}/itens`, { tombamento });
+  confirmarItem(levantamentoId: string, tombamento: string, tombamentoAntigo = '', descricao = ''): Observable<LevantamentoItem> {
+    return this.http.post<LevantamentoItem>(`${this.baseUrl}/${levantamentoId}/itens`, { tombamento, tombamentoAntigo, descricao });
   }
 }

@@ -49,6 +49,8 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
   currentStep: LevantamentoStep = 'levantamento';
   form: LevantamentoForm = { nome: '', descricao: '' };
   manualTombamento = '';
+  manualTombamentoAntigo = '';
+  manualDescricao = '';
   loading = false;
   creating = false;
   scannerOpen = false;
@@ -156,6 +158,8 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         this.form = { nome: '', descricao: '' };
         this.pendingItem = null;
         this.manualTombamento = '';
+        this.manualTombamentoAntigo = '';
+        this.manualDescricao = '';
         this.levantamentos = [levantamento, ...this.levantamentos];
         this.activeLevantamentoId = levantamento.id;
         this.currentStep = 'leitura';
@@ -173,6 +177,8 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     this.pendingItem = null;
     this.codeReadMessage = '';
     this.manualTombamento = '';
+    this.manualTombamentoAntigo = '';
+    this.manualDescricao = '';
     this.currentStep = 'leitura';
   }
 
@@ -214,7 +220,17 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.handleDetectedCode(this.manualTombamento);
+    if (!this.manualTombamento.trim() && !this.manualTombamentoAntigo.trim()) {
+      this.toastr.warning('Informe o tombamento do E-Estado ou o tombamento antigo.');
+      return;
+    }
+
+    if (!this.manualTombamento.trim() && this.manualTombamentoAntigo.trim() && !this.manualDescricao.trim()) {
+      this.toastr.warning('Informe a descrição do item quando houver apenas tombamento antigo.');
+      return;
+    }
+
+    this.handleDetectedCode(this.manualTombamento, this.manualTombamentoAntigo, this.manualDescricao);
   }
 
   async onIdentificationPhotoSelected(event: Event): Promise<void> {
@@ -309,12 +325,19 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     }
 
     this.confirmingItem = true;
-    this.levantamentoService.confirmarItem(this.activeLevantamento.id, this.pendingItem.tombamento).subscribe({
+    this.levantamentoService.confirmarItem(
+      this.activeLevantamento.id,
+      this.pendingItem.tombamento,
+      this.pendingItem.tombamentoAntigo,
+      this.pendingItem.descricao
+    ).subscribe({
       next: (item) => {
         this.confirmingItem = false;
         this.applyConfirmedItem(item);
         this.pendingItem = null;
         this.manualTombamento = '';
+        this.manualTombamentoAntigo = '';
+        this.manualDescricao = '';
         this.codeReadMessage = 'Item confirmado e adicionado ao levantamento.';
         this.currentStep = 'leitura';
         this.toastr.success('Item confirmado com sucesso.');
@@ -332,7 +355,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     this.currentStep = this.activeLevantamento ? 'leitura' : 'levantamento';
   }
 
-  private handleDetectedCode(rawValue: string): void {
+  private handleDetectedCode(rawValue: string, tombamentoAntigoManual = '', descricaoManual = ''): void {
     const activeLevantamento = this.activeLevantamento;
     if (!activeLevantamento) {
       this.toastr.warning('Crie ou selecione um levantamento antes de ler os tombamentos.');
@@ -340,15 +363,34 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     }
 
     const tombamento = this.formatTombamentoValue(rawValue);
-    if (!tombamento) {
+    const tombamentoAntigoNormalizado = this.normalizeTombamentoAntigoValue(tombamentoAntigoManual);
+    const descricaoNormalizada = descricaoManual.trim();
+
+    if (!tombamento && !tombamentoAntigoNormalizado) {
       this.toastr.warning('Não foi possível identificar um tombamento válido.');
       return;
     }
 
-    if (activeLevantamento.itens.some((item) => item.tombamento === tombamento)) {
+    if (activeLevantamento.itens.some((item) =>
+      (tombamento && item.tombamento === tombamento)
+      || (!tombamento && tombamentoAntigoNormalizado && item.tombamentoAntigo === tombamentoAntigoNormalizado)
+    )) {
       this.toastr.info('Esse tombamento já foi confirmado neste levantamento.');
       this.pendingItem = null;
       this.closeScanner();
+      return;
+    }
+
+    if (!tombamento && tombamentoAntigoNormalizado) {
+      this.pendingItem = {
+        tombamento: '',
+        tombamentoAntigo: tombamentoAntigoNormalizado,
+        descricao: descricaoNormalizada,
+        tipo: '',
+        urlConsulta: '',
+      };
+      this.codeReadMessage = 'Item manual pronto para confirmação.';
+      this.currentStep = 'confirmacao';
       return;
     }
 
@@ -360,7 +402,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
       }))
       .subscribe({
         next: (resumo) => {
-          this.pendingItem = this.mapResumoToPreview(resumo, tombamento);
+          this.pendingItem = this.mapResumoToPreview(resumo, tombamento, tombamentoAntigoManual, descricaoManual);
           this.codeReadMessage = 'Resumo do item carregado. Confirme para adicionar ao levantamento.';
           this.currentStep = 'confirmacao';
           this.closeScanner();
@@ -369,8 +411,8 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
           if (error?.status === 404) {
             this.pendingItem = {
               tombamento,
-              tombamentoAntigo: '',
-              descricao: `Item ${tombamento}`,
+              tombamentoAntigo: this.normalizeTombamentoAntigoValue(tombamentoAntigoManual),
+              descricao: descricaoNormalizada || `Item ${tombamento}`,
               tipo: '',
               urlConsulta: '',
             };
@@ -398,11 +440,13 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     });
   }
 
-  private mapResumoToPreview(resumo: ConsultaPublicaBem, tombamento: string): LevantamentoItemPreview {
+  private mapResumoToPreview(resumo: ConsultaPublicaBem, tombamento: string, tombamentoAntigoManual = '', descricaoManual = ''): LevantamentoItemPreview {
+    const tombamentoAntigoNormalizado = this.normalizeTombamentoAntigoValue(tombamentoAntigoManual);
+
     return {
       tombamento: this.formatTombamentoValue(resumo.tombamento || tombamento),
-      tombamentoAntigo: this.normalizeTombamentoAntigoValue(resumo.tombamentoAntigo),
-      descricao: resumo.descricao || resumo.tipo || `Item ${tombamento}`,
+      tombamentoAntigo: tombamentoAntigoNormalizado || this.normalizeTombamentoAntigoValue(resumo.tombamentoAntigo),
+      descricao: resumo.descricao || resumo.tipo || descricaoManual.trim() || `Item ${tombamento}`,
       tipo: resumo.tipo || '',
       urlConsulta: resumo.urlConsulta || '',
     };
