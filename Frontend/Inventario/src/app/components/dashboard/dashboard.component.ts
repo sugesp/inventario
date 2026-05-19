@@ -40,6 +40,13 @@ export class DashboardComponent implements OnInit {
       visible: () => this.authService.canManageInventario,
     },
     {
+      title: 'Levantamentos',
+      description: 'Crie um levantamento e confirme rapidamente os tombamentos lidos por QR code.',
+      route: '/levantamentos',
+      icon: 'fa-qrcode',
+      visible: () => this.authService.canManageInventario,
+    },
+    {
       title: 'Nova transferência',
       description: 'Leia os tombamentos, monte a remessa no celular e conclua a entrega depois no computador.',
       route: '/transferir',

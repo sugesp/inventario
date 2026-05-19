@@ -17,4 +17,6 @@ public class Usuario : BaseEntity
     public ICollection<Transferencia> TransferenciasCriadas { get; set; } = new List<Transferencia>();
     public ICollection<Transferencia> TransferenciasFinalizadas { get; set; } = new List<Transferencia>();
     public ICollection<LaudoTecnico> LaudosTecnicos { get; set; } = new List<LaudoTecnico>();
+    public ICollection<Levantamento> LevantamentosCriados { get; set; } = new List<Levantamento>();
+    public ICollection<LevantamentoItem> LevantamentosItensConfirmados { get; set; } = new List<LevantamentoItem>();
 }

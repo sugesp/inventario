@@ -1,0 +1,76 @@
+using System.Security.Claims;
+using Application.Contract;
+using Application.DTO.Levantamento;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace API.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class LevantamentosController : ControllerBase
+{
+    private readonly ILevantamentoService _service;
+
+    public LevantamentosController(ILevantamentoService service)
+    {
+        _service = service;
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<LevantamentoDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        return Ok(await _service.GetAllAsync(cancellationToken));
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<LevantamentoDto>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var levantamento = await _service.GetByIdAsync(id, cancellationToken);
+        return levantamento is null ? NotFound() : Ok(levantamento);
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPost]
+    public async Task<ActionResult<LevantamentoDto>> Create([FromBody] LevantamentoCreateDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var created = await _service.CreateAsync(dto, GetUsuarioId(), cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPost("{id:guid}/itens")]
+    public async Task<ActionResult<LevantamentoItemDto>> ConfirmarItem(Guid id, [FromBody] LevantamentoConfirmItemDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var created = await _service.ConfirmarItemAsync(id, dto, GetUsuarioId(), cancellationToken);
+            return Ok(created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    private Guid GetUsuarioId()
+    {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (!Guid.TryParse(value, out var usuarioId))
+        {
+            throw new InvalidOperationException("Usuário autenticado inválido.");
+        }
+
+        return usuarioId;
+    }
+}

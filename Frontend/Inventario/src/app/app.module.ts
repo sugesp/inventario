@@ -20,6 +20,7 @@ import { InventariarItemComponent } from './components/inventariar-item/inventar
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.component';
 import { LaudosTecnicosComponent } from './components/laudos-tecnicos/laudos-tecnicos.component';
+import { LevantamentosComponent } from './components/levantamentos/levantamentos.component';
 import { LocaisComponent } from './components/locais/locais.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
@@ -43,6 +44,7 @@ registerLocaleData(localePt);
     EquipesComponent,
     LocaisComponent,
     InventariarItemComponent,
+    LevantamentosComponent,
     ItensInventariadosComponent,
     LaudoTecnicoComponent,
     LaudosTecnicosComponent,

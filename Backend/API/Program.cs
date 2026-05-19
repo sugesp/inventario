@@ -68,6 +68,7 @@ builder.Services.AddScoped<ILocalService, LocalService>();
 builder.Services.AddScoped<IComissaoService, ComissaoService>();
 builder.Services.AddScoped<IUnidadeAdministrativaService, UnidadeAdministrativaService>();
 builder.Services.AddScoped<IItemInventariadoService, ItemInventariadoService>();
+builder.Services.AddScoped<ILevantamentoService, LevantamentoService>();
 builder.Services.AddScoped<ITransferenciaService, TransferenciaService>();
 builder.Services.AddScoped<ILaudoTecnicoService, LaudoTecnicoService>();
 

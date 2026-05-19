@@ -33,6 +33,10 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar</span>
         </a>
+        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/levantamentos" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>
+          <span>Levantamentos</span>
+        </a>
         <a class="menu-item" *ngIf="authService.canManageComissoes" routerLink="/comissoes" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
           <span>Comissões</span>

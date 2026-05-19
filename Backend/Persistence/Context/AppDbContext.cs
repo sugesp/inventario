@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<ComissaoMembro> ComissoesMembros { get; set; }
     public DbSet<ItemInventariado> ItensInventariados { get; set; }
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
+    public DbSet<Levantamento> Levantamentos { get; set; }
+    public DbSet<LevantamentoItem> LevantamentosItens { get; set; }
     public DbSet<Transferencia> Transferencias { get; set; }
     public DbSet<TransferenciaItem> TransferenciasItens { get; set; }
     public DbSet<LaudoTecnico> LaudosTecnicos { get; set; }
@@ -141,6 +143,37 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Fotos)
                 .HasForeignKey(x => x.ItemInventariadoId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Levantamento>(entity =>
+        {
+            entity.ToTable("Levantamentos");
+            entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Descricao).HasMaxLength(2000);
+            entity.HasOne(x => x.CriadoPorUsuario)
+                .WithMany(x => x.LevantamentosCriados)
+                .HasForeignKey(x => x.CriadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LevantamentoItem>(entity =>
+        {
+            entity.ToTable("LevantamentosItens");
+            entity.HasIndex(x => new { x.LevantamentoId, x.Tombamento })
+                .IsUnique();
+            entity.Property(x => x.Tombamento).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
+            entity.Property(x => x.Descricao).HasMaxLength(500);
+            entity.Property(x => x.Tipo).HasMaxLength(200);
+            entity.Property(x => x.UrlConsulta).HasMaxLength(500);
+            entity.HasOne(x => x.Levantamento)
+                .WithMany(x => x.Itens)
+                .HasForeignKey(x => x.LevantamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.ConfirmadoPorUsuario)
+                .WithMany(x => x.LevantamentosItensConfirmados)
+                .HasForeignKey(x => x.ConfirmadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Transferencia>(entity =>

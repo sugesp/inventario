@@ -14,6 +14,7 @@ import { InventariarItemComponent } from './components/inventariar-item/inventar
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.component';
 import { LaudosTecnicosComponent } from './components/laudos-tecnicos/laudos-tecnicos.component';
+import { LevantamentosComponent } from './components/levantamentos/levantamentos.component';
 import { LocaisComponent } from './components/locais/locais.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
@@ -32,6 +33,7 @@ const routes: Routes = [
   { path: 'locais', component: LocaisComponent, canActivate: [AdminGuard], data: { title: 'Locais' } },
   { path: 'unidades-administrativas', component: UnidadesAdministrativasComponent, canActivate: [AdminGuard], data: { title: 'Unidades Administrativas' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [InventarioGuard], data: { title: 'Inventariar item' } },
+  { path: 'levantamentos', component: LevantamentosComponent, canActivate: [InventarioGuard], data: { title: 'Levantamentos' } },
   { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [InventarioGuard], data: { title: 'Itens inventariados' } },
   { path: 'transferir', component: TransferirItensComponent, canActivate: [GtiGestorGuard], data: { title: 'Nova transferência' } },
   { path: 'laudo-tecnico', component: LaudoTecnicoComponent, canActivate: [GtiTecnicoGuard], data: { title: 'Laudo Técnico' } },

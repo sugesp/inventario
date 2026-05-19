@@ -1,0 +1,94 @@
+.levantamentos-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.levantamento-card {
+  border: 1px solid #d7dfeb;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.levantamento-card:hover {
+  border-color: #7fa0ca;
+  box-shadow: 0 10px 24px rgba(33, 55, 84, 0.08);
+  transform: translateY(-1px);
+}
+
+.levantamento-card.is-active {
+  border-color: #3c8dbc;
+  box-shadow: 0 12px 28px rgba(60, 141, 188, 0.16);
+}
+
+.levantamento-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.levantamento-card p {
+  margin: 0 0 0.5rem;
+  color: #5d7089;
+}
+
+.levantamento-card small {
+  color: #7a8aa1;
+}
+
+.selected-levantamento-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #d7dfeb;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f9fbff 0%, #eef4fb 100%);
+}
+
+.selected-levantamento-banner small {
+  display: block;
+  color: #6e829d;
+}
+
+.selected-levantamento-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: #e5f1fb;
+  color: #245d86;
+  font-weight: 700;
+}
+
+.manual-confirm-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.manual-confirm-action {
+  display: flex;
+  align-items: end;
+}
+
+@media (max-width: 767.98px) {
+  .selected-levantamento-banner,
+  .manual-confirm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-levantamento-count {
+    width: fit-content;
+  }
+}
