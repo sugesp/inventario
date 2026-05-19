@@ -122,7 +122,6 @@
                   [disabled]="!item.tombamentoNovo"
                 >
                   <i class="fa fa-copy" aria-hidden="true"></i>
-                  <span>Copiar</span>
                 </button>
               </div>
             </td>
@@ -154,14 +153,14 @@
             </td>
             <td class="text-end">
               <button
+                *ngIf="!item.lancadoEEstado"
                 class="btn btn-sm"
                 [class.btn-success]="!item.lancadoEEstado"
-                [class.btn-outline-secondary]="item.lancadoEEstado"
                 type="button"
-                (click)="marcarLancamentoEEstado(item, !item.lancadoEEstado)"
+                (click)="marcarLancamentoEEstado(item, true)"
                 [disabled]="isUpdatingLancamento(item)"
               >
-                {{ isUpdatingLancamento(item) ? 'Salvando...' : (item.lancadoEEstado ? 'Reabrir' : 'Marcar lançado') }}
+                {{ isUpdatingLancamento(item) ? 'Salvando...' : 'Marcar lançado' }}
               </button>
             </td>
           </tr>
