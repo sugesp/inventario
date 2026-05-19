@@ -63,7 +63,7 @@ export class LevantamentosListaComponent implements OnInit {
       'Tombamento antigo',
       'Descricao',
       'Tipo',
-      'Confirmado por',
+      'Levantamento feito por',
       'Data',
     ];
 
@@ -144,7 +144,7 @@ export class LevantamentosListaComponent implements OnInit {
               <th>Tombamento antigo</th>
               <th>Descrição</th>
               <th>Tipo</th>
-              <th>Confirmado por</th>
+              <th>Levantamento feito por</th>
               <th>Data</th>
             </tr>
           </thead>
