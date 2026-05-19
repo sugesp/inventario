@@ -148,19 +148,21 @@
                 (click)="openFotos(item)"
                 [disabled]="!item.fotos.length"
               >
-                {{ item.fotos.length ? ('Ver fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
+                {{ item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
               </button>
             </td>
             <td class="text-end">
               <button
                 *ngIf="!item.lancadoEEstado"
-                class="btn btn-sm"
-                [class.btn-success]="!item.lancadoEEstado"
+                class="btn btn-sm btn-success btn-lancado-icon"
                 type="button"
+                title="Marcar lançado"
+                aria-label="Marcar lançado"
                 (click)="marcarLancamentoEEstado(item, true)"
                 [disabled]="isUpdatingLancamento(item)"
               >
-                {{ isUpdatingLancamento(item) ? 'Salvando...' : 'Marcar lançado' }}
+                <span *ngIf="isUpdatingLancamento(item)">...</span>
+                <i *ngIf="!isUpdatingLancamento(item)" class="fa fa-check" aria-hidden="true"></i>
               </button>
             </td>
           </tr>
