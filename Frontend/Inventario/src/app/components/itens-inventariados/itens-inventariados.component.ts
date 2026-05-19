@@ -17,6 +17,7 @@ export class ItensInventariadosComponent implements OnInit {
   selectedLocalFilter = '';
   selectedEquipeFilter = '';
   selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
+  selectedTombamentoFilter: 'todos' | 'sem-tombamento-eestado' | 'sem-tombamento-antigo' | 'sem-ambos-tombamentos' = 'todos';
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
   loadingFotos = false;
@@ -108,8 +109,15 @@ export class ItensInventariadosComponent implements OnInit {
         this.selectedLancamentoFilter === 'todos'
         || (this.selectedLancamentoFilter === 'lancados' && item.lancadoEEstado)
         || (this.selectedLancamentoFilter === 'pendentes' && !item.lancadoEEstado);
+      const hasTombamentoNovo = !!item.tombamentoNovo?.trim();
+      const hasTombamentoAntigo = !!item.tombamentoAntigo?.trim();
+      const matchesTombamento =
+        this.selectedTombamentoFilter === 'todos'
+        || (this.selectedTombamentoFilter === 'sem-tombamento-eestado' && !hasTombamentoNovo)
+        || (this.selectedTombamentoFilter === 'sem-tombamento-antigo' && !hasTombamentoAntigo)
+        || (this.selectedTombamentoFilter === 'sem-ambos-tombamentos' && !hasTombamentoNovo && !hasTombamentoAntigo);
 
-      return matchesLocal && matchesEquipe && matchesLancamento;
+      return matchesLocal && matchesEquipe && matchesLancamento && matchesTombamento;
     });
   }
 
@@ -117,6 +125,7 @@ export class ItensInventariadosComponent implements OnInit {
     this.selectedLocalFilter = '';
     this.selectedEquipeFilter = '';
     this.selectedLancamentoFilter = 'todos';
+    this.selectedTombamentoFilter = 'todos';
   }
 
   marcarLancamentoEEstado(item: ItemInventariado, lancado: boolean): void {

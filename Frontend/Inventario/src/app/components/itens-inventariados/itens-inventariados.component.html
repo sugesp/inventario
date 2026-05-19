@@ -53,12 +53,22 @@
         </select>
       </div>
 
+      <div>
+        <label class="form-label">Filtrar por tombamento</label>
+        <select class="form-select" [(ngModel)]="selectedTombamentoFilter">
+          <option value="todos">Todos os itens</option>
+          <option value="sem-tombamento-eestado">Sem Tombamento (E-Estado)</option>
+          <option value="sem-tombamento-antigo">Sem Tombamento Antigo</option>
+          <option value="sem-ambos-tombamentos">Sem Ambos os Tombamentos</option>
+        </select>
+      </div>
+
       <div class="filters-actions">
         <button
           class="btn btn-outline-secondary"
           type="button"
           (click)="clearFilters()"
-          [disabled]="!selectedLocalFilter && !selectedEquipeFilter && selectedLancamentoFilter === 'todos'"
+          [disabled]="!selectedLocalFilter && !selectedEquipeFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'"
         >
           Limpar filtros
         </button>
