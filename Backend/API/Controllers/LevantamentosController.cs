@@ -18,14 +18,14 @@ public class LevantamentosController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Levantamento")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LevantamentoDto>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await _service.GetAllAsync(cancellationToken));
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Levantamento")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LevantamentoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ public class LevantamentosController : ControllerBase
         return levantamento is null ? NotFound() : Ok(levantamento);
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Levantamento")]
     [HttpPost]
     public async Task<ActionResult<LevantamentoDto>> Create([FromBody] LevantamentoCreateDto dto, CancellationToken cancellationToken)
     {
@@ -48,7 +48,7 @@ public class LevantamentosController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Levantamento")]
     [HttpPost("{id:guid}/itens")]
     public async Task<ActionResult<LevantamentoItemDto>> ConfirmarItem(Guid id, [FromBody] LevantamentoConfirmItemDto dto, CancellationToken cancellationToken)
     {

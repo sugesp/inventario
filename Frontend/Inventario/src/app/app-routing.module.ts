@@ -6,6 +6,7 @@ import { GtiGestorGuard } from './auth/gti-gestor.guard';
 import { GtiLaudosGuard } from './auth/gti-laudos.guard';
 import { GtiTecnicoGuard } from './auth/gti-tecnico.guard';
 import { InventarioGuard } from './auth/contratos.guard';
+import { LevantamentoGuard } from './auth/levantamento.guard';
 import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
@@ -34,8 +35,8 @@ const routes: Routes = [
   { path: 'locais', component: LocaisComponent, canActivate: [AdminGuard], data: { title: 'Locais' } },
   { path: 'unidades-administrativas', component: UnidadesAdministrativasComponent, canActivate: [AdminGuard], data: { title: 'Unidades Administrativas' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [InventarioGuard], data: { title: 'Inventariar item' } },
-  { path: 'levantamentos', component: LevantamentosComponent, canActivate: [InventarioGuard], data: { title: 'Levantamentos' } },
-  { path: 'levantamentos-lista', component: LevantamentosListaComponent, canActivate: [InventarioGuard], data: { title: 'Listagem de levantamentos' } },
+  { path: 'levantamentos', component: LevantamentosComponent, canActivate: [LevantamentoGuard], data: { title: 'Levantamentos' } },
+  { path: 'levantamentos-lista', component: LevantamentosListaComponent, canActivate: [LevantamentoGuard], data: { title: 'Listagem de levantamentos' } },
   { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [InventarioGuard], data: { title: 'Itens inventariados' } },
   { path: 'transferir', component: TransferirItensComponent, canActivate: [GtiGestorGuard], data: { title: 'Nova transferência' } },
   { path: 'laudo-tecnico', component: LaudoTecnicoComponent, canActivate: [GtiTecnicoGuard], data: { title: 'Laudo Técnico' } },

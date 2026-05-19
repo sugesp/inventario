@@ -6,6 +6,7 @@ public static class UsuarioPermissoes
 {
     public const string Administrador = "Administrador";
     public const string Inventario = "Inventario";
+    public const string Levantamento = "Levantamento";
     public const string GtiTecnico = "GTI.Tecnico";
     public const string GtiGestor = "GTI.Gestor";
 
@@ -13,6 +14,7 @@ public static class UsuarioPermissoes
     {
         Administrador,
         Inventario,
+        Levantamento,
         GtiTecnico,
         GtiGestor
     };
@@ -76,6 +78,7 @@ public static class UsuarioPermissoes
         {
             _ when string.Equals(normalized, Administrador, StringComparison.OrdinalIgnoreCase) => Administrador,
             _ when string.Equals(normalized, Inventario, StringComparison.OrdinalIgnoreCase) => Inventario,
+            _ when string.Equals(normalized, Levantamento, StringComparison.OrdinalIgnoreCase) => Levantamento,
             _ when string.Equals(normalized, GtiTecnico, StringComparison.OrdinalIgnoreCase) => GtiTecnico,
             _ when string.Equals(normalized, GtiGestor, StringComparison.OrdinalIgnoreCase) => GtiGestor,
             _ => null

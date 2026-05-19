@@ -48,6 +48,10 @@ export class AuthService {
     return this.isAdmin || this.hasPermission('Inventario');
   }
 
+  get canManageLevantamentos(): boolean {
+    return this.isAdmin || this.hasPermission('Levantamento');
+  }
+
   get canAccessGtiTecnico(): boolean {
     return this.isAdmin || this.hasPermission('GTI.Tecnico');
   }

@@ -43,7 +43,7 @@
         </a>
       </div>
 
-      <div class="menu-group" *ngIf="authService.canManageInventario">
+      <div class="menu-group" *ngIf="authService.canManageLevantamentos">
         <span class="menu-section-label">Levantamento</span>
         <a class="menu-item" routerLink="/levantamentos" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>

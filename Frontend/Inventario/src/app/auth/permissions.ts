@@ -1,4 +1,4 @@
-export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'GTI.Tecnico', 'GTI.Gestor'] as const;
+export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'Levantamento', 'GTI.Tecnico', 'GTI.Gestor'] as const;
 
 export type UserPermission = typeof USER_PERMISSIONS[number];
 
@@ -18,6 +18,11 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
     value: 'Inventario',
     label: 'Inventário',
     description: 'Acessa o inventário; membros de comissão podem inventariar e presidentes editam sua comissão.',
+  },
+  {
+    value: 'Levantamento',
+    label: 'Levantamento',
+    description: 'Cria levantamentos, confirma tombamentos e consulta a listagem de levantamentos.',
   },
   {
     value: 'GTI.Tecnico',

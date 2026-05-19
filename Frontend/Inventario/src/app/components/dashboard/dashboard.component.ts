@@ -44,7 +44,7 @@ export class DashboardComponent implements OnInit {
       description: 'Crie um levantamento e confirme rapidamente os tombamentos lidos por QR code.',
       route: '/levantamentos',
       icon: 'fa-qrcode',
-      visible: () => this.authService.canManageInventario,
+      visible: () => this.authService.canManageLevantamentos,
     },
     {
       title: 'Nova transferência',

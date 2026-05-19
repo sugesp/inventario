@@ -533,6 +533,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       const rawValue = await this.detectCodeFromImageFile(file);
 
       if (rawValue) {
+        this.playScanBeep();
         this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
         this.codeReadMessage = 'Tombamento identificado automaticamente pela imagem.';
         this.consultarResumoPublico();
@@ -823,6 +824,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.detectCodeFromVideoFrame(video)
       .then((rawValue) => {
         if (rawValue) {
+          this.playScanBeep();
           this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
           this.identificationMode = 'qr';
           this.codeReadMessage = 'Tombamento identificado automaticamente pela câmera.';
@@ -936,6 +938,35 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     });
 
     return result?.data?.trim() ?? null;
+  }
+
+  private playScanBeep(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) {
+      return;
+    }
+
+    const context = new AudioContextClass();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(1046.5, context.currentTime);
+    gainNode.gain.setValueAtTime(0.0001, context.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.12);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.12);
+    oscillator.onended = () => {
+      void context.close();
+    };
   }
 
   private loadImage(file: File): Promise<HTMLImageElement> {
