@@ -1165,7 +1165,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   private normalizeTombamentoAntigoValue(value: string | null | undefined): string {
-    return (value ?? '').replace(/\./g, '').trim();
+    const normalized = (value ?? '').replace(/\./g, '').trim();
+    const meaningfulValue = normalized.replace(/[-\s]/g, '');
+
+    if (!/[A-Za-z0-9]/.test(meaningfulValue)) {
+      return '';
+    }
+
+    return normalized;
   }
 
   private clearConsultaPublica(): void {

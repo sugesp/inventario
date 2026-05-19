@@ -73,7 +73,7 @@ public class ItemInventariadoService : IItemInventariadoService
         return new ConsultaPublicaBemDto
         {
             Tombamento = NormalizeDigits(tombamentoConsulta) is { Length: > 0 } tombamentoExtraido ? tombamentoExtraido : tombamentoNormalizado,
-            TombamentoAntigo = tombamentoAntigo,
+            TombamentoAntigo = NormalizeOptionalTombamentoAntigo(tombamentoAntigo),
             Tipo = tipo,
             Descricao = descricao,
             UrlConsulta = $"https://e-estado.ro.gov.br/publico/bens/{tombamentoNormalizado}"
@@ -118,7 +118,7 @@ public class ItemInventariadoService : IItemInventariadoService
         var entity = new ItemInventariado
         {
             TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty,
-            TombamentoAntigo = dto.TombamentoAntigo?.Trim() ?? string.Empty,
+            TombamentoAntigo = NormalizeOptionalTombamentoAntigo(dto.TombamentoAntigo),
             Descricao = dto.Descricao?.Trim() ?? string.Empty,
             LocalId = dto.LocalId,
             UsuarioId = dto.UsuarioId ?? usuarioAutenticadoId,
@@ -160,7 +160,7 @@ public class ItemInventariadoService : IItemInventariadoService
         await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, cancellationToken);
 
         entity.TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty;
-        entity.TombamentoAntigo = dto.TombamentoAntigo?.Trim() ?? string.Empty;
+        entity.TombamentoAntigo = NormalizeOptionalTombamentoAntigo(dto.TombamentoAntigo);
         entity.Descricao = dto.Descricao?.Trim() ?? string.Empty;
         entity.LocalId = dto.LocalId;
         entity.UsuarioId = dto.UsuarioId ?? entity.UsuarioId;
@@ -393,6 +393,19 @@ public class ItemInventariadoService : IItemInventariadoService
             "PESSIMO" => "PÉSSIMO",
             _ => null
         };
+    }
+
+    private static string NormalizeOptionalTombamentoAntigo(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var normalized = value.Replace(".", string.Empty).Trim();
+        var meaningfulValue = Regex.Replace(normalized, @"[-\s]", string.Empty);
+
+        return meaningfulValue.Any(char.IsLetterOrDigit) ? normalized : string.Empty;
     }
 
     private static string RemoveDiacritics(string value)
