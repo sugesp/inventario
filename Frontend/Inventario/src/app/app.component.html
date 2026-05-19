@@ -33,14 +33,6 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar</span>
         </a>
-        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/levantamentos" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>
-          <span>Novo Levantamento</span>
-        </a>
-        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/levantamentos-lista" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
-          <span>Listagem de Levantamentos</span>
-        </a>
         <a class="menu-item" *ngIf="authService.canManageComissoes" routerLink="/comissoes" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
           <span>Comissões</span>
@@ -48,6 +40,18 @@
         <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/lista-inventariados" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
           <span>Itens Inventariados</span>
+        </a>
+      </div>
+
+      <div class="menu-group" *ngIf="authService.canManageInventario">
+        <span class="menu-section-label">Levantamento</span>
+        <a class="menu-item" routerLink="/levantamentos" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>
+          <span>Novo Levantamento</span>
+        </a>
+        <a class="menu-item" routerLink="/levantamentos-lista" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
+          <span>Listagem de Levantamentos</span>
         </a>
       </div>
 
