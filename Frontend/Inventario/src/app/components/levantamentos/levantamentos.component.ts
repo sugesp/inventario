@@ -31,6 +31,8 @@ interface LevantamentoItemPreview {
   urlConsulta: string;
 }
 
+type LevantamentoStep = 'levantamento' | 'leitura' | 'confirmacao';
+
 @Component({
   selector: 'app-levantamentos',
   templateUrl: './levantamentos.component.html',
@@ -44,6 +46,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
 
   levantamentos: Levantamento[] = [];
   activeLevantamentoId = '';
+  currentStep: LevantamentoStep = 'levantamento';
   form: LevantamentoForm = { nome: '', descricao: '' };
   manualTombamento = '';
   loading = false;
@@ -94,6 +97,18 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     return !!this.activeLevantamento;
   }
 
+  get isLevantamentoStep(): boolean {
+    return this.currentStep === 'levantamento';
+  }
+
+  get isLeituraStep(): boolean {
+    return this.currentStep === 'leitura';
+  }
+
+  get isConfirmacaoStep(): boolean {
+    return this.currentStep === 'confirmacao';
+  }
+
   loadLevantamentos(selectId?: string): void {
     this.loading = true;
     this.levantamentoService.getAll().subscribe({
@@ -103,6 +118,9 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
 
         if (selectId && data.some((item) => item.id === selectId)) {
           this.activeLevantamentoId = selectId;
+          if (!this.pendingItem) {
+            this.currentStep = 'leitura';
+          }
           return;
         }
 
@@ -111,6 +129,9 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         }
 
         this.activeLevantamentoId = data[0]?.id ?? '';
+        if (this.activeLevantamentoId && !this.pendingItem) {
+          this.currentStep = 'leitura';
+        }
       },
       error: () => {
         this.loading = false;
@@ -137,6 +158,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         this.manualTombamento = '';
         this.levantamentos = [levantamento, ...this.levantamentos];
         this.activeLevantamentoId = levantamento.id;
+        this.currentStep = 'leitura';
         this.toastr.success('Levantamento criado com sucesso.');
       },
       error: (error) => {
@@ -151,6 +173,21 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     this.pendingItem = null;
     this.codeReadMessage = '';
     this.manualTombamento = '';
+    this.currentStep = 'leitura';
+  }
+
+  goToLevantamentoStep(): void {
+    this.currentStep = 'levantamento';
+  }
+
+  goToLeituraStep(): void {
+    if (!this.activeLevantamento) {
+      this.toastr.warning('Crie ou selecione um levantamento para continuar.');
+      return;
+    }
+
+    this.pendingItem = null;
+    this.currentStep = 'leitura';
   }
 
   startQrFlow(): void {
@@ -279,6 +316,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         this.pendingItem = null;
         this.manualTombamento = '';
         this.codeReadMessage = 'Item confirmado e adicionado ao levantamento.';
+        this.currentStep = 'leitura';
         this.toastr.success('Item confirmado com sucesso.');
       },
       error: (error) => {
@@ -291,6 +329,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
   cancelPendingItem(): void {
     this.pendingItem = null;
     this.codeReadMessage = '';
+    this.currentStep = this.activeLevantamento ? 'leitura' : 'levantamento';
   }
 
   private handleDetectedCode(rawValue: string): void {
@@ -323,6 +362,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         next: (resumo) => {
           this.pendingItem = this.mapResumoToPreview(resumo, tombamento);
           this.codeReadMessage = 'Resumo do item carregado. Confirme para adicionar ao levantamento.';
+          this.currentStep = 'confirmacao';
           this.closeScanner();
         },
         error: (error) => {
@@ -335,6 +375,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
               urlConsulta: '',
             };
             this.codeReadMessage = 'Resumo público não localizado. Confirme o tombamento para registrar no levantamento.';
+            this.currentStep = 'confirmacao';
             this.closeScanner();
             return;
           }

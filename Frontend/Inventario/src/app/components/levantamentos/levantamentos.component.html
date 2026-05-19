@@ -3,47 +3,46 @@
     <span class="list-header-eyebrow">Levantamento</span>
     <h2 class="list-header-title">Levantamentos por QR code</h2>
     <p class="hero-copy">
-      Crie um levantamento, leia os tombamentos pelo QR code e confirme cada item para montar a relação rapidamente.
+      Escolha um levantamento, leia o QR code ou informe o tombamento e confirme cada item em sequência.
     </p>
   </section>
 
-  <section class="step-card">
-    <div class="step-head">
-      <span class="step-number">1</span>
-      <div>
-        <h3>Criar levantamento</h3>
-        <p>Defina um nome e, se desejar, uma descrição para iniciar a conferência.</p>
-      </div>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-md-5">
-        <label class="form-label">Nome</label>
-        <input class="form-control" [(ngModel)]="form.nome" placeholder="Ex.: Levantamento depósito GTI" />
-      </div>
-      <div class="col-md-7">
-        <label class="form-label">Descrição</label>
-        <input class="form-control" [(ngModel)]="form.descricao" placeholder="Opcional" />
-      </div>
-    </div>
-
-    <div class="step-actions">
-      <button class="btn btn-primary" type="button" (click)="createLevantamento()" [disabled]="creating || !canCreate">
-        {{ creating ? 'Criando...' : 'Criar levantamento' }}
+  <section class="step-card flow-navigation-card">
+    <div class="transfer-steps">
+      <button type="button" class="transfer-step-tab" [class.is-active]="isLevantamentoStep" (click)="goToLevantamentoStep()">
+        <span>1</span>
+        <strong>Levantamento</strong>
+      </button>
+      <button type="button" class="transfer-step-tab" [class.is-active]="isLeituraStep" (click)="goToLeituraStep()">
+        <span>2</span>
+        <strong>Leitura</strong>
+      </button>
+      <button type="button" class="transfer-step-tab" [class.is-active]="isConfirmacaoStep" [disabled]="!pendingItem">
+        <span>3</span>
+        <strong>Confirmação</strong>
       </button>
     </div>
   </section>
 
-  <section class="step-card">
+  <section class="step-card" *ngIf="isLevantamentoStep">
     <div class="step-head">
-      <span class="step-number">2</span>
+      <span class="step-number">1</span>
       <div>
-        <h3>Selecionar levantamento</h3>
-        <p>Escolha um levantamento existente para continuar lendo e confirmando os tombamentos.</p>
+        <h3>Escolher levantamento</h3>
+        <p>Selecione um levantamento existente ou crie um novo para iniciar a leitura dos tombamentos.</p>
       </div>
     </div>
 
     <div class="scan-feedback" *ngIf="loading">Carregando levantamentos...</div>
+
+    <div class="selected-levantamento-banner" *ngIf="activeLevantamento">
+      <div>
+        <span class="selected-local-label">Levantamento selecionado</span>
+        <strong>{{ activeLevantamento.nome }}</strong>
+        <small>{{ activeLevantamento.descricao || 'Sem descrição informada.' }}</small>
+      </div>
+      <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+    </div>
 
     <div class="empty-state" *ngIf="!loading && levantamentos.length === 0">
       Nenhum levantamento foi criado até o momento.
@@ -65,14 +64,38 @@
         <small>Criado por {{ levantamento.criadoPorUsuarioNome || 'Usuário não informado' }} em {{ levantamento.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
       </button>
     </div>
+
+    <div class="inline-divider">
+      <span>ou crie um novo levantamento</span>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-5">
+        <label class="form-label">Nome</label>
+        <input class="form-control" [(ngModel)]="form.nome" placeholder="Ex.: Levantamento depósito GTI" />
+      </div>
+      <div class="col-md-7">
+        <label class="form-label">Descrição</label>
+        <input class="form-control" [(ngModel)]="form.descricao" placeholder="Opcional" />
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToLeituraStep()" [disabled]="!hasActiveLevantamento">
+        Usar levantamento selecionado
+      </button>
+      <button class="btn btn-primary" type="button" (click)="createLevantamento()" [disabled]="creating || !canCreate">
+        {{ creating ? 'Criando...' : 'Criar novo levantamento' }}
+      </button>
+    </div>
   </section>
 
-  <section class="step-card" *ngIf="activeLevantamento">
+  <section class="step-card" *ngIf="isLeituraStep && activeLevantamento">
     <div class="step-head">
-      <span class="step-number">3</span>
+      <span class="step-number">2</span>
       <div>
-        <h3>Confirmar tombamentos</h3>
-        <p>Leia o QR code ou informe o tombamento manualmente para confirmar o item no levantamento selecionado.</p>
+        <h3>Ler tombamento</h3>
+        <p>Leia o QR code ou informe manualmente o tombamento para seguir para a confirmação.</p>
       </div>
     </div>
 
@@ -107,7 +130,7 @@
       </div>
       <div class="manual-confirm-action">
         <button class="btn btn-outline-secondary" type="button" (click)="confirmManualTombamento()" [disabled]="consultaEmAndamento || !manualTombamento.trim()">
-          Ler manualmente
+          Informar tombamento
         </button>
       </div>
     </div>
@@ -116,9 +139,34 @@
     <div class="scan-feedback" *ngIf="!consultaEmAndamento && codeReadMessage">{{ codeReadMessage }}</div>
     <div class="scan-feedback" *ngIf="scannerMessage">{{ scannerMessage }}</div>
 
-    <div class="transfer-confirm-card" *ngIf="pendingItem">
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToLevantamentoStep()">
+        Trocar levantamento
+      </button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isConfirmacaoStep && pendingItem && activeLevantamento">
+    <div class="step-head">
+      <span class="step-number">3</span>
+      <div>
+        <h3>Confirmar item</h3>
+        <p>Confira os dados lidos e confirme para voltar direto à próxima leitura.</p>
+      </div>
+    </div>
+
+    <div class="selected-levantamento-banner">
+      <div>
+        <span class="selected-local-label">Levantamento ativo</span>
+        <strong>{{ activeLevantamento.nome }}</strong>
+        <small>{{ activeLevantamento.descricao || 'Sem descrição informada.' }}</small>
+      </div>
+      <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+    </div>
+
+    <div class="transfer-confirm-card">
       <span class="selected-local-label">Item pendente de confirmação</span>
-      <div class="summary-card transfer-summary-card">
+      <div class="summary-card">
         <div>
           <strong>Tombamento</strong>
           <span>{{ pendingItem.tombamento || '-' }}</span>
@@ -141,50 +189,11 @@
         <a *ngIf="pendingItem.urlConsulta" class="btn btn-outline-secondary" [href]="pendingItem.urlConsulta" target="_blank" rel="noopener noreferrer">
           Abrir consulta pública
         </a>
-        <button class="btn btn-outline-secondary" type="button" (click)="cancelPendingItem()">Cancelar</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="cancelPendingItem()">Voltar</button>
         <button class="btn btn-primary" type="button" (click)="confirmPendingItem()" [disabled]="confirmingItem">
-          {{ confirmingItem ? 'Confirmando...' : 'Confirmar item' }}
+          {{ confirmingItem ? 'Confirmando...' : 'Confirmar e continuar' }}
         </button>
       </div>
-    </div>
-  </section>
-
-  <section class="step-card" *ngIf="activeLevantamento">
-    <div class="step-head">
-      <span class="step-number">4</span>
-      <div>
-        <h3>Itens confirmados</h3>
-        <p>Relação dos tombamentos já confirmados neste levantamento.</p>
-      </div>
-    </div>
-
-    <div class="empty-state" *ngIf="activeLevantamento.itens.length === 0">
-      Nenhum item foi confirmado neste levantamento ainda.
-    </div>
-
-    <div class="table-responsive" *ngIf="activeLevantamento.itens.length > 0">
-      <table class="table table-hover align-middle">
-        <thead>
-          <tr>
-            <th>Tombamento</th>
-            <th>Tombamento antigo</th>
-            <th>Descrição</th>
-            <th>Tipo</th>
-            <th>Confirmado por</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of activeLevantamento.itens">
-            <td>{{ item.tombamento || '-' }}</td>
-            <td>{{ item.tombamentoAntigo || '-' }}</td>
-            <td>{{ item.descricao || '-' }}</td>
-            <td>{{ item.tipo || '-' }}</td>
-            <td>{{ item.confirmadoPorUsuarioNome || '-' }}</td>
-            <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </section>
 </div>

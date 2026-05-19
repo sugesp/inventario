@@ -1,0 +1,130 @@
+<div class="inventario-grid">
+  <section class="hero-card">
+    <div class="hero-header">
+      <div>
+        <span class="list-header-eyebrow">Levantamento</span>
+        <h2 class="list-header-title">Listagem de levantamentos</h2>
+      </div>
+      <a class="btn btn-primary" routerLink="/levantamentos">Novo levantamento</a>
+    </div>
+    <p class="hero-copy">
+      Consulte os levantamentos criados e abra os detalhes para visualizar os itens confirmados em cada um.
+    </p>
+  </section>
+
+  <section class="step-card">
+    <div class="step-head">
+      <span class="step-number">L</span>
+      <div>
+        <h3>Levantamentos cadastrados</h3>
+        <p>Atualize a listagem e abra o levantamento para ver a relação dos itens confirmados.</p>
+      </div>
+    </div>
+
+    <div class="step-actions step-actions-start">
+      <button class="btn btn-outline-secondary" type="button" (click)="loadLevantamentos()" [disabled]="loading">
+        {{ loading ? 'Atualizando...' : 'Atualizar listagem' }}
+      </button>
+    </div>
+
+    <div class="scan-feedback" *ngIf="loading">Carregando levantamentos...</div>
+
+    <div class="empty-state" *ngIf="!loading && levantamentos.length === 0">
+      Nenhum levantamento foi cadastrado até o momento.
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && levantamentos.length > 0">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Criado por</th>
+            <th>Itens confirmados</th>
+            <th>Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let levantamento of levantamentos">
+            <td>{{ levantamento.nome || '-' }}</td>
+            <td>{{ levantamento.descricao || '-' }}</td>
+            <td>{{ levantamento.criadoPorUsuarioNome || '-' }}</td>
+            <td>{{ levantamento.itens.length }}</td>
+            <td>{{ levantamento.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="actions-cell">
+              <button class="btn btn-sm btn-outline-primary" type="button" (click)="openDetails(levantamento.id)">
+                Ver detalhes
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="levantamento-modal-backdrop" *ngIf="activeLevantamento || loadingModal" (click)="closeModal()"></div>
+<div class="levantamento-modal" *ngIf="activeLevantamento || loadingModal" (click)="closeModal()">
+  <div class="levantamento-modal-card" (click)="$event.stopPropagation()">
+    <div class="levantamento-modal-header">
+      <div>
+        <span class="list-header-eyebrow">Detalhes</span>
+        <h3>{{ loadingModal ? 'Carregando levantamento...' : (activeLevantamento?.nome || 'Levantamento') }}</h3>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeModal()"></button>
+    </div>
+
+    <div class="levantamento-modal-body" *ngIf="activeLevantamento as levantamento">
+      <div class="summary-card">
+        <div>
+          <strong>Nome</strong>
+          <span>{{ levantamento.nome || '-' }}</span>
+        </div>
+        <div>
+          <strong>Criado por</strong>
+          <span>{{ levantamento.criadoPorUsuarioNome || '-' }}</span>
+        </div>
+        <div class="summary-card-full">
+          <strong>Descrição</strong>
+          <span>{{ levantamento.descricao || '-' }}</span>
+        </div>
+      </div>
+
+      <div class="scan-feedback mt-0">
+        {{ levantamento.itens.length }} item(ns) confirmado(s) neste levantamento.
+      </div>
+
+      <div class="empty-state" *ngIf="levantamento.itens.length === 0">
+        Nenhum item foi confirmado neste levantamento ainda.
+      </div>
+
+      <div class="table-responsive" *ngIf="levantamento.itens.length > 0">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Tombamento</th>
+              <th>Tombamento antigo</th>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Confirmado por</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of levantamento.itens">
+              <td>{{ item.tombamento || '-' }}</td>
+              <td>{{ item.tombamentoAntigo || '-' }}</td>
+              <td>{{ item.descricao || '-' }}</td>
+              <td>{{ item.tipo || '-' }}</td>
+              <td>{{ item.confirmadoPorUsuarioNome || '-' }}</td>
+              <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="scan-feedback modal-feedback" *ngIf="loadingModal">Carregando itens do levantamento...</div>
+  </div>
+</div>

@@ -29,6 +29,46 @@
   padding: 22px;
 }
 
+.transfer-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.transfer-step-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+  background: #fff;
+  color: #61788f;
+}
+
+.transfer-step-tab span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #edf4fb;
+  color: #295f96;
+  font-weight: 700;
+}
+
+.transfer-step-tab.is-active {
+  border-color: #8fb0d2;
+  box-shadow: 0 14px 24px rgba(26, 52, 79, 0.08);
+  color: #21384f;
+}
+
+.transfer-step-tab:disabled {
+  opacity: 0.55;
+}
+
 .step-head {
   display: flex;
   gap: 14px;
@@ -113,6 +153,26 @@
   letter-spacing: 0.08em;
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+.inline-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0 18px;
+  color: #6c8199;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.inline-divider::before,
+.inline-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #d8dde6;
 }
 
 .step-actions {
@@ -293,6 +353,10 @@
     border-radius: 24px;
   }
 
+  .flow-navigation-card {
+    display: none;
+  }
+
   .step-head {
     align-items: flex-start;
     margin-bottom: 14px;
@@ -303,14 +367,13 @@
   }
 
   .summary-card,
-  .step-actions,
-  .selected-levantamento-banner,
   .manual-confirm-grid {
     grid-template-columns: 1fr;
   }
 
   .step-actions,
-  .selected-levantamento-banner {
+  .selected-levantamento-banner,
+  .manual-confirm-grid {
     flex-direction: column;
     align-items: stretch;
   }
