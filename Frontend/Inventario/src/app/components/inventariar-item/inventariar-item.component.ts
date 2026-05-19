@@ -954,16 +954,16 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     const oscillator = context.createOscillator();
     const gainNode = context.createGain();
 
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(1046.5, context.currentTime);
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(1244.5, context.currentTime);
     gainNode.gain.setValueAtTime(0.0001, context.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.12);
+    gainNode.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.008);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.16);
 
     oscillator.connect(gainNode);
     gainNode.connect(context.destination);
     oscillator.start();
-    oscillator.stop(context.currentTime + 0.12);
+    oscillator.stop(context.currentTime + 0.16);
     oscillator.onended = () => {
       void context.close();
     };
