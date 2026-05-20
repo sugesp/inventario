@@ -331,6 +331,18 @@
   font-weight: 700;
 }
 
+.selected-levantamento-actions {
+  display: grid;
+  justify-items: end;
+  gap: 0.65rem;
+}
+
+.selected-levantamento-switch {
+  min-height: 38px;
+  border-radius: 999px;
+  padding-inline: 1rem;
+}
+
 .manual-confirm-grid {
   display: grid;
   gap: 1rem;
@@ -380,6 +392,15 @@
 
   .selected-levantamento-count {
     width: fit-content;
+  }
+
+  .selected-levantamento-actions {
+    justify-items: start;
+  }
+
+  .selected-levantamento-switch {
+    width: 100%;
+    justify-content: center;
   }
 
   .scanner-modal {

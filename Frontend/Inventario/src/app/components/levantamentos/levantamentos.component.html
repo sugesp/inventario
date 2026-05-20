@@ -105,7 +105,12 @@
         <strong>{{ activeLevantamento.nome }}</strong>
         <small>{{ activeLevantamento.descricao || 'Sem descrição informada.' }}</small>
       </div>
-      <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+      <div class="selected-levantamento-actions">
+        <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+        <button class="btn btn-outline-secondary btn-sm selected-levantamento-switch" type="button" (click)="goToLevantamentoStep()">
+          Mudar levantamento
+        </button>
+      </div>
     </div>
 
     <input
@@ -146,12 +151,6 @@
     <div class="scan-feedback" *ngIf="consultaEmAndamento">Consultando dados do item...</div>
     <div class="scan-feedback" *ngIf="!consultaEmAndamento && codeReadMessage">{{ codeReadMessage }}</div>
     <div class="scan-feedback" *ngIf="scannerMessage">{{ scannerMessage }}</div>
-
-    <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="goToLevantamentoStep()">
-        Trocar levantamento
-      </button>
-    </div>
   </section>
 
   <section class="step-card" *ngIf="isConfirmacaoStep && pendingItem && activeLevantamento">
