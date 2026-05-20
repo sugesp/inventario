@@ -355,6 +355,27 @@
   align-items: end;
 }
 
+.manual-confirm-button {
+  min-height: 44px;
+  padding-inline: 1.1rem;
+  border: 1px solid #8fb0d2;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3f8fe 0%, #e6f0fb 100%);
+  color: #245d86;
+  font-weight: 700;
+}
+
+.manual-confirm-button:hover:not(:disabled),
+.manual-confirm-button:focus-visible:not(:disabled) {
+  border-color: #5f8fbd;
+  background: linear-gradient(135deg, #eaf3fd 0%, #dceafb 100%);
+  color: #1f4f74;
+}
+
+.manual-confirm-button:disabled {
+  opacity: 0.6;
+}
+
 @media (max-width: 767.98px) {
   .hero-card {
     padding: 18px;
@@ -401,6 +422,10 @@
   .selected-levantamento-switch {
     width: 100%;
     justify-content: center;
+  }
+
+  .manual-confirm-button {
+    width: 100%;
   }
 
   .scanner-modal {

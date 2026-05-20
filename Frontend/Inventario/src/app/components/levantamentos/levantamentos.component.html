@@ -142,8 +142,8 @@
         <input class="form-control" [(ngModel)]="manualDescricao" placeholder="Obrigatória quando houver apenas tombamento antigo" />
       </div>
       <div class="manual-confirm-action">
-        <button class="btn btn-outline-secondary" type="button" (click)="confirmManualTombamento()" [disabled]="consultaEmAndamento || (!manualTombamento.trim() && !manualTombamentoAntigo.trim())">
-          Informar tombamento
+        <button class="btn manual-confirm-button" type="button" (click)="confirmManualTombamento()" [disabled]="consultaEmAndamento || (!manualTombamento.trim() && !manualTombamentoAntigo.trim())">
+          Lançar item manualmente
         </button>
       </div>
     </div>
@@ -193,9 +193,6 @@
       </div>
 
       <div class="step-actions">
-        <a *ngIf="pendingItem.urlConsulta" class="btn btn-outline-secondary" [href]="pendingItem.urlConsulta" target="_blank" rel="noopener noreferrer">
-          Abrir consulta pública
-        </a>
         <button class="btn btn-outline-secondary" type="button" (click)="cancelPendingItem()">Voltar</button>
         <button class="btn btn-primary" type="button" (click)="confirmPendingItem()" [disabled]="confirmingItem">
           {{ confirmingItem ? 'Confirmando...' : 'Confirmar e continuar' }}
