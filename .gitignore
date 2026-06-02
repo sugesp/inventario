@@ -1,2 +1,4 @@
 Task/
 resources/*
+.env
+!.env.example
