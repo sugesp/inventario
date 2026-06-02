@@ -98,7 +98,7 @@ public class LevantamentoService : ILevantamentoService
     )
     {
         var levantamento = await _context.Levantamentos
-            .Include(x => x.Compartilhamentos)
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (levantamento is null)
@@ -141,7 +141,11 @@ public class LevantamentoService : ILevantamentoService
             }
         }
 
-        foreach (var compartilhamento in levantamento.Compartilhamentos)
+        var compartilhamentos = await _context.LevantamentosCompartilhamentos
+            .Where(x => x.LevantamentoId == levantamento.Id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var compartilhamento in compartilhamentos)
         {
             if (!usuarioIds.Contains(compartilhamento.UsuarioId))
             {
@@ -149,14 +153,14 @@ public class LevantamentoService : ILevantamentoService
             }
         }
 
-        var compartilhamentosAtuais = levantamento.Compartilhamentos
+        var compartilhamentosAtuais = compartilhamentos
             .Where(x => x.DeletedAt == null)
             .Select(x => x.UsuarioId)
             .ToHashSet();
 
         foreach (var usuarioId in usuarioIds.Where(usuarioId => !compartilhamentosAtuais.Contains(usuarioId)))
         {
-            var compartilhamentoExistente = levantamento.Compartilhamentos
+            var compartilhamentoExistente = compartilhamentos
                 .FirstOrDefault(x => x.UsuarioId == usuarioId);
 
             if (compartilhamentoExistente is not null)
@@ -166,7 +170,7 @@ public class LevantamentoService : ILevantamentoService
                 continue;
             }
 
-            levantamento.Compartilhamentos.Add(new LevantamentoCompartilhamento
+            _context.LevantamentosCompartilhamentos.Add(new LevantamentoCompartilhamento
             {
                 LevantamentoId = levantamento.Id,
                 UsuarioId = usuarioId,
@@ -174,7 +178,18 @@ public class LevantamentoService : ILevantamentoService
             });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException(
+                "Não foi possível salvar o compartilhamento. Atualize a página e tente novamente.",
+                ex
+            );
+        }
+
         return await GetByIdAsync(id, usuarioAutenticadoId, cancellationToken);
     }
 

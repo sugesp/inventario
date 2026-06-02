@@ -57,7 +57,7 @@ export class AppComponent {
       return null;
     }
 
-    return `https://www.gravatar.com/avatar/${this.md5(this.userEmail)}?s=80&d=404`;
+    return `https://www.gravatar.com/avatar/${this.md5(this.userEmail)}?s=80&d=mp`;
   }
 
   get userRole(): string {
