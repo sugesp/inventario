@@ -74,10 +74,10 @@ public class ComissaoService : IComissaoService
         return (await GetByIdAsync(entity.Id, cancellationToken))!;
     }
 
-    public async Task<ComissaoDto?> UpdateAsync(Guid id, ComissaoCreateUpdateDto dto, CancellationToken cancellationToken = default)
+    public async Task<ComissaoDto?> UpdateAsync(Guid id, ComissaoCreateUpdateDto dto, bool usuarioAdministrador, CancellationToken cancellationToken = default)
     {
         var entity = await _context.Comissoes
-            .Include(x => x.Membros.Where(m => m.DeletedAt == null))
+            .Include(x => x.Membros)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (entity is null)
@@ -85,28 +85,41 @@ public class ComissaoService : IComissaoService
             return null;
         }
 
-        var membros = await ValidateAsync(dto, id, cancellationToken);
+        var effectiveDto = usuarioAdministrador
+            ? dto
+            : new ComissaoCreateUpdateDto
+            {
+                Ano = entity.Ano,
+                Status = entity.Status,
+                PresidenteId = entity.PresidenteId,
+                Membros = dto.Membros
+            };
 
-        entity.Ano = dto.Ano;
-        entity.Status = NormalizeStatus(dto.Status);
-        entity.PresidenteId = dto.PresidenteId;
+        var membros = await ValidateAsync(effectiveDto, id, cancellationToken);
+
+        entity.Ano = effectiveDto.Ano;
+        entity.Status = NormalizeStatus(effectiveDto.Status);
+        entity.PresidenteId = effectiveDto.PresidenteId;
 
         var membrosAtuais = entity.Membros.Where(x => x.DeletedAt == null).ToList();
-        var membrosAtuaisPorUsuarioId = membrosAtuais.ToDictionary(x => x.UsuarioId);
+        var membrosPorUsuarioId = entity.Membros
+            .GroupBy(x => x.UsuarioId)
+            .ToDictionary(x => x.Key, x => x.OrderByDescending(membro => membro.CreatedAt).First());
         var membrosParaRemover = membrosAtuais
             .Where(x => membros.All(m => m.UsuarioId != x.UsuarioId))
             .ToList();
 
-        if (membrosParaRemover.Count > 0)
+        foreach (var membroParaRemover in membrosParaRemover)
         {
-            _context.ComissoesMembros.RemoveRange(membrosParaRemover);
+            membroParaRemover.DeletedAt = DateTime.UtcNow;
         }
 
         foreach (var membro in membros)
         {
-            if (membrosAtuaisPorUsuarioId.TryGetValue(membro.UsuarioId, out var membroAtual))
+            if (membrosPorUsuarioId.TryGetValue(membro.UsuarioId, out var membroAtual))
             {
                 membroAtual.EquipeId = membro.EquipeId;
+                membroAtual.DeletedAt = null;
                 continue;
             }
 
@@ -117,7 +130,18 @@ public class ComissaoService : IComissaoService
             });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException(
+                "Não foi possível salvar a comissão. Atualize a página e tente novamente.",
+                ex
+            );
+        }
+
         return await GetByIdAsync(entity.Id, cancellationToken);
     }
 

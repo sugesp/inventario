@@ -126,6 +126,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return !!comissao && this.canEdit(comissao);
   }
 
+  get canEditCurrentComissaoBasics(): boolean {
+    return this.authService.isAdmin;
+  }
+
   loadComissoes(): void {
     if (this.isEditPage) {
       return;
@@ -233,9 +237,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   submit(): void {
     const payload: ComissaoPayload = {
-      ano: Number(this.form.ano),
-      status: this.form.status,
-      presidenteId: this.form.presidenteId,
+      ano: this.canEditCurrentComissaoBasics ? Number(this.form.ano) : this.comissaoEmEdicao?.ano ?? Number(this.form.ano),
+      status: this.canEditCurrentComissaoBasics ? this.form.status : this.comissaoEmEdicao?.status ?? this.form.status,
+      presidenteId: this.canEditCurrentComissaoBasics ? this.form.presidenteId : this.comissaoEmEdicao?.presidenteId ?? this.form.presidenteId,
       membros: this.form.membros.reduce<Array<{ usuarioId: string; equipeId?: string | null }>>((acc, item) => {
         if (!item.usuarioId || acc.some((current) => current.usuarioId === item.usuarioId)) {
           return acc;

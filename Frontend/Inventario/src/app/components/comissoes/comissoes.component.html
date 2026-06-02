@@ -79,12 +79,12 @@
       <div class="row g-3">
         <div class="col-md-4">
           <label class="form-label">Ano do inventário</label>
-          <input class="form-control" name="paginaAno" [(ngModel)]="form.ano" type="number" min="2000" max="9999" required />
+          <input class="form-control" name="paginaAno" [(ngModel)]="form.ano" type="number" min="2000" max="9999" [readonly]="!canEditCurrentComissaoBasics" required />
         </div>
 
         <div class="col-md-4">
           <label class="form-label">Status</label>
-          <select class="form-select" name="paginaStatus" [(ngModel)]="form.status" required>
+          <select class="form-select" name="paginaStatus" [(ngModel)]="form.status" [disabled]="!canEditCurrentComissaoBasics" required>
             <option value="Inativa">Inativa</option>
             <option value="Ativa">Ativa</option>
           </select>
@@ -92,7 +92,7 @@
 
         <div class="col-md-4">
           <label class="form-label">Presidente</label>
-          <select class="form-select" name="paginaPresidente" [(ngModel)]="form.presidenteId" required>
+          <select class="form-select" name="paginaPresidente" [(ngModel)]="form.presidenteId" [disabled]="!canEditCurrentComissaoBasics" required>
             <option value="" disabled>Selecione</option>
             <option *ngFor="let usuario of usuariosInventario" [value]="usuario.id">{{ usuario.nome }}</option>
           </select>
@@ -109,14 +109,17 @@
         </div>
 
         <div class="col-12" *ngIf="activeTab === 'dados'">
-          <div class="section-card">
-            <div class="section-card-header">
-              <div>
-                <label class="form-label mb-1">Dados básicos</label>
-                <p class="section-card-hint mb-0">Ajuste ano, presidente e status da comissão.</p>
+            <div class="section-card">
+              <div class="section-card-header">
+                <div>
+                  <label class="form-label mb-1">Dados básicos</label>
+                  <p class="section-card-hint mb-0">Ajuste ano, presidente e status da comissão.</p>
+                </div>
+              </div>
+              <div class="inline-hint" *ngIf="!canEditCurrentComissaoBasics">
+                Como presidente, você pode gerenciar membros, equipes, locais e vínculos. Ano, status e presidente ficam restritos ao administrador.
               </div>
             </div>
-          </div>
         </div>
 
         <div class="col-12" *ngIf="activeTab === 'membros'">

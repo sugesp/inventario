@@ -73,7 +73,7 @@ public class ComissoesController : ControllerBase
                 return Forbid();
             }
 
-            var updated = await _service.UpdateAsync(id, dto, cancellationToken);
+            var updated = await _service.UpdateAsync(id, dto, User.IsInRole("Administrador"), cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)
