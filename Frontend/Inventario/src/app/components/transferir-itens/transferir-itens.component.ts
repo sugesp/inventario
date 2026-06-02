@@ -10,6 +10,7 @@ import { UnidadeAdministrativa } from '../../contracts/unidade-administrativa.mo
 import { UnidadeAdministrativaService } from '../../contracts/unidade-administrativa.service';
 import { Transferencia, TransferenciaItem, TransferenciaPayload } from '../../contracts/transferencia.model';
 import { TransferenciaService } from '../../contracts/transferencia.service';
+import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
 declare global {
   interface Window {
@@ -23,7 +24,7 @@ declare global {
 }
 
 interface TransferenciaForm {
-  unidadeAdministrativaDestinoId: string;
+  unidadeAdministrativaDestinoId: string | null;
   responsavelDestino: string;
   idSeiTermo: string;
   dataEntrega: string;
@@ -38,6 +39,10 @@ interface DraftItem {
   observacao: string;
   condicao: string;
   statusItem: string;
+}
+
+interface UnidadeDestinoOption extends SearchableSelectOption {
+  value: string;
 }
 
 type TransferenciaStep = 'dados' | 'itens' | 'resumo';
@@ -105,6 +110,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   get unidadeSelecionada(): UnidadeAdministrativa | null {
     return this.unidadesAdministrativas.find((item) => item.id === this.form.unidadeAdministrativaDestinoId) ?? null;
+  }
+
+  get unidadeDestinoOptions(): UnidadeDestinoOption[] {
+    return this.buildUnidadeDestinoOptions();
   }
 
   get statusOptions(): string[] {
@@ -434,7 +443,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   private toPayload(nextStatus?: string): TransferenciaPayload {
     return {
-      unidadeAdministrativaDestinoId: this.form.unidadeAdministrativaDestinoId,
+      unidadeAdministrativaDestinoId: this.form.unidadeAdministrativaDestinoId ?? '',
       responsavelDestino: this.form.responsavelDestino.trim(),
       idSeiTermo: this.form.idSeiTermo.trim(),
       dataEntrega: this.form.dataEntrega || null,
@@ -465,7 +474,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   private createEmptyForm(): TransferenciaForm {
     return {
-      unidadeAdministrativaDestinoId: '',
+      unidadeAdministrativaDestinoId: null,
       responsavelDestino: '',
       idSeiTermo: '',
       dataEntrega: '',
@@ -483,6 +492,38 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       condicao: 'SERVÍVEL',
       statusItem: 'CEDIDO',
     };
+  }
+
+  private buildUnidadeDestinoOptions(): UnidadeDestinoOption[] {
+    const childrenByParent = new Map<string | null, UnidadeAdministrativa[]>();
+
+    for (const unidade of this.unidadesAdministrativas) {
+      const parentId = unidade.unidadeSuperiorId ?? null;
+      const siblings = childrenByParent.get(parentId) ?? [];
+      siblings.push(unidade);
+      childrenByParent.set(parentId, siblings);
+    }
+
+    for (const siblings of childrenByParent.values()) {
+      siblings.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+
+    const options: UnidadeDestinoOption[] = [];
+
+    const walk = (parentId: string | null, depth: number): void => {
+      for (const unidade of childrenByParent.get(parentId) ?? []) {
+        options.push({
+          value: unidade.id,
+          label: `${unidade.sigla} - ${unidade.nome}`,
+          depth,
+        });
+        walk(unidade.id, depth + 1);
+      }
+    };
+
+    walk(null, 0);
+
+    return options;
   }
 
   normalizeTombamentoAntigoValue(value: string | null | undefined): string {

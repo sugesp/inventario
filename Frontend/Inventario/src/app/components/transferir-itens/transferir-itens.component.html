@@ -36,10 +36,14 @@
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label">Unidade administrativa de destino</label>
-        <select class="form-select" [(ngModel)]="form.unidadeAdministrativaDestinoId">
-          <option value="">Selecione</option>
-          <option *ngFor="let unidade of unidadesAdministrativas" [value]="unidade.id">{{ unidade.sigla }} - {{ unidade.nome }}</option>
-        </select>
+        <app-searchable-select
+          name="unidadeAdministrativaDestinoId"
+          [(ngModel)]="form.unidadeAdministrativaDestinoId"
+          [options]="unidadeDestinoOptions"
+          placeholder="Selecione"
+          searchPlaceholder="Pesquisar unidade de destino"
+          emptyOptionLabel="Selecione"
+        ></app-searchable-select>
       </div>
       <div class="col-md-6">
         <label class="form-label">Responsável</label>
