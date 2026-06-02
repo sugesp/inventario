@@ -101,38 +101,25 @@ public class ComissaoService : IComissaoService
         entity.Status = NormalizeStatus(effectiveDto.Status);
         entity.PresidenteId = effectiveDto.PresidenteId;
 
-        var membrosAtuais = entity.Membros.Where(x => x.DeletedAt == null).ToList();
-        var membrosPorUsuarioId = entity.Membros
-            .GroupBy(x => x.UsuarioId)
-            .ToDictionary(x => x.Key, x => x.OrderByDescending(membro => membro.CreatedAt).First());
-        var membrosParaRemover = membrosAtuais
-            .Where(x => membros.All(m => m.UsuarioId != x.UsuarioId))
-            .ToList();
-
-        foreach (var membroParaRemover in membrosParaRemover)
-        {
-            membroParaRemover.DeletedAt = DateTime.UtcNow;
-        }
-
-        foreach (var membro in membros)
-        {
-            if (membrosPorUsuarioId.TryGetValue(membro.UsuarioId, out var membroAtual))
-            {
-                membroAtual.EquipeId = membro.EquipeId;
-                membroAtual.DeletedAt = null;
-                continue;
-            }
-
-            entity.Membros.Add(new ComissaoMembro
-            {
-                UsuarioId = membro.UsuarioId,
-                EquipeId = membro.EquipeId
-            });
-        }
-
         try
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+            _context.ComissoesMembros.RemoveRange(entity.Membros);
             await _context.SaveChangesAsync(cancellationToken);
+
+            var novosMembros = membros
+                .Select(membro => new ComissaoMembro
+                {
+                    ComissaoId = entity.Id,
+                    UsuarioId = membro.UsuarioId,
+                    EquipeId = membro.EquipeId
+                })
+                .ToList();
+
+            _context.ComissoesMembros.AddRange(novosMembros);
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException ex)
         {
