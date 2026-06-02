@@ -2,6 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import jsQR from 'jsqr';
 import { ToastrService } from 'ngx-toastr';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 import { ConsultaPublicaBem } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Levantamento, LevantamentoItem } from '../../contracts/levantamento.model';
@@ -61,6 +62,11 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
   codeReadMessage = '';
   pendingItem: LevantamentoItemPreview | null = null;
   confirmingItem = false;
+  usuariosLevantamento: Array<{ id: string; nome: string; cpf: string }> = [];
+  sharingModalOpen = false;
+  loadingSharingUsers = false;
+  savingSharing = false;
+  sharingSelection = new Set<string>();
 
   private scannerStream: MediaStream | null = null;
   private scannerFrameId: number | null = null;
@@ -68,6 +74,7 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
   private scannerCanvas: HTMLCanvasElement | null = null;
 
   constructor(
+    private readonly authService: AuthService,
     private readonly levantamentoService: LevantamentoService,
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
@@ -109,6 +116,11 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
 
   get isConfirmacaoStep(): boolean {
     return this.currentStep === 'confirmacao';
+  }
+
+  get usuariosCompartilhamentoDisponiveis(): Array<{ id: string; nome: string; cpf: string }> {
+    const criadoPorUsuarioId = this.activeLevantamento?.criadoPorUsuarioId;
+    return this.usuariosLevantamento.filter((usuario) => usuario.id !== criadoPorUsuarioId);
   }
 
   loadLevantamentos(selectId?: string): void {
@@ -180,6 +192,62 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
     this.manualTombamentoAntigo = '';
     this.manualDescricao = '';
     this.currentStep = 'leitura';
+  }
+
+  openSharingModal(levantamento: Levantamento): void {
+    if (!levantamento.usuarioPodeCompartilhar) {
+      this.toastr.warning('Somente o criador pode compartilhar este levantamento.');
+      return;
+    }
+
+    this.activeLevantamentoId = levantamento.id;
+    this.sharingSelection = new Set(levantamento.compartilhamentos.map((item) => item.usuarioId));
+    this.sharingModalOpen = true;
+
+    if (this.usuariosLevantamento.length === 0) {
+      this.loadSharingUsers();
+    }
+  }
+
+  closeSharingModal(): void {
+    if (this.savingSharing) {
+      return;
+    }
+
+    this.sharingModalOpen = false;
+    this.sharingSelection.clear();
+  }
+
+  toggleSharingUser(usuarioId: string, checked: boolean): void {
+    if (checked) {
+      this.sharingSelection.add(usuarioId);
+      return;
+    }
+
+    this.sharingSelection.delete(usuarioId);
+  }
+
+  saveSharing(): void {
+    const levantamento = this.activeLevantamento;
+    if (!levantamento) {
+      return;
+    }
+
+    this.savingSharing = true;
+    this.levantamentoService.compartilhar(levantamento.id, {
+      usuarioIds: Array.from(this.sharingSelection),
+    }).subscribe({
+      next: (updated) => {
+        this.savingSharing = false;
+        this.applyUpdatedLevantamento(updated);
+        this.closeSharingModal();
+        this.toastr.success('Compartilhamento atualizado com sucesso.');
+      },
+      error: (error) => {
+        this.savingSharing = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o compartilhamento.');
+      },
+    });
   }
 
   goToLevantamentoStep(): void {
@@ -438,6 +506,26 @@ export class LevantamentosComponent implements OnInit, OnDestroy {
         ...levantamento,
         itens: [item, ...levantamento.itens],
       };
+    });
+  }
+
+  private applyUpdatedLevantamento(updated: Levantamento): void {
+    this.levantamentos = this.levantamentos.map((levantamento) =>
+      levantamento.id === updated.id ? updated : levantamento
+    );
+  }
+
+  private loadSharingUsers(): void {
+    this.loadingSharingUsers = true;
+    this.authService.getLevantamentoUsers().subscribe({
+      next: (usuarios) => {
+        this.usuariosLevantamento = usuarios;
+        this.loadingSharingUsers = false;
+      },
+      error: () => {
+        this.loadingSharingUsers = false;
+        this.toastr.error('Não foi possível carregar os usuários para compartilhamento.');
+      },
     });
   }
 

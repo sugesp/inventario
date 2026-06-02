@@ -108,6 +108,10 @@ export class AuthService {
     return this.http.get<Array<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/inventario`);
   }
 
+  getLevantamentoUsers(): Observable<Array<{ id: string; nome: string; cpf: string }>> {
+    return this.http.get<Array<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/levantamento`);
+  }
+
   getPagedInventarioUsers(params: PageParams): Observable<PagedResult<{ id: string; nome: string; cpf: string }>> {
     return this.http.get<PagedResult<{ id: string; nome: string; cpf: string }>>(`${this.baseUrl}/users/inventario/paged`, {
       params: {

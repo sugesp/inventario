@@ -485,6 +485,42 @@ namespace Persistence.Migrations
                     b.ToTable("Levantamentos", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Model.LevantamentoCompartilhamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CompartilhadoPorUsuarioId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("LevantamentoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompartilhadoPorUsuarioId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("LevantamentoId", "UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("LevantamentosCompartilhamentos", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Model.LevantamentoItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -899,6 +935,33 @@ namespace Persistence.Migrations
                     b.Navigation("CriadoPorUsuario");
                 });
 
+            modelBuilder.Entity("Domain.Model.LevantamentoCompartilhamento", b =>
+                {
+                    b.HasOne("Domain.Model.Usuario", "CompartilhadoPorUsuario")
+                        .WithMany("LevantamentosCompartilhadosPorUsuario")
+                        .HasForeignKey("CompartilhadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Model.Levantamento", "Levantamento")
+                        .WithMany("Compartilhamentos")
+                        .HasForeignKey("LevantamentoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Model.Usuario", "Usuario")
+                        .WithMany("LevantamentosCompartilhados")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CompartilhadoPorUsuario");
+
+                    b.Navigation("Levantamento");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Domain.Model.LevantamentoItem", b =>
                 {
                     b.HasOne("Domain.Model.Usuario", "ConfirmadoPorUsuario")
@@ -997,6 +1060,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Levantamento", b =>
                 {
+                    b.Navigation("Compartilhamentos");
+
                     b.Navigation("Itens");
                 });
 
@@ -1028,6 +1093,10 @@ namespace Persistence.Migrations
                     b.Navigation("LaudosTecnicos");
 
                     b.Navigation("LevantamentosCriados");
+
+                    b.Navigation("LevantamentosCompartilhados");
+
+                    b.Navigation("LevantamentosCompartilhadosPorUsuario");
 
                     b.Navigation("LevantamentosItensConfirmados");
 

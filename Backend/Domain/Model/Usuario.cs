@@ -19,4 +19,6 @@ public class Usuario : BaseEntity
     public ICollection<LaudoTecnico> LaudosTecnicos { get; set; } = new List<LaudoTecnico>();
     public ICollection<Levantamento> LevantamentosCriados { get; set; } = new List<Levantamento>();
     public ICollection<LevantamentoItem> LevantamentosItensConfirmados { get; set; } = new List<LevantamentoItem>();
+    public ICollection<LevantamentoCompartilhamento> LevantamentosCompartilhados { get; set; } = new List<LevantamentoCompartilhamento>();
+    public ICollection<LevantamentoCompartilhamento> LevantamentosCompartilhadosPorUsuario { get; set; } = new List<LevantamentoCompartilhamento>();
 }

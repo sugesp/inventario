@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Application.Contract;
 using Application.DTO.Levantamento;
 using Domain.Model;
+using Domain.Security;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 
@@ -21,21 +22,38 @@ public class LevantamentoService : ILevantamentoService
         _itemInventariadoService = itemInventariadoService;
     }
 
-    public async Task<IEnumerable<LevantamentoDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<LevantamentoDto>> GetAllAsync(Guid usuarioAutenticadoId, CancellationToken cancellationToken = default)
     {
         var entities = await QueryBase()
+            .Where(x =>
+                x.CriadoPorUsuarioId == usuarioAutenticadoId
+                || x.Compartilhamentos.Any(compartilhamento =>
+                    compartilhamento.UsuarioId == usuarioAutenticadoId
+                    && compartilhamento.DeletedAt == null
+                )
+            )
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return entities.Select(MapToDto);
+        return entities.Select(entity => MapToDto(entity, usuarioAutenticadoId));
     }
 
-    public async Task<LevantamentoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<LevantamentoDto?> GetByIdAsync(Guid id, Guid usuarioAutenticadoId, CancellationToken cancellationToken = default)
     {
         var entity = await QueryBase()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(x =>
+                x.Id == id
+                && (
+                    x.CriadoPorUsuarioId == usuarioAutenticadoId
+                    || x.Compartilhamentos.Any(compartilhamento =>
+                        compartilhamento.UsuarioId == usuarioAutenticadoId
+                        && compartilhamento.DeletedAt == null
+                    )
+                ),
+                cancellationToken
+            );
 
-        return entity is null ? null : MapToDto(entity);
+        return entity is null ? null : MapToDto(entity, usuarioAutenticadoId);
     }
 
     public async Task<LevantamentoDto> CreateAsync(
@@ -69,7 +87,95 @@ public class LevantamentoService : ILevantamentoService
         _context.Levantamentos.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return (await GetByIdAsync(entity.Id, cancellationToken))!;
+        return (await GetByIdAsync(entity.Id, usuarioAutenticadoId, cancellationToken))!;
+    }
+
+    public async Task<LevantamentoDto?> CompartilharAsync(
+        Guid id,
+        LevantamentoCompartilharDto dto,
+        Guid usuarioAutenticadoId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var levantamento = await _context.Levantamentos
+            .Include(x => x.Compartilhamentos)
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (levantamento is null)
+        {
+            return null;
+        }
+
+        if (levantamento.CriadoPorUsuarioId != usuarioAutenticadoId)
+        {
+            throw new InvalidOperationException("Somente o criador pode compartilhar este levantamento.");
+        }
+
+        var usuarioIds = dto.UsuarioIds
+            .Where(usuarioId => usuarioId != Guid.Empty && usuarioId != levantamento.CriadoPorUsuarioId)
+            .Distinct()
+            .ToHashSet();
+
+        if (usuarioIds.Count > 0)
+        {
+            var usuariosValidos = await _context.Usuarios
+                .AsNoTracking()
+                .Where(x =>
+                    usuarioIds.Contains(x.Id)
+                    && x.DeletedAt == null
+                    && x.Status == "Ativo"
+                )
+                .ToListAsync(cancellationToken);
+
+            var usuariosInvalidos = usuariosValidos
+                .Where(x =>
+                    !UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Levantamento)
+                    && !UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Administrador)
+                )
+                .Select(x => x.Id)
+                .ToHashSet();
+
+            if (usuariosValidos.Count != usuarioIds.Count || usuariosInvalidos.Count > 0)
+            {
+                throw new InvalidOperationException("Compartilhe apenas com usuários ativos que tenham acesso a levantamentos.");
+            }
+        }
+
+        foreach (var compartilhamento in levantamento.Compartilhamentos)
+        {
+            if (!usuarioIds.Contains(compartilhamento.UsuarioId))
+            {
+                compartilhamento.DeletedAt = DateTime.UtcNow;
+            }
+        }
+
+        var compartilhamentosAtuais = levantamento.Compartilhamentos
+            .Where(x => x.DeletedAt == null)
+            .Select(x => x.UsuarioId)
+            .ToHashSet();
+
+        foreach (var usuarioId in usuarioIds.Where(usuarioId => !compartilhamentosAtuais.Contains(usuarioId)))
+        {
+            var compartilhamentoExistente = levantamento.Compartilhamentos
+                .FirstOrDefault(x => x.UsuarioId == usuarioId);
+
+            if (compartilhamentoExistente is not null)
+            {
+                compartilhamentoExistente.DeletedAt = null;
+                compartilhamentoExistente.CompartilhadoPorUsuarioId = usuarioAutenticadoId;
+                continue;
+            }
+
+            levantamento.Compartilhamentos.Add(new LevantamentoCompartilhamento
+            {
+                LevantamentoId = levantamento.Id,
+                UsuarioId = usuarioId,
+                CompartilhadoPorUsuarioId = usuarioAutenticadoId,
+            });
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(id, usuarioAutenticadoId, cancellationToken);
     }
 
     public async Task<LevantamentoItemDto> ConfirmarItemAsync(
@@ -80,7 +186,19 @@ public class LevantamentoService : ILevantamentoService
     )
     {
         var levantamento = await _context.Levantamentos
-            .FirstOrDefaultAsync(x => x.Id == levantamentoId && x.DeletedAt == null, cancellationToken);
+            .Include(x => x.Compartilhamentos.Where(compartilhamento => compartilhamento.DeletedAt == null))
+            .FirstOrDefaultAsync(x =>
+                x.Id == levantamentoId
+                && x.DeletedAt == null
+                && (
+                    x.CriadoPorUsuarioId == usuarioAutenticadoId
+                    || x.Compartilhamentos.Any(compartilhamento =>
+                        compartilhamento.UsuarioId == usuarioAutenticadoId
+                        && compartilhamento.DeletedAt == null
+                    )
+                ),
+                cancellationToken
+            );
 
         if (levantamento is null)
         {
@@ -147,11 +265,15 @@ public class LevantamentoService : ILevantamentoService
             .AsNoTracking()
             .Where(x => x.DeletedAt == null)
             .Include(x => x.CriadoPorUsuario)
+            .Include(x => x.Compartilhamentos.Where(compartilhamento => compartilhamento.DeletedAt == null))
+                .ThenInclude(x => x.Usuario)
+            .Include(x => x.Compartilhamentos.Where(compartilhamento => compartilhamento.DeletedAt == null))
+                .ThenInclude(x => x.CompartilhadoPorUsuario)
             .Include(x => x.Itens.Where(item => item.DeletedAt == null))
                 .ThenInclude(x => x.ConfirmadoPorUsuario);
     }
 
-    private static LevantamentoDto MapToDto(Levantamento entity)
+    private static LevantamentoDto MapToDto(Levantamento entity, Guid usuarioAutenticadoId)
     {
         return new LevantamentoDto
         {
@@ -162,6 +284,19 @@ public class LevantamentoService : ILevantamentoService
             CriadoPorUsuarioNome = entity.CriadoPorUsuario?.Nome ?? string.Empty,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
+            UsuarioPodeCompartilhar = entity.CriadoPorUsuarioId == usuarioAutenticadoId,
+            Compartilhamentos = entity.Compartilhamentos
+                .Where(x => x.DeletedAt == null)
+                .OrderBy(x => x.Usuario?.Nome)
+                .Select(x => new LevantamentoCompartilhamentoDto
+                {
+                    UsuarioId = x.UsuarioId,
+                    UsuarioNome = x.Usuario?.Nome ?? string.Empty,
+                    CompartilhadoPorUsuarioId = x.CompartilhadoPorUsuarioId,
+                    CompartilhadoPorUsuarioNome = x.CompartilhadoPorUsuario?.Nome ?? string.Empty,
+                    CreatedAt = x.CreatedAt,
+                })
+                .ToArray(),
             Itens = entity.Itens
                 .Where(x => x.DeletedAt == null)
                 .OrderByDescending(x => x.CreatedAt)

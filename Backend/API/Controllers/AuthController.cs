@@ -120,6 +120,13 @@ public class AuthController : ControllerBase
         return Ok(await _service.GetPagedInventarioUsersAsync(pageParams, cancellationToken));
     }
 
+    [Authorize(Roles = "Administrador,Levantamento")]
+    [HttpGet("users/levantamento")]
+    public async Task<ActionResult<IEnumerable<UsuarioResponsavelDto>>> GetLevantamentoUsers(CancellationToken cancellationToken)
+    {
+        return Ok(await _service.GetLevantamentoUsersAsync(cancellationToken));
+    }
+
     [Authorize]
     [HttpPost("change-password")]
     public async Task<ActionResult<AuthResponseDto>> ChangePassword(

@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<ItemInventariado> ItensInventariados { get; set; }
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
     public DbSet<Levantamento> Levantamentos { get; set; }
+    public DbSet<LevantamentoCompartilhamento> LevantamentosCompartilhamentos { get; set; }
     public DbSet<LevantamentoItem> LevantamentosItens { get; set; }
     public DbSet<Transferencia> Transferencias { get; set; }
     public DbSet<TransferenciaItem> TransferenciasItens { get; set; }
@@ -173,6 +174,25 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.ConfirmadoPorUsuario)
                 .WithMany(x => x.LevantamentosItensConfirmados)
                 .HasForeignKey(x => x.ConfirmadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LevantamentoCompartilhamento>(entity =>
+        {
+            entity.ToTable("LevantamentosCompartilhamentos");
+            entity.HasIndex(x => new { x.LevantamentoId, x.UsuarioId })
+                .IsUnique();
+            entity.HasOne(x => x.Levantamento)
+                .WithMany(x => x.Compartilhamentos)
+                .HasForeignKey(x => x.LevantamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Usuario)
+                .WithMany(x => x.LevantamentosCompartilhados)
+                .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.CompartilhadoPorUsuario)
+                .WithMany(x => x.LevantamentosCompartilhadosPorUsuario)
+                .HasForeignKey(x => x.CompartilhadoPorUsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

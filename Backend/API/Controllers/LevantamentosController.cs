@@ -22,14 +22,14 @@ public class LevantamentosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LevantamentoDto>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAllAsync(cancellationToken));
+        return Ok(await _service.GetAllAsync(GetUsuarioId(), cancellationToken));
     }
 
     [Authorize(Roles = "Administrador,Levantamento")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LevantamentoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var levantamento = await _service.GetByIdAsync(id, cancellationToken);
+        var levantamento = await _service.GetByIdAsync(id, GetUsuarioId(), cancellationToken);
         return levantamento is null ? NotFound() : Ok(levantamento);
     }
 
@@ -41,6 +41,21 @@ public class LevantamentosController : ControllerBase
         {
             var created = await _service.CreateAsync(dto, GetUsuarioId(), cancellationToken);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Administrador,Levantamento")]
+    [HttpPut("{id:guid}/compartilhamentos")]
+    public async Task<ActionResult<LevantamentoDto>> Compartilhar(Guid id, [FromBody] LevantamentoCompartilharDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _service.CompartilharAsync(id, dto, GetUsuarioId(), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)
         {

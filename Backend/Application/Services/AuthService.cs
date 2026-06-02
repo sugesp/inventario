@@ -359,6 +359,26 @@ public class AuthService : IAuthService
         return PagedResult<UsuarioResponsavelDto>.Create(usuarios, pageParams);
     }
 
+    public async Task<IEnumerable<UsuarioResponsavelDto>> GetLevantamentoUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var usuarios = await _usuarioRepository.GetAllAsync(cancellationToken);
+        return usuarios
+            .Where(x =>
+                (
+                    UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Levantamento)
+                    || UsuarioPermissoes.HasPermission(x.PermissoesJson, UsuarioPermissoes.Administrador)
+                )
+                && string.Equals(x.Status, StatusAtivo, StringComparison.OrdinalIgnoreCase)
+                && !IsSystemAdminUser(x))
+            .OrderBy(x => x.Nome)
+            .Select(x => new UsuarioResponsavelDto
+            {
+                Id = x.Id,
+                Nome = x.Nome,
+                Cpf = MaskCpf(x.Cpf)
+            });
+    }
+
     private AuthResponseDto GenerateAuthResponse(Usuario usuario)
     {
         var jwtSection = _configuration.GetSection("Jwt");

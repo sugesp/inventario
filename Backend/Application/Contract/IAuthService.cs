@@ -13,6 +13,7 @@ public interface IAuthService
     Task<PagedResult<UsuarioDto>> GetPagedUsersAsync(PageParams pageParams, CancellationToken cancellationToken = default);
     Task<IEnumerable<UsuarioResponsavelDto>> GetInventarioUsersAsync(CancellationToken cancellationToken = default);
     Task<PagedResult<UsuarioResponsavelDto>> GetPagedInventarioUsersAsync(PageParams pageParams, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UsuarioResponsavelDto>> GetLevantamentoUsersAsync(CancellationToken cancellationToken = default);
     Task<AuthResponseDto> ChangePasswordAsync(Guid usuarioId, ChangePasswordDto dto, CancellationToken cancellationToken = default);
     Task ResetPasswordAsync(Guid usuarioId, CancellationToken cancellationToken = default);
 }

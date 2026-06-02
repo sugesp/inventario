@@ -8,4 +8,5 @@ public class Levantamento : BaseEntity
 
     public Usuario? CriadoPorUsuario { get; set; }
     public ICollection<LevantamentoItem> Itens { get; set; } = new List<LevantamentoItem>();
+    public ICollection<LevantamentoCompartilhamento> Compartilhamentos { get; set; } = new List<LevantamentoCompartilhamento>();
 }

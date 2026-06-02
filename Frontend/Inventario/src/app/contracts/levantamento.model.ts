@@ -18,10 +18,24 @@ export interface Levantamento {
   criadoPorUsuarioNome: string;
   createdAt: string;
   updatedAt?: string | null;
+  usuarioPodeCompartilhar: boolean;
+  compartilhamentos: LevantamentoCompartilhamento[];
   itens: LevantamentoItem[];
 }
 
 export interface LevantamentoCreatePayload {
   nome: string;
   descricao: string;
+}
+
+export interface LevantamentoCompartilhamento {
+  usuarioId: string;
+  usuarioNome: string;
+  compartilhadoPorUsuarioId: string;
+  compartilhadoPorUsuarioNome: string;
+  createdAt: string;
+}
+
+export interface LevantamentoCompartilharPayload {
+  usuarioIds: string[];
 }

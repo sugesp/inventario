@@ -41,7 +41,17 @@
         <strong>{{ activeLevantamento.nome }}</strong>
         <small>{{ activeLevantamento.descricao || 'Sem descrição informada.' }}</small>
       </div>
-      <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+      <div class="selected-levantamento-actions">
+        <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+        <button
+          class="btn btn-outline-primary btn-sm selected-levantamento-switch"
+          type="button"
+          *ngIf="activeLevantamento.usuarioPodeCompartilhar"
+          (click)="openSharingModal(activeLevantamento)"
+        >
+          Compartilhar
+        </button>
+      </div>
     </div>
 
     <div class="empty-state" *ngIf="!loading && levantamentos.length === 0">
@@ -62,6 +72,7 @@
         </div>
         <p>{{ levantamento.descricao || 'Sem descrição informada.' }}</p>
         <small>Criado por {{ levantamento.criadoPorUsuarioNome || 'Usuário não informado' }} em {{ levantamento.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+        <small>{{ levantamento.compartilhamentos.length }} usuário(s) compartilhado(s)</small>
       </button>
     </div>
 
@@ -107,6 +118,14 @@
       </div>
       <div class="selected-levantamento-actions">
         <span class="selected-levantamento-count">{{ activeLevantamento.itens.length }} item(ns)</span>
+        <button
+          class="btn btn-outline-primary btn-sm selected-levantamento-switch"
+          type="button"
+          *ngIf="activeLevantamento.usuarioPodeCompartilhar"
+          (click)="openSharingModal(activeLevantamento)"
+        >
+          Compartilhar
+        </button>
         <button class="btn btn-outline-secondary btn-sm selected-levantamento-switch" type="button" (click)="goToLevantamentoStep()">
           Mudar levantamento
         </button>
@@ -220,6 +239,49 @@
 
     <div class="scanner-footer">
       <button class="btn btn-secondary w-100" type="button" (click)="closeScanner()">Fechar câmera</button>
+    </div>
+  </div>
+</div>
+
+<div class="sharing-backdrop" *ngIf="sharingModalOpen" (click)="closeSharingModal()"></div>
+<div class="sharing-modal" *ngIf="sharingModalOpen" (click)="closeSharingModal()">
+  <div class="sharing-card" (click)="$event.stopPropagation()">
+    <div class="sharing-header">
+      <div>
+        <span class="list-header-eyebrow">Compartilhamento</span>
+        <h3>{{ activeLevantamento?.nome || 'Levantamento' }}</h3>
+        <p>Selecione os usuários que poderão acessar e lançar itens neste levantamento.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeSharingModal()"></button>
+    </div>
+
+    <div class="sharing-body">
+      <div class="scan-feedback mt-0" *ngIf="loadingSharingUsers">Carregando usuários...</div>
+
+      <div class="empty-state" *ngIf="!loadingSharingUsers && usuariosCompartilhamentoDisponiveis.length === 0">
+        Nenhum usuário ativo com permissão de levantamento foi encontrado.
+      </div>
+
+      <label class="sharing-user" *ngFor="let usuario of usuariosCompartilhamentoDisponiveis">
+        <input
+          type="checkbox"
+          [checked]="sharingSelection.has(usuario.id)"
+          (change)="toggleSharingUser(usuario.id, $any($event.target).checked)"
+        />
+        <span>
+          <strong>{{ usuario.nome }}</strong>
+          <small>{{ usuario.cpf }}</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="sharing-footer">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeSharingModal()" [disabled]="savingSharing">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" type="button" (click)="saveSharing()" [disabled]="savingSharing || loadingSharingUsers">
+        {{ savingSharing ? 'Salvando...' : 'Salvar compartilhamento' }}
+      </button>
     </div>
   </div>
 </div>
