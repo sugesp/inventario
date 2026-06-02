@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from '../../auth/auth.service';
 import { Levantamento } from '../../contracts/levantamento.model';
 import { LevantamentoService } from '../../contracts/levantamento.service';
 
@@ -13,8 +14,14 @@ export class LevantamentosListaComponent implements OnInit {
   loading = false;
   activeLevantamento: Levantamento | null = null;
   loadingModal = false;
+  sharingLevantamento: Levantamento | null = null;
+  usuariosLevantamento: Array<{ id: string; nome: string; cpf: string }> = [];
+  loadingSharingUsers = false;
+  savingSharing = false;
+  sharingSelection = new Set<string>();
 
   constructor(
+    private readonly authService: AuthService,
     private readonly levantamentoService: LevantamentoService,
     private readonly toastr: ToastrService
   ) {}
@@ -55,6 +62,66 @@ export class LevantamentosListaComponent implements OnInit {
   closeModal(): void {
     this.activeLevantamento = null;
     this.loadingModal = false;
+  }
+
+  get usuariosCompartilhamentoDisponiveis(): Array<{ id: string; nome: string; cpf: string }> {
+    const criadoPorUsuarioId = this.sharingLevantamento?.criadoPorUsuarioId;
+    return this.usuariosLevantamento.filter((usuario) => usuario.id !== criadoPorUsuarioId);
+  }
+
+  openSharing(levantamento: Levantamento): void {
+    if (!levantamento.usuarioPodeCompartilhar) {
+      this.toastr.warning('Somente o criador pode compartilhar este levantamento.');
+      return;
+    }
+
+    this.sharingLevantamento = levantamento;
+    this.sharingSelection = new Set(levantamento.compartilhamentos.map((item) => item.usuarioId));
+
+    if (this.usuariosLevantamento.length === 0) {
+      this.loadSharingUsers();
+    }
+  }
+
+  closeSharing(): void {
+    if (this.savingSharing) {
+      return;
+    }
+
+    this.sharingLevantamento = null;
+    this.sharingSelection.clear();
+  }
+
+  toggleSharingUser(usuarioId: string, checked: boolean): void {
+    if (checked) {
+      this.sharingSelection.add(usuarioId);
+      return;
+    }
+
+    this.sharingSelection.delete(usuarioId);
+  }
+
+  saveSharing(): void {
+    const levantamento = this.sharingLevantamento;
+    if (!levantamento) {
+      return;
+    }
+
+    this.savingSharing = true;
+    this.levantamentoService.compartilhar(levantamento.id, {
+      usuarioIds: Array.from(this.sharingSelection),
+    }).subscribe({
+      next: (updated) => {
+        this.savingSharing = false;
+        this.applyUpdatedLevantamento(updated);
+        this.closeSharing();
+        this.toastr.success('Compartilhamento atualizado com sucesso.');
+      },
+      error: (error) => {
+        this.savingSharing = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o compartilhamento.');
+      },
+    });
   }
 
   exportCsv(levantamento: Levantamento): void {
@@ -197,5 +264,29 @@ export class LevantamentosListaComponent implements OnInit {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       || 'levantamento';
+  }
+
+  private loadSharingUsers(): void {
+    this.loadingSharingUsers = true;
+    this.authService.getLevantamentoUsers().subscribe({
+      next: (usuarios) => {
+        this.usuariosLevantamento = usuarios;
+        this.loadingSharingUsers = false;
+      },
+      error: () => {
+        this.loadingSharingUsers = false;
+        this.toastr.error('Não foi possível carregar os usuários para compartilhamento.');
+      },
+    });
+  }
+
+  private applyUpdatedLevantamento(updated: Levantamento): void {
+    this.levantamentos = this.levantamentos.map((levantamento) =>
+      levantamento.id === updated.id ? updated : levantamento
+    );
+
+    if (this.activeLevantamento?.id === updated.id) {
+      this.activeLevantamento = updated;
+    }
   }
 }

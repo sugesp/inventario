@@ -56,6 +56,14 @@
               <button class="btn btn-sm btn-outline-primary" type="button" (click)="openDetails(levantamento.id)">
                 Ver detalhes
               </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                *ngIf="levantamento.usuarioPodeCompartilhar"
+                (click)="openSharing(levantamento)"
+              >
+                Compartilhar
+              </button>
             </td>
           </tr>
         </tbody>
@@ -78,6 +86,9 @@
         </button>
         <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLevantamento" (click)="exportPdf(activeLevantamento)">
           Exportar PDF
+        </button>
+        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLevantamento?.usuarioPodeCompartilhar" (click)="openSharing(activeLevantamento!)">
+          Compartilhar
         </button>
         <button class="btn-close" type="button" aria-label="Fechar" (click)="closeModal()"></button>
       </div>
@@ -134,5 +145,48 @@
     </div>
 
     <div class="scan-feedback modal-feedback" *ngIf="loadingModal">Carregando itens do levantamento...</div>
+  </div>
+</div>
+
+<div class="sharing-backdrop" *ngIf="sharingLevantamento" (click)="closeSharing()"></div>
+<div class="sharing-modal" *ngIf="sharingLevantamento" (click)="closeSharing()">
+  <div class="sharing-card" (click)="$event.stopPropagation()">
+    <div class="sharing-header">
+      <div>
+        <span class="list-header-eyebrow">Compartilhamento</span>
+        <h3>{{ sharingLevantamento.nome || 'Levantamento' }}</h3>
+        <p>Selecione os usuários que poderão acessar e lançar itens neste levantamento.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeSharing()"></button>
+    </div>
+
+    <div class="sharing-body">
+      <div class="scan-feedback mt-0" *ngIf="loadingSharingUsers">Carregando usuários...</div>
+
+      <div class="empty-state" *ngIf="!loadingSharingUsers && usuariosCompartilhamentoDisponiveis.length === 0">
+        Nenhum usuário ativo com permissão de levantamento foi encontrado.
+      </div>
+
+      <label class="sharing-user" *ngFor="let usuario of usuariosCompartilhamentoDisponiveis">
+        <input
+          type="checkbox"
+          [checked]="sharingSelection.has(usuario.id)"
+          (change)="toggleSharingUser(usuario.id, $any($event.target).checked)"
+        />
+        <span>
+          <strong>{{ usuario.nome }}</strong>
+          <small>{{ usuario.cpf }}</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="sharing-footer">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeSharing()" [disabled]="savingSharing">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" type="button" (click)="saveSharing()" [disabled]="savingSharing || loadingSharingUsers">
+        {{ savingSharing ? 'Salvando...' : 'Salvar compartilhamento' }}
+      </button>
+    </div>
   </div>
 </div>
