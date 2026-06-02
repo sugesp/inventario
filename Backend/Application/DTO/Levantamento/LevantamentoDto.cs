@@ -9,6 +9,7 @@ public class LevantamentoDto
     public string CriadoPorUsuarioNome { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public bool UsuarioPodeGerenciar { get; set; }
     public bool UsuarioPodeCompartilhar { get; set; }
     public LevantamentoCompartilhamentoDto[] Compartilhamentos { get; set; } = [];
     public LevantamentoItemDto[] Itens { get; set; } = [];

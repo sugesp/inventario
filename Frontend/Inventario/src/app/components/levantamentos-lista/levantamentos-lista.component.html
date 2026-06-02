@@ -64,6 +64,15 @@
               >
                 Compartilhar
               </button>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                type="button"
+                *ngIf="levantamento.usuarioPodeGerenciar && levantamento.itens.length === 0"
+                (click)="deleteLevantamento(levantamento)"
+                [disabled]="deletingLevantamentoId === levantamento.id"
+              >
+                {{ deletingLevantamentoId === levantamento.id ? 'Excluindo...' : 'Excluir' }}
+              </button>
             </td>
           </tr>
         </tbody>
@@ -89,6 +98,15 @@
         </button>
         <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLevantamento?.usuarioPodeCompartilhar" (click)="openSharing(activeLevantamento!)">
           Compartilhar
+        </button>
+        <button
+          class="btn btn-outline-danger btn-sm"
+          type="button"
+          *ngIf="activeLevantamento?.usuarioPodeGerenciar && activeLevantamento?.itens?.length === 0"
+          (click)="deleteLevantamento(activeLevantamento!)"
+          [disabled]="deletingLevantamentoId === activeLevantamento?.id"
+        >
+          {{ deletingLevantamentoId === activeLevantamento?.id ? 'Excluindo...' : 'Excluir' }}
         </button>
         <button class="btn-close" type="button" aria-label="Fechar" (click)="closeModal()"></button>
       </div>
@@ -128,6 +146,7 @@
               <th>Tipo</th>
               <th>Levantamento feito por</th>
               <th>Data</th>
+              <th class="text-end" *ngIf="levantamento.usuarioPodeGerenciar">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -138,6 +157,16 @@
               <td>{{ item.tipo || '-' }}</td>
               <td>{{ item.confirmadoPorUsuarioNome || '-' }}</td>
               <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-end" *ngIf="levantamento.usuarioPodeGerenciar">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  type="button"
+                  (click)="deleteItem(levantamento, item.id)"
+                  [disabled]="deletingItemId === item.id"
+                >
+                  {{ deletingItemId === item.id ? 'Excluindo...' : 'Excluir' }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>

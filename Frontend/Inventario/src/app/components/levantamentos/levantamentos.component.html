@@ -51,6 +51,15 @@
         >
           Compartilhar
         </button>
+        <button
+          class="btn btn-outline-danger btn-sm selected-levantamento-switch"
+          type="button"
+          *ngIf="activeLevantamento.usuarioPodeGerenciar && activeLevantamento.itens.length === 0"
+          (click)="deleteLevantamento(activeLevantamento)"
+          [disabled]="deletingLevantamentoId === activeLevantamento.id"
+        >
+          {{ deletingLevantamentoId === activeLevantamento.id ? 'Excluindo...' : 'Excluir' }}
+        </button>
       </div>
     </div>
 
@@ -126,6 +135,15 @@
         >
           Compartilhar
         </button>
+        <button
+          class="btn btn-outline-danger btn-sm selected-levantamento-switch"
+          type="button"
+          *ngIf="activeLevantamento.usuarioPodeGerenciar && activeLevantamento.itens.length === 0"
+          (click)="deleteLevantamento(activeLevantamento)"
+          [disabled]="deletingLevantamentoId === activeLevantamento.id"
+        >
+          {{ deletingLevantamentoId === activeLevantamento.id ? 'Excluindo...' : 'Excluir' }}
+        </button>
         <button class="btn btn-outline-secondary btn-sm selected-levantamento-switch" type="button" (click)="goToLevantamentoStep()">
           Mudar levantamento
         </button>
@@ -170,6 +188,50 @@
     <div class="scan-feedback" *ngIf="consultaEmAndamento">Consultando dados do item...</div>
     <div class="scan-feedback" *ngIf="!consultaEmAndamento && codeReadMessage">{{ codeReadMessage }}</div>
     <div class="scan-feedback" *ngIf="scannerMessage">{{ scannerMessage }}</div>
+
+    <div class="items-management" *ngIf="activeLevantamento.itens.length > 0">
+      <div class="items-management-header">
+        <div>
+          <span class="selected-local-label">Itens lançados</span>
+          <h4>{{ activeLevantamento.itens.length }} item(ns)</h4>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Tombamento</th>
+              <th>Descrição</th>
+              <th>Confirmado por</th>
+              <th>Data</th>
+              <th class="text-end" *ngIf="activeLevantamento.usuarioPodeGerenciar">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of activeLevantamento.itens">
+              <td>
+                <strong>{{ item.tombamento || '-' }}</strong>
+                <small>{{ item.tombamentoAntigo || 'Sem tombamento antigo' }}</small>
+              </td>
+              <td>{{ item.descricao || '-' }}</td>
+              <td>{{ item.confirmadoPorUsuarioNome || '-' }}</td>
+              <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-end" *ngIf="activeLevantamento.usuarioPodeGerenciar">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  type="button"
+                  (click)="deleteItem(item)"
+                  [disabled]="deletingItemId === item.id"
+                >
+                  {{ deletingItemId === item.id ? 'Excluindo...' : 'Excluir' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <section class="step-card" *ngIf="isConfirmacaoStep && pendingItem && activeLevantamento">

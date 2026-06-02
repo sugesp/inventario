@@ -29,4 +29,12 @@ export class LevantamentoService {
   confirmarItem(levantamentoId: string, tombamento: string, tombamentoAntigo = '', descricao = ''): Observable<LevantamentoItem> {
     return this.http.post<LevantamentoItem>(`${this.baseUrl}/${levantamentoId}/itens`, { tombamento, tombamentoAntigo, descricao });
   }
+
+  deleteItem(levantamentoId: string, itemId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${levantamentoId}/itens/${itemId}`);
+  }
+
+  delete(levantamentoId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${levantamentoId}`);
+  }
 }

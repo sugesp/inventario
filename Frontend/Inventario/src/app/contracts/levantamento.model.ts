@@ -18,6 +18,7 @@ export interface Levantamento {
   criadoPorUsuarioNome: string;
   createdAt: string;
   updatedAt?: string | null;
+  usuarioPodeGerenciar: boolean;
   usuarioPodeCompartilhar: boolean;
   compartilhamentos: LevantamentoCompartilhamento[];
   itens: LevantamentoItem[];

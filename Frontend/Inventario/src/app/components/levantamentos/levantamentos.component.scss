@@ -114,6 +114,33 @@
   min-height: 52px;
 }
 
+.items-management {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.items-management-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.items-management-header h4 {
+  margin: 0;
+  color: #21384f;
+}
+
+.table-responsive {
+  border: 1px solid #e4eaf1;
+  border-radius: 12px;
+}
+
+.table td small {
+  display: block;
+  color: #61788f;
+}
+
 .transfer-confirm-card {
   display: grid;
   gap: 12px;

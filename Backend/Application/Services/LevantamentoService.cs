@@ -259,6 +259,84 @@ public class LevantamentoService : ILevantamentoService
         return MapItemToDto(created);
     }
 
+    public async Task<bool> DeleteItemAsync(
+        Guid levantamentoId,
+        Guid itemId,
+        Guid usuarioAutenticadoId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var levantamento = await _context.Levantamentos
+            .FirstOrDefaultAsync(x => x.Id == levantamentoId && x.DeletedAt == null, cancellationToken);
+
+        if (levantamento is null)
+        {
+            return false;
+        }
+
+        if (levantamento.CriadoPorUsuarioId != usuarioAutenticadoId)
+        {
+            throw new InvalidOperationException("Somente o criador pode excluir itens deste levantamento.");
+        }
+
+        var item = await _context.LevantamentosItens
+            .FirstOrDefaultAsync(x =>
+                x.Id == itemId
+                && x.LevantamentoId == levantamentoId
+                && x.DeletedAt == null,
+                cancellationToken
+            );
+
+        if (item is null)
+        {
+            return false;
+        }
+
+        _context.LevantamentosItens.Remove(item);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(
+        Guid id,
+        Guid usuarioAutenticadoId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var levantamento = await _context.Levantamentos
+            .Include(x => x.Compartilhamentos.Where(compartilhamento => compartilhamento.DeletedAt == null))
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (levantamento is null)
+        {
+            return false;
+        }
+
+        if (levantamento.CriadoPorUsuarioId != usuarioAutenticadoId)
+        {
+            throw new InvalidOperationException("Somente o criador pode excluir este levantamento.");
+        }
+
+        var possuiItens = await _context.LevantamentosItens.AnyAsync(
+            x => x.LevantamentoId == id && x.DeletedAt == null,
+            cancellationToken
+        );
+
+        if (possuiItens)
+        {
+            throw new InvalidOperationException("Somente levantamentos sem itens podem ser excluídos.");
+        }
+
+        levantamento.DeletedAt = DateTime.UtcNow;
+        foreach (var compartilhamento in levantamento.Compartilhamentos)
+        {
+            compartilhamento.DeletedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private IQueryable<Levantamento> QueryBase()
     {
         return _context.Levantamentos
@@ -284,6 +362,7 @@ public class LevantamentoService : ILevantamentoService
             CriadoPorUsuarioNome = entity.CriadoPorUsuario?.Nome ?? string.Empty,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
+            UsuarioPodeGerenciar = entity.CriadoPorUsuarioId == usuarioAutenticadoId,
             UsuarioPodeCompartilhar = entity.CriadoPorUsuarioId == usuarioAutenticadoId,
             Compartilhamentos = entity.Compartilhamentos
                 .Where(x => x.DeletedAt == null)

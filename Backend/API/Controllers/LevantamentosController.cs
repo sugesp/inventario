@@ -78,6 +78,36 @@ public class LevantamentosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,Levantamento")]
+    [HttpDelete("{id:guid}/itens/{itemId:guid}")]
+    public async Task<IActionResult> DeleteItem(Guid id, Guid itemId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deleted = await _service.DeleteItemAsync(id, itemId, GetUsuarioId(), cancellationToken);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Administrador,Levantamento")]
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deleted = await _service.DeleteAsync(id, GetUsuarioId(), cancellationToken);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     private Guid GetUsuarioId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

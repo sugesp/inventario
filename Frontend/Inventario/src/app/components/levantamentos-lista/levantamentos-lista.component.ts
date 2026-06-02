@@ -19,6 +19,8 @@ export class LevantamentosListaComponent implements OnInit {
   loadingSharingUsers = false;
   savingSharing = false;
   sharingSelection = new Set<string>();
+  deletingLevantamentoId = '';
+  deletingItemId = '';
 
   constructor(
     private readonly authService: AuthService,
@@ -120,6 +122,68 @@ export class LevantamentosListaComponent implements OnInit {
       error: (error) => {
         this.savingSharing = false;
         this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o compartilhamento.');
+      },
+    });
+  }
+
+  deleteLevantamento(levantamento: Levantamento): void {
+    if (!levantamento.usuarioPodeGerenciar) {
+      this.toastr.warning('Somente o criador pode excluir este levantamento.');
+      return;
+    }
+
+    if (levantamento.itens.length > 0) {
+      this.toastr.warning('Somente levantamentos sem itens podem ser excluídos.');
+      return;
+    }
+
+    if (!window.confirm(`Excluir o levantamento "${levantamento.nome}"?`)) {
+      return;
+    }
+
+    this.deletingLevantamentoId = levantamento.id;
+    this.levantamentoService.delete(levantamento.id).subscribe({
+      next: () => {
+        this.deletingLevantamentoId = '';
+        this.levantamentos = this.levantamentos.filter((item) => item.id !== levantamento.id);
+
+        if (this.activeLevantamento?.id === levantamento.id) {
+          this.closeModal();
+        }
+
+        this.toastr.success('Levantamento excluído com sucesso.');
+      },
+      error: (error) => {
+        this.deletingLevantamentoId = '';
+        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir o levantamento.');
+      },
+    });
+  }
+
+  deleteItem(levantamento: Levantamento, itemId: string): void {
+    if (!levantamento.usuarioPodeGerenciar) {
+      this.toastr.warning('Somente o criador pode excluir itens deste levantamento.');
+      return;
+    }
+
+    if (!window.confirm('Excluir este item do levantamento?')) {
+      return;
+    }
+
+    this.deletingItemId = itemId;
+    this.levantamentoService.deleteItem(levantamento.id, itemId).subscribe({
+      next: () => {
+        this.deletingItemId = '';
+        const updated = {
+          ...levantamento,
+          itens: levantamento.itens.filter((item) => item.id !== itemId),
+        };
+        this.applyUpdatedLevantamento(updated);
+        this.toastr.success('Item excluído do levantamento.');
+      },
+      error: (error) => {
+        this.deletingItemId = '';
+        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir o item.');
       },
     });
   }
