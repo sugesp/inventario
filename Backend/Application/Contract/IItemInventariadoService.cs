@@ -8,6 +8,7 @@ public interface IItemInventariadoService
     Task<IEnumerable<ItemInventariadoDto>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default);
+    Task<ConsultaTombamentoDto> ConsultarTombamentoAsync(string tombamento, CancellationToken cancellationToken = default);
     Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
         Guid itemId,
         Guid fotoId,

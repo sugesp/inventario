@@ -52,6 +52,20 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador")]
+    [HttpGet("consulta-tombamento/{tombamento}")]
+    public async Task<ActionResult<ConsultaTombamentoDto>> ConsultarTombamento(string tombamento, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await _service.ConsultarTombamentoAsync(tombamento, cancellationToken));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
     public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)

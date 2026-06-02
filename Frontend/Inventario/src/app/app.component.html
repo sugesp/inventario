@@ -51,6 +51,10 @@
 
       <div class="menu-group" *ngIf="authService.isAdmin">
         <span class="menu-section-label">Administrador</span>
+        <a class="menu-item" routerLink="/consulta-tombamento" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <span>Consulta Tombamento</span>
+        </a>
         <a class="menu-item" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
           <span>Usuários</span>

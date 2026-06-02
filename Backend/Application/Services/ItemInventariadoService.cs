@@ -80,6 +80,148 @@ public class ItemInventariadoService : IItemInventariadoService
         };
     }
 
+    public async Task<ConsultaTombamentoDto> ConsultarTombamentoAsync(string tombamento, CancellationToken cancellationToken = default)
+    {
+        var tombamentoNormalizado = NormalizeDigits(tombamento);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        {
+            throw new InvalidOperationException("Informe um tombamento válido para consulta.");
+        }
+
+        ConsultaPublicaBemDto? consultaPublica = null;
+        try
+        {
+            consultaPublica = await ConsultarResumoPublicoAsync(tombamentoNormalizado, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            consultaPublica = null;
+        }
+
+        var transferencias = await _context.TransferenciasItens
+            .AsNoTracking()
+            .Where(x =>
+                x.DeletedAt == null
+                && x.Transferencia != null
+                && x.Transferencia.DeletedAt == null
+                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
+            )
+            .Include(x => x.Transferencia)
+                .ThenInclude(x => x!.UnidadeAdministrativaDestino)
+            .OrderByDescending(x => x.Transferencia!.CreatedAt)
+            .ThenBy(x => x.Descricao)
+            .Select(x => new ConsultaTombamentoTransferenciaDto
+            {
+                TransferenciaId = x.TransferenciaId,
+                ItemId = x.Id,
+                TombamentoNovo = x.TombamentoNovo,
+                TombamentoAntigo = x.TombamentoAntigo,
+                Descricao = x.Descricao,
+                StatusTransferencia = x.Transferencia!.Status,
+                StatusItem = x.StatusItem,
+                Condicao = x.Condicao,
+                UnidadeAdministrativaDestinoNome = x.Transferencia.UnidadeAdministrativaDestino != null
+                    ? x.Transferencia.UnidadeAdministrativaDestino.Nome
+                    : string.Empty,
+                UnidadeAdministrativaDestinoSigla = x.Transferencia.UnidadeAdministrativaDestino != null
+                    ? x.Transferencia.UnidadeAdministrativaDestino.Sigla
+                    : string.Empty,
+                ResponsavelDestino = x.Transferencia.ResponsavelDestino,
+                IdSeiTermo = x.Transferencia.IdSeiTermo,
+                DataEntrega = x.Transferencia.DataEntrega,
+                CreatedAt = x.Transferencia.CreatedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        var itensLevantamento = await _context.LevantamentosItens
+            .AsNoTracking()
+            .Where(x =>
+                x.DeletedAt == null
+                && x.Levantamento != null
+                && x.Levantamento.DeletedAt == null
+                && x.Tombamento.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
+            )
+            .Include(x => x.Levantamento)
+            .Include(x => x.ConfirmadoPorUsuario)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new ConsultaTombamentoLevantamentoItemDto
+            {
+                LevantamentoId = x.LevantamentoId,
+                ItemId = x.Id,
+                LevantamentoNome = x.Levantamento != null ? x.Levantamento.Nome : string.Empty,
+                Tombamento = x.Tombamento,
+                TombamentoAntigo = x.TombamentoAntigo,
+                Descricao = x.Descricao,
+                Tipo = x.Tipo,
+                ConfirmadoPorUsuarioNome = x.ConfirmadoPorUsuario != null ? x.ConfirmadoPorUsuario.Nome : string.Empty,
+                CreatedAt = x.CreatedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        var laudos = await _context.LaudosTecnicos
+            .AsNoTracking()
+            .Where(x =>
+                x.DeletedAt == null
+                && x.Patrimonio.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
+            )
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new ConsultaTombamentoLaudoDto
+            {
+                Id = x.Id,
+                Patrimonio = x.Patrimonio,
+                ProcessoSei = x.ProcessoSei,
+                IdDevolucaoSei = x.IdDevolucaoSei,
+                TipoEquipamento = x.TipoEquipamento,
+                Marca = x.Marca,
+                Modelo = x.Modelo,
+                NumeroSerie = x.NumeroSerie,
+                ClassificacaoFinal = x.ClassificacaoFinal,
+                ResponsavelTecnicoNome = x.ResponsavelTecnicoNome,
+                DataAvaliacao = x.DataAvaliacao,
+                CreatedAt = x.CreatedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        var itensInventariados = await _context.ItensInventariados
+            .AsNoTracking()
+            .Where(x =>
+                x.DeletedAt == null
+                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
+            )
+            .Include(x => x.Local)
+                .ThenInclude(x => x!.Equipe)
+            .Include(x => x.Usuario)
+            .OrderByDescending(x => x.DataInventario)
+            .Select(x => new ConsultaTombamentoItemInventariadoDto
+            {
+                Id = x.Id,
+                TombamentoNovo = x.TombamentoNovo,
+                TombamentoAntigo = x.TombamentoAntigo,
+                Descricao = x.Descricao,
+                LocalNome = x.Local != null ? x.Local.Nome : string.Empty,
+                EquipeDescricao = x.Local != null && x.Local.Equipe != null ? x.Local.Equipe.Descricao : string.Empty,
+                UsuarioNome = x.Usuario != null ? x.Usuario.Nome : string.Empty,
+                Status = x.Status,
+                EstadoConservacao = x.EstadoConservacao,
+                LancadoEEstado = x.LancadoEEstado,
+                DataInventario = x.DataInventario,
+            })
+            .ToListAsync(cancellationToken);
+
+        return new ConsultaTombamentoDto
+        {
+            TombamentoPesquisado = tombamentoNormalizado,
+            ConsultaPublica = consultaPublica,
+            Ocorrencias = new ConsultaTombamentoOcorrenciasDto
+            {
+                Transferencias = transferencias,
+                ItensLevantamento = itensLevantamento,
+                Laudos = laudos,
+                ItensInventariados = itensInventariados,
+            }
+        };
+    }
+
     public async Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
         Guid itemId,
         Guid fotoId,

@@ -9,6 +9,7 @@ import { InventarioGuard } from './auth/contratos.guard';
 import { LevantamentoGuard } from './auth/levantamento.guard';
 import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
+import { ConsultaTombamentoComponent } from './components/consulta-tombamento/consulta-tombamento.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { EquipesComponent } from './components/equipes/equipes.component';
 import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
@@ -28,6 +29,7 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { title: 'Dashboard' } },
   { path: 'auth', component: AuthComponent, data: { title: 'Entrar' } },
   { path: 'usuarios', component: UsuariosComponent, canActivate: [AdminGuard], data: { title: 'Usuários' } },
+  { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [AdminGuard], data: { title: 'Consulta por tombamento' } },
   { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Comissões' } },
   { path: 'comissoes/:id', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Editar comissão' } },
   { path: 'equipes', component: EquipesComponent, canActivate: [AdminGuard], data: { title: 'Equipes' } },

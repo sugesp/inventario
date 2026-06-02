@@ -1,0 +1,237 @@
+<div class="consulta-grid">
+  <section class="consulta-panel">
+    <div class="consulta-header">
+      <div>
+        <span class="consulta-eyebrow">Administrador</span>
+        <h2>Consulta por patrimônio do e-Estado</h2>
+        <p>Pesquise o tombamento para ver a consulta pública e onde ele aparece no sistema.</p>
+      </div>
+    </div>
+
+    <form class="consulta-form" (ngSubmit)="consultar()" #consultaForm="ngForm">
+      <div class="search-field">
+        <label class="form-label" for="patrimonio">Patrimônio</label>
+        <input
+          id="patrimonio"
+          class="form-control"
+          name="patrimonio"
+          [(ngModel)]="patrimonio"
+          inputmode="numeric"
+          placeholder="Digite o tombamento do e-Estado"
+          required
+        />
+      </div>
+      <div class="consulta-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="loading || !consultaForm.form.valid">
+          {{ loading ? 'Consultando...' : 'Consultar' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="limpar()" [disabled]="loading">
+          Limpar
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="consulta-summary" *ngIf="resultado">
+    <div class="summary-card">
+      <span class="summary-label">Tombamento pesquisado</span>
+      <strong>{{ resultado.tombamentoPesquisado }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Ocorrências locais</span>
+      <strong>{{ totalOcorrencias }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Consulta pública</span>
+      <strong>{{ resultado.consultaPublica ? 'Localizada' : 'Não localizada' }}</strong>
+    </div>
+  </section>
+
+  <section class="consulta-panel" *ngIf="resultado?.consultaPublica">
+    <div class="section-title">
+      <h3>Dados da consulta pública</h3>
+      <a
+        class="btn btn-outline-primary btn-sm"
+        [href]="resultado?.consultaPublica?.urlConsulta"
+        target="_blank"
+        rel="noopener"
+      >
+        Abrir e-Estado
+      </a>
+    </div>
+    <div class="public-data-grid">
+      <div>
+        <span>Patrimônio</span>
+        <strong>{{ resultado?.consultaPublica?.tombamento || 'Não informado' }}</strong>
+      </div>
+      <div>
+        <span>Tombamento antigo</span>
+        <strong>{{ resultado?.consultaPublica?.tombamentoAntigo || 'Não informado' }}</strong>
+      </div>
+      <div>
+        <span>Tipo</span>
+        <strong>{{ resultado?.consultaPublica?.tipo || 'Não informado' }}</strong>
+      </div>
+      <div class="public-data-description">
+        <span>Descrição</span>
+        <strong>{{ resultado?.consultaPublica?.descricao || 'Não informado' }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="consulta-panel" *ngIf="resultado">
+    <div class="section-title">
+      <h3>Transferências</h3>
+      <span>{{ resultado.ocorrencias.transferencias.length }} registro(s)</span>
+    </div>
+    <div class="table-responsive" *ngIf="resultado.ocorrencias.transferencias.length; else noTransferencias">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Destino</th>
+            <th>Status</th>
+            <th>SEI</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of resultado.ocorrencias.transferencias">
+            <td>
+              <strong>{{ item.descricao }}</strong>
+              <small>{{ item.tombamentoNovo }} · antigo {{ item.tombamentoAntigo || 'não informado' }}</small>
+            </td>
+            <td>
+              <strong>{{ item.unidadeAdministrativaDestinoSigla || item.unidadeAdministrativaDestinoNome || 'Não informado' }}</strong>
+              <small>{{ item.responsavelDestino || 'Responsável não informado' }}</small>
+            </td>
+            <td>
+              <span class="status-pill">{{ item.statusTransferencia }}</span>
+              <small>{{ item.statusItem || 'Item sem status' }} · {{ item.condicao || 'Sem condição' }}</small>
+            </td>
+            <td>{{ item.idSeiTermo || 'Não informado' }}</td>
+            <td>{{ formatDate(item.dataEntrega || item.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noTransferencias>
+      <div class="empty-state">Nenhuma transferência encontrada para este tombamento.</div>
+    </ng-template>
+  </section>
+
+  <section class="consulta-panel" *ngIf="resultado">
+    <div class="section-title">
+      <h3>Itens de levantamento</h3>
+      <span>{{ resultado.ocorrencias.itensLevantamento.length }} registro(s)</span>
+    </div>
+    <div class="table-responsive" *ngIf="resultado.ocorrencias.itensLevantamento.length; else noLevantamentos">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Levantamento</th>
+            <th>Item</th>
+            <th>Confirmado por</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of resultado.ocorrencias.itensLevantamento">
+            <td>{{ item.levantamentoNome || 'Não informado' }}</td>
+            <td>
+              <strong>{{ item.descricao || item.tipo || 'Sem descrição' }}</strong>
+              <small>{{ item.tombamento }} · antigo {{ item.tombamentoAntigo || 'não informado' }}</small>
+            </td>
+            <td>{{ item.confirmadoPorUsuarioNome || 'Não informado' }}</td>
+            <td>{{ formatDate(item.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noLevantamentos>
+      <div class="empty-state">Nenhum item de levantamento encontrado para este tombamento.</div>
+    </ng-template>
+  </section>
+
+  <section class="consulta-panel" *ngIf="resultado">
+    <div class="section-title">
+      <h3>Laudos</h3>
+      <span>{{ resultado.ocorrencias.laudos.length }} registro(s)</span>
+    </div>
+    <div class="table-responsive" *ngIf="resultado.ocorrencias.laudos.length; else noLaudos">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Equipamento</th>
+            <th>Processo</th>
+            <th>Responsável</th>
+            <th>Classificação</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of resultado.ocorrencias.laudos">
+            <td>
+              <strong>{{ item.tipoEquipamento || 'Equipamento' }}</strong>
+              <small>{{ item.marca || 'Sem marca' }} {{ item.modelo || '' }} · série {{ item.numeroSerie || 'não informada' }}</small>
+            </td>
+            <td>
+              <strong>{{ item.processoSei || 'Não informado' }}</strong>
+              <small>ID devolução: {{ item.idDevolucaoSei || 'não informado' }}</small>
+            </td>
+            <td>{{ item.responsavelTecnicoNome || 'Não informado' }}</td>
+            <td>{{ item.classificacaoFinal || 'Não informada' }}</td>
+            <td>{{ formatDate(item.dataAvaliacao || item.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noLaudos>
+      <div class="empty-state">Nenhum laudo encontrado para este patrimônio.</div>
+    </ng-template>
+  </section>
+
+  <section class="consulta-panel" *ngIf="resultado">
+    <div class="section-title">
+      <h3>Itens inventariados</h3>
+      <span>{{ resultado.ocorrencias.itensInventariados.length }} registro(s)</span>
+    </div>
+    <div class="table-responsive" *ngIf="resultado.ocorrencias.itensInventariados.length; else noInventariados">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Local</th>
+            <th>Responsável</th>
+            <th>Status</th>
+            <th>e-Estado</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of resultado.ocorrencias.itensInventariados">
+            <td>
+              <strong>{{ item.descricao }}</strong>
+              <small>{{ item.tombamentoNovo }} · antigo {{ item.tombamentoAntigo || 'não informado' }}</small>
+            </td>
+            <td>
+              <strong>{{ item.localNome || 'Não informado' }}</strong>
+              <small>{{ item.equipeDescricao || 'Equipe não informada' }}</small>
+            </td>
+            <td>{{ item.usuarioNome || 'Não informado' }}</td>
+            <td>{{ item.status || 'Não informado' }} · {{ item.estadoConservacao || 'Sem conservação' }}</td>
+            <td>{{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}</td>
+            <td>{{ formatDate(item.dataInventario) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noInventariados>
+      <div class="empty-state">Nenhum item inventariado encontrado para este tombamento.</div>
+    </ng-template>
+  </section>
+
+  <section class="consulta-panel" *ngIf="searched && !loading && !resultado">
+    <div class="empty-state">Informe um patrimônio válido e execute uma consulta.</div>
+  </section>
+</div>
