@@ -1,39 +1,81 @@
-<section class="card">
+<div class="card">
   <div class="card-body">
     <div class="list-header">
       <div class="list-header-copy">
-        <span class="list-header-eyebrow">Destino das transferências</span>
+        <span class="list-header-eyebrow">Estrutura organizacional</span>
         <h2 class="list-header-title">Unidades Administrativas</h2>
-        <p class="list-header-subtitle">Estruture as unidades administrativas usadas como destino nas transferências.</p>
+        <p class="list-header-subtitle">Cadastro de unidades e hierarquia administrativa usadas como destino nas transferências.</p>
       </div>
       <button class="btn btn-standard-new" type="button" (click)="openCreateModal()">Nova unidade</button>
     </div>
 
     <div class="tree-card" *ngIf="unidades.length > 0; else semUnidades">
-      <div class="tree-node" *ngFor="let node of unidadesTree">
-        <div class="tree-item" [style.padding-left.rem]="node.depth * 1.25">
-          <button class="tree-toggle" type="button" *ngIf="hasChildren(node)" (click)="toggleNode(node.unidade.id)">
-            {{ isExpanded(node.unidade.id) ? '−' : '+' }}
-          </button>
-          <span class="tree-toggle tree-toggle-placeholder" *ngIf="!hasChildren(node)"></span>
+      <div class="tree-head">
+        <span>Estrutura hierárquica</span>
+        <span>{{ unidades.length }} unidade(s)</span>
+      </div>
 
-          <div class="tree-copy">
-            <strong>{{ node.unidade.sigla }}</strong>
-            <span>{{ node.unidade.nome }}</span>
-          </div>
-
-          <div class="row-actions">
-            <button class="btn btn-sm btn-standard-action" type="button" (click)="edit(node.unidade)">Editar</button>
-            <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(node.unidade)">Excluir</button>
-          </div>
-        </div>
+      <div class="tree-body">
+        <ng-container *ngTemplateOutlet="treeNodes; context: { $implicit: unidadesTree }"></ng-container>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <ng-template #semUnidades>
   <div class="empty-state">Nenhuma unidade administrativa cadastrada.</div>
+</ng-template>
+
+<ng-template #treeNodes let-nodes>
+  <div class="tree-level">
+    <div class="tree-node" *ngFor="let node of nodes">
+      <div class="tree-row" [style.--tree-depth]="node.depth">
+        <button
+          class="tree-toggle"
+          type="button"
+          *ngIf="hasChildren(node); else treeSpacer"
+          (click)="toggleNode(node.unidade.id)"
+          [attr.aria-label]="isExpanded(node.unidade.id) ? 'Recolher unidade' : 'Expandir unidade'"
+        >
+          {{ isExpanded(node.unidade.id) ? '−' : '+' }}
+        </button>
+        <ng-template #treeSpacer>
+          <span class="tree-spacer"></span>
+        </ng-template>
+
+        <div class="tree-content">
+          <div class="tree-primary">
+            <strong>{{ node.unidade.sigla }}</strong>
+            <span>{{ node.unidade.nome }}</span>
+          </div>
+          <div class="tree-actions">
+            <button
+              class="btn btn-sm btn-standard-action tree-edit-button"
+              type="button"
+              (click)="edit(node.unidade)"
+              [attr.aria-label]="'Editar unidade ' + node.unidade.sigla"
+              title="Editar unidade"
+            >
+              Editar
+            </button>
+            <button
+              class="btn btn-sm btn-outline-danger tree-delete-button"
+              type="button"
+              (click)="remove(node.unidade)"
+              [attr.aria-label]="'Excluir unidade ' + node.unidade.sigla"
+              title="Excluir unidade"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-children" *ngIf="hasChildren(node) && isExpanded(node.unidade.id)">
+        <ng-container *ngTemplateOutlet="treeNodes; context: { $implicit: node.children }"></ng-container>
+      </div>
+    </div>
+  </div>
 </ng-template>
 
 <div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
@@ -57,12 +99,14 @@
           </div>
           <div class="col-12">
             <label class="form-label">Unidade superior</label>
-            <select class="form-select" name="unidadeSuperiorId" [(ngModel)]="form.unidadeSuperiorId">
-              <option [ngValue]="null">Nenhuma</option>
-              <option *ngFor="let unidade of unidadesPaiDisponiveis" [ngValue]="unidade.id">
-                {{ unidade.sigla }} - {{ unidade.nome }}
-              </option>
-            </select>
+            <app-searchable-select
+              name="unidadeSuperiorId"
+              [(ngModel)]="form.unidadeSuperiorId"
+              [options]="unidadesPaiOptions"
+              placeholder="Selecione"
+              searchPlaceholder="Pesquisar unidade superior"
+              emptyOptionLabel="Nenhuma"
+            ></app-searchable-select>
           </div>
         </div>
       </div>

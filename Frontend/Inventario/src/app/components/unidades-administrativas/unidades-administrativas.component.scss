@@ -1,35 +1,162 @@
 .tree-card {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.tree-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 0.85rem;
+  border: 1px solid #d9e1ea;
+  border-radius: 14px;
+  overflow: hidden;
   background: #fff;
 }
 
-.tree-toggle {
-  width: 2rem;
-  height: 2rem;
-  border: 0;
-  border-radius: 999px;
-  background: #eef2f5;
-}
-
-.tree-toggle-placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: transparent;
-}
-
-.tree-copy {
+.tree-head {
   display: flex;
-  flex-direction: column;
-  flex: 1;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #f6f9fc;
+  border-bottom: 1px solid #d9e1ea;
+  color: #52677d;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.tree-body { padding: 10px 0; }
+
+.tree-level { display: grid; }
+
+.tree-row {
+  --tree-indent: calc(var(--tree-depth, 0) * 28px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px calc(18px + var(--tree-indent));
+}
+
+.tree-row:hover {
+  background: #f9fbfd;
+}
+
+.tree-toggle,
+.tree-spacer {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.tree-toggle {
+  border: 1px solid #c9d5e2;
+  border-radius: 8px;
+  background: #f5f8fb;
+  color: #274967;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tree-spacer {
+  display: inline-block;
+}
+
+.tree-content {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.tree-primary {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tree-primary strong {
+  color: #17324d;
+  font-size: 0.95rem;
+}
+
+.tree-primary span {
+  color: #61768b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.empty-state {
+  padding: 28px;
+  text-align: center;
+  color: #6b7f92;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 40, 44, 0.55);
+  z-index: 1070;
+}
+
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal-card {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: visible;
+  background: #fff;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+}
+
+.modal-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e3eaf2;
+}
+
+@media (max-width: 768px) {
+  .tree-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tree-row {
+    padding-right: 14px;
+  }
+
+  .tree-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .tree-actions {
+    flex-direction: column;
+  }
+
+  .tree-edit-button,
+  .tree-delete-button {
+    min-width: 0;
+    padding-right: 0.7rem;
+    padding-left: 0.7rem;
+  }
+
+  .tree-primary {
+    min-height: 40px;
+    align-content: center;
+  }
+
+  .tree-primary strong,
+  .tree-primary span {
+    white-space: normal;
+  }
 }

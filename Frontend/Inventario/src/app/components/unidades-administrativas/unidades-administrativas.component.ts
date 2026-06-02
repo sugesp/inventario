@@ -2,11 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { UnidadeAdministrativa, UnidadeAdministrativaPayload } from '../../contracts/unidade-administrativa.model';
 import { UnidadeAdministrativaService } from '../../contracts/unidade-administrativa.service';
+import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
 interface UnidadeTreeNode {
   unidade: UnidadeAdministrativa;
   children: UnidadeTreeNode[];
   depth: number;
+}
+
+interface UnidadeSelectOption extends SearchableSelectOption {
+  value: string;
 }
 
 @Component({
@@ -37,7 +42,12 @@ export class UnidadesAdministrativasComponent implements OnInit {
   }
 
   get unidadesPaiDisponiveis(): UnidadeAdministrativa[] {
-    return this.unidades.filter((x) => x.id !== this.editingId);
+    const unavailableIds = this.getUnavailableParentIds();
+    return this.unidades.filter((x) => !unavailableIds.has(x.id));
+  }
+
+  get unidadesPaiOptions(): UnidadeSelectOption[] {
+    return this.buildUnidadeOptions(this.unidadesPaiDisponiveis);
   }
 
   get unidadesTree(): UnidadeTreeNode[] {
@@ -159,5 +169,68 @@ export class UnidadesAdministrativasComponent implements OnInit {
 
   hasChildren(node: UnidadeTreeNode): boolean {
     return node.children.length > 0;
+  }
+
+  private buildUnidadeOptions(unidades: UnidadeAdministrativa[]): UnidadeSelectOption[] {
+    const idsDisponiveis = new Set(unidades.map((item) => item.id));
+    const childrenByParent = new Map<string | null, UnidadeAdministrativa[]>();
+
+    for (const unidade of unidades) {
+      const parentId = unidade.unidadeSuperiorId && idsDisponiveis.has(unidade.unidadeSuperiorId)
+        ? unidade.unidadeSuperiorId
+        : null;
+      const siblings = childrenByParent.get(parentId) ?? [];
+      siblings.push(unidade);
+      childrenByParent.set(parentId, siblings);
+    }
+
+    for (const siblings of childrenByParent.values()) {
+      siblings.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+
+    const options: UnidadeSelectOption[] = [];
+
+    const walk = (parentId: string | null, depth: number): void => {
+      for (const unidade of childrenByParent.get(parentId) ?? []) {
+        options.push({
+          value: unidade.id,
+          label: `${unidade.sigla} - ${unidade.nome}`,
+          depth,
+        });
+        walk(unidade.id, depth + 1);
+      }
+    };
+
+    walk(null, 0);
+
+    return options;
+  }
+
+  private getUnavailableParentIds(): Set<string> {
+    const unavailableIds = new Set<string>();
+    if (!this.editingId) {
+      return unavailableIds;
+    }
+
+    const childrenByParent = new Map<string, UnidadeAdministrativa[]>();
+    for (const unidade of this.unidades) {
+      if (!unidade.unidadeSuperiorId) {
+        continue;
+      }
+
+      const children = childrenByParent.get(unidade.unidadeSuperiorId) ?? [];
+      children.push(unidade);
+      childrenByParent.set(unidade.unidadeSuperiorId, children);
+    }
+
+    const walk = (id: string): void => {
+      unavailableIds.add(id);
+      for (const child of childrenByParent.get(id) ?? []) {
+        walk(child.id);
+      }
+    };
+
+    walk(this.editingId);
+    return unavailableIds;
   }
 }
