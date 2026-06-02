@@ -1,11 +1,14 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Persistence.Context;
 
 #nullable disable
 
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
     [Migration("20260602144806_AddLevantamentosCompartilhamentos")]
     public partial class AddLevantamentosCompartilhamentos : Migration
     {
