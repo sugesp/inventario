@@ -121,7 +121,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   get condicaoOptions(): string[] {
-    return ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO'];
+    return ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO', 'DEFEITO'];
   }
 
   get canSave(): boolean {

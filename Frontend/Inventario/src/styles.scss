@@ -71,6 +71,7 @@ button,
 
 .btn-standard-new,
 .btn-standard-action,
+.btn-standard-danger,
 .btn-standard-edit {
   min-height: var(--ui-button-height);
   padding-inline: var(--ui-button-padding-x);
@@ -93,6 +94,7 @@ button,
 }
 
 .btn-standard-action,
+.btn-standard-danger,
 .btn-standard-edit {
   width: 120px;
   display: inline-flex;
@@ -124,6 +126,19 @@ button,
   background: #f4f8fc;
   border-color: #b7c6d6;
   color: #1f2c3a;
+}
+
+.btn-standard-danger {
+  background: #fff;
+  border-color: #f0a6af;
+  color: #bf1d2d;
+}
+
+.btn-standard-danger:hover,
+.btn-standard-danger:focus {
+  background: #fff5f6;
+  border-color: #dc3545;
+  color: #9f1724;
 }
 
 .table tbody tr > * {

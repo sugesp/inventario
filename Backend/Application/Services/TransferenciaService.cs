@@ -11,7 +11,7 @@ namespace Application.Services;
 public class TransferenciaService : ITransferenciaService
 {
     private static readonly string[] StatusValidos = ["RASCUNHO", "EM SEPARACAO", "AGUARDANDO CONCLUSAO", "CONCLUIDA", "CANCELADA"];
-    private static readonly string[] CondicoesValidas = ["SERVIVEL", "INSERVIVEL", "OBSOLETO"];
+    private static readonly string[] CondicoesValidas = ["SERVIVEL", "INSERVIVEL", "OBSOLETO", "DEFEITO"];
 
     private readonly AppDbContext _context;
 
@@ -270,6 +270,7 @@ public class TransferenciaService : ITransferenciaService
             "SERVIVEL" => "SERVÍVEL",
             "INSERVIVEL" => "INSERVÍVEL",
             "OBSOLETO" => "OBSOLETO",
+            "DEFEITO" => "DEFEITO",
             _ => null
         };
     }
