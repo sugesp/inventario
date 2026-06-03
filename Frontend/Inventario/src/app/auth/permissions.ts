@@ -16,8 +16,8 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
   },
   {
     value: 'Inventario',
-    label: 'SGPA',
-    description: 'Acessa o Sistema de Gestão Patrimonial; membros de comissão podem inventariar e presidentes editam sua comissão.',
+    label: 'Inventário',
+    description: 'Acessa o módulo de inventário; membros de comissão podem inventariar e presidentes editam sua comissão.',
   },
   {
     value: 'Levantamento',
