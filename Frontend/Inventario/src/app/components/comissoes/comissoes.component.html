@@ -385,14 +385,21 @@
 
         <div class="col-12">
           <div class="local-map-panel">
-            <div class="local-map" (click)="canManageCurrentComissao && setLocalFromMap($event)">
+            <div
+              class="local-map"
+              (click)="canManageCurrentComissao && setLocalFromMap($event)"
+              (pointerdown)="beginLocalMapDrag($event)"
+              (pointermove)="dragLocalMap($event)"
+              (pointerup)="endLocalMapDrag($event)"
+              (pointercancel)="endLocalMapDrag($event)"
+            >
               <img
                 *ngFor="let tile of localMapTiles"
                 class="local-map-tile"
                 [src]="tile.url"
                 alt=""
-                [style.left.%]="tile.left"
-                [style.top.%]="tile.top"
+                [style.left.px]="tile.left"
+                [style.top.px]="tile.top"
               />
               <span
                 class="local-map-marker"

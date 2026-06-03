@@ -62,6 +62,16 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   localMapZoom = 17;
   localMapCenterLatitude = -8.76077;
   localMapCenterLongitude = -63.89990;
+  localMapWidth = 640;
+  localMapHeight = 360;
+  private localMapDragStart: {
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+    centerX: number;
+    centerY: number;
+    moved: boolean;
+  } | null = null;
   private readonly memberSearchChanged$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
@@ -586,18 +596,91 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   setLocalFromMap(event: MouseEvent): void {
+    if (this.localMapDragStart?.moved) {
+      return;
+    }
+
+    const eventTarget = event.target as HTMLElement;
+    if (eventTarget.closest('a')) {
+      return;
+    }
+
     const target = event.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
-    const percentX = (event.clientX - rect.left) / rect.width;
-    const percentY = (event.clientY - rect.top) / rect.height;
-    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
-    const startX = Math.floor(centerTile.x) - 1;
-    const startY = Math.floor(centerTile.y) - 1;
-    const tileX = startX + percentX * 3;
-    const tileY = startY + percentY * 3;
-    const coordinates = this.unprojectTile(tileX, tileY, this.localMapZoom);
+    this.updateLocalMapSize(rect);
+
+    const centerPixel = this.projectToPixel(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    const clickedX = centerPixel.x + event.clientX - rect.left - this.localMapWidth / 2;
+    const clickedY = centerPixel.y + event.clientY - rect.top - this.localMapHeight / 2;
+    const coordinates = this.unprojectPixel(clickedX, clickedY, this.localMapZoom);
 
     this.setLocalCoordinates(coordinates.latitude, coordinates.longitude);
+  }
+
+  beginLocalMapDrag(event: PointerEvent): void {
+    if (!this.canManageCurrentComissao || event.button !== 0) {
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    this.updateLocalMapSize(rect);
+
+    const centerPixel = this.projectToPixel(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    this.localMapDragStart = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      centerX: centerPixel.x,
+      centerY: centerPixel.y,
+      moved: false,
+    };
+
+    target.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  dragLocalMap(event: PointerEvent): void {
+    if (!this.localMapDragStart || this.localMapDragStart.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - this.localMapDragStart.clientX;
+    const deltaY = event.clientY - this.localMapDragStart.clientY;
+    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      this.localMapDragStart.moved = true;
+    }
+
+    const coordinates = this.unprojectPixel(
+      this.localMapDragStart.centerX - deltaX,
+      this.localMapDragStart.centerY - deltaY,
+      this.localMapZoom
+    );
+
+    this.localForm = {
+      ...this.localForm,
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+    };
+    this.localMapCenterLatitude = coordinates.latitude;
+    this.localMapCenterLongitude = coordinates.longitude;
+    this.localMapTiles = this.buildLocalMapTiles();
+    event.preventDefault();
+  }
+
+  endLocalMapDrag(event: PointerEvent): void {
+    if (!this.localMapDragStart || this.localMapDragStart.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    if (target.hasPointerCapture(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+
+    setTimeout(() => {
+      this.localMapDragStart = null;
+    });
   }
 
   clearLocalCoordinates(): void {
@@ -609,19 +692,11 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   getLocalMarkerLeft(): number {
-    if (!this.localFormHasGeolocalizacao) {
-      return 50;
-    }
-
-    return this.getLocalMarkerPosition().left;
+    return 50;
   }
 
   getLocalMarkerTop(): number {
-    if (!this.localFormHasGeolocalizacao) {
-      return 50;
-    }
-
-    return this.getLocalMarkerPosition().top;
+    return 50;
   }
 
   getLocalMembersSelectedCount(): number {
@@ -787,19 +862,25 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   private buildLocalMapTiles(): LocalMapTile[] {
-    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
-    const startX = Math.floor(centerTile.x) - 1;
-    const startY = Math.floor(centerTile.y) - 1;
+    const centerPixel = this.projectToPixel(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    const centerTileX = Math.floor(centerPixel.x / 256);
+    const centerTileY = Math.floor(centerPixel.y / 256);
+    const maxTile = 2 ** this.localMapZoom;
     const tiles: LocalMapTile[] = [];
 
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const tileX = startX + col;
-        const tileY = startY + row;
+    for (let row = -2; row <= 2; row += 1) {
+      for (let col = -2; col <= 2; col += 1) {
+        const tileX = centerTileX + col;
+        const tileY = centerTileY + row;
+        if (tileY < 0 || tileY >= maxTile) {
+          continue;
+        }
+
+        const wrappedTileX = ((tileX % maxTile) + maxTile) % maxTile;
         tiles.push({
-          url: `https://tile.openstreetmap.org/${this.localMapZoom}/${tileX}/${tileY}.png`,
-          left: (col / 3) * 100,
-          top: (row / 3) * 100,
+          url: `https://tile.openstreetmap.org/${this.localMapZoom}/${wrappedTileX}/${tileY}.png`,
+          left: this.localMapWidth / 2 + tileX * 256 - centerPixel.x,
+          top: this.localMapHeight / 2 + tileY * 256 - centerPixel.y,
         });
       }
     }
@@ -807,16 +888,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return tiles;
   }
 
-  private getLocalMarkerPosition(): { left: number; top: number } {
-    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
-    const startX = Math.floor(centerTile.x) - 1;
-    const startY = Math.floor(centerTile.y) - 1;
-    const point = this.projectToTile(this.localForm.latitude!, this.localForm.longitude!, this.localMapZoom);
-
-    return {
-      left: ((point.x - startX) / 3) * 100,
-      top: ((point.y - startY) / 3) * 100,
-    };
+  private updateLocalMapSize(rect: DOMRect): void {
+    this.localMapWidth = rect.width || this.localMapWidth;
+    this.localMapHeight = rect.height || this.localMapHeight;
   }
 
   private projectToTile(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
@@ -829,10 +903,19 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     };
   }
 
-  private unprojectTile(x: number, y: number, zoom: number): { latitude: number; longitude: number } {
+  private projectToPixel(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
+    const tile = this.projectToTile(latitude, longitude, zoom);
+
+    return {
+      x: tile.x * 256,
+      y: tile.y * 256,
+    };
+  }
+
+  private unprojectPixel(x: number, y: number, zoom: number): { latitude: number; longitude: number } {
     const scale = 2 ** zoom;
-    const longitude = x / scale * 360 - 180;
-    const latitudeRadians = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / scale)));
+    const longitude = x / 256 / scale * 360 - 180;
+    const latitudeRadians = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / 256 / scale)));
 
     return {
       latitude: latitudeRadians * 180 / Math.PI,

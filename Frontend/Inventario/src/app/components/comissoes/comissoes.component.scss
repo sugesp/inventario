@@ -84,14 +84,21 @@
   border: 1px solid #d8e2ef;
   border-radius: 14px;
   background: #dbe7ef;
-  cursor: crosshair;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.local-map:active {
+  cursor: grabbing;
 }
 
 .local-map-tile {
   position: absolute;
-  width: 33.3334%;
-  height: 33.3334%;
+  width: 256px;
+  height: 256px;
   object-fit: cover;
+  pointer-events: none;
   user-select: none;
 }
 
