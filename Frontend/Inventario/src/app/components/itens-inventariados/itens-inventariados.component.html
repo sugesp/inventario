@@ -109,7 +109,6 @@
             <th>Classificação</th>
             <th>Local</th>
             <th>Localização</th>
-            <th>Responsáveis do local</th>
             <th>Responsável</th>
             <th>E-Estado</th>
             <th>Data</th>
@@ -151,7 +150,6 @@
               </a>
               <ng-template #semGeolocalizacao>-</ng-template>
             </td>
-            <td>{{ getLocalMembrosLabel(item) }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
             <td>
               <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado" [class.eestado-badge-pending]="!item.lancadoEEstado">

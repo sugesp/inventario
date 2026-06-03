@@ -197,12 +197,6 @@ export class ItensInventariadosComponent implements OnInit {
     return `Comissão ${comissao.ano} - ${comissao.status}`;
   }
 
-  getLocalMembrosLabel(item: ItemInventariado): string {
-    return item.localMembrosNomes?.length
-      ? item.localMembrosNomes.join(', ')
-      : '-';
-  }
-
   hasGeolocalizacao(item: ItemInventariado): boolean {
     return item.latitude !== null
       && item.latitude !== undefined
