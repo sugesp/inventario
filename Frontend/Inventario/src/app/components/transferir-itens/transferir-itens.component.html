@@ -141,7 +141,7 @@
     </div>
 
     <div class="step-footer-actions">
-      <button class="btn btn-outline-danger" type="button" (click)="resetTransferencia()">Limpar transferência</button>
+      <button class="btn btn-standard-danger" type="button" (click)="resetTransferencia()">Limpar transferência</button>
       <button class="btn btn-outline-secondary" type="button" (click)="goToDadosStep()">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToResumoStep()" [disabled]="itens.length === 0">
         Continuar para o resumo
@@ -207,7 +207,7 @@
               <span class="transfer-item-tag transfer-item-tag-muted">{{ item.statusItem || 'Sem status' }}</span>
             </div>
           </div>
-          <button class="btn btn-outline-danger transfer-item-remove" type="button" (click)="removeItem(i)">Remover</button>
+          <button class="btn btn-standard-danger transfer-item-remove" type="button" (click)="removeItem(i)">Remover</button>
         </div>
 
         <div class="transfer-item-row transfer-item-row-compact">

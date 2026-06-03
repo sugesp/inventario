@@ -74,29 +74,45 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("Informe um tombamento válido para consulta.");
         }
 
-        var client = _httpClientFactory.CreateClient("PatrimonioPublico");
-        using var response = await client.GetAsync($"publico/bens/{tombamentoNormalizado}", cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        try
         {
-            return null;
+            var client = _httpClientFactory.CreateClient("PatrimonioPublico");
+            using var response = await client.GetAsync($"publico/bens/{tombamentoNormalizado}", cancellationToken);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return await GetBemLocalAsync(tombamentoNormalizado, cancellationToken);
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var tipo = ExtractTipo(html);
+            var descricao = ExtractDescricao(html);
+            var tombamentoAntigo = ExtractIdentificacaoColumn(html, 2);
+            var tombamentoConsulta = ExtractIdentificacaoColumn(html, 1);
+
+            var resumo = new ConsultaPublicaBemDto
+            {
+                Tombamento = NormalizeDigits(tombamentoConsulta) is { Length: > 0 } tombamentoExtraido ? tombamentoExtraido : tombamentoNormalizado,
+                TombamentoAntigo = NormalizeOptionalTombamentoAntigo(tombamentoAntigo),
+                Tipo = tipo,
+                Descricao = descricao,
+                UrlConsulta = $"https://e-estado.ro.gov.br/publico/bens/{tombamentoNormalizado}"
+            };
+
+            await PersistirBemConsultadoAsync(resumo, cancellationToken);
+            return resumo;
         }
-
-        response.EnsureSuccessStatusCode();
-
-        var html = await response.Content.ReadAsStringAsync(cancellationToken);
-        var tipo = ExtractTipo(html);
-        var descricao = ExtractDescricao(html);
-        var tombamentoAntigo = ExtractIdentificacaoColumn(html, 2);
-        var tombamentoConsulta = ExtractIdentificacaoColumn(html, 1);
-
-        return new ConsultaPublicaBemDto
+        catch (HttpRequestException)
         {
-            Tombamento = NormalizeDigits(tombamentoConsulta) is { Length: > 0 } tombamentoExtraido ? tombamentoExtraido : tombamentoNormalizado,
-            TombamentoAntigo = NormalizeOptionalTombamentoAntigo(tombamentoAntigo),
-            Tipo = tipo,
-            Descricao = descricao,
-            UrlConsulta = $"https://e-estado.ro.gov.br/publico/bens/{tombamentoNormalizado}"
-        };
+            var bemLocal = await GetBemLocalAsync(tombamentoNormalizado, cancellationToken);
+            if (bemLocal is not null)
+            {
+                return bemLocal;
+            }
+
+            throw;
+        }
     }
 
     public async Task<ConsultaTombamentoDto> ConsultarTombamentoAsync(string tombamento, CancellationToken cancellationToken = default)
@@ -585,6 +601,63 @@ public class ItemInventariadoService : IItemInventariadoService
         return new string(buffer.ToArray()).Normalize(NormalizationForm.FormC);
     }
 
+    private async Task<ConsultaPublicaBemDto?> GetBemLocalAsync(string tombamentoNormalizado, CancellationToken cancellationToken)
+    {
+        var bem = await _context.Bens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.DeletedAt == null && x.Tombamento == tombamentoNormalizado, cancellationToken);
+
+        return bem is null
+            ? null
+            : new ConsultaPublicaBemDto
+            {
+                Tombamento = bem.Tombamento,
+                TombamentoAntigo = bem.TombamentoAntigo,
+                Tipo = bem.Tipo,
+                Descricao = bem.Descricao,
+                UrlConsulta = bem.UrlConsulta,
+            };
+    }
+
+    private async Task PersistirBemConsultadoAsync(ConsultaPublicaBemDto resumo, CancellationToken cancellationToken)
+    {
+        var tombamentoNormalizado = NormalizeDigits(resumo.Tombamento);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        {
+            return;
+        }
+
+        var exists = await _context.Bens.AnyAsync(
+            x => x.DeletedAt == null && x.Tombamento == tombamentoNormalizado,
+            cancellationToken
+        );
+        if (exists)
+        {
+            return;
+        }
+
+        var bem = new Bem
+        {
+            Tombamento = tombamentoNormalizado,
+            TombamentoFormatado = FormatTombamento(tombamentoNormalizado),
+            TombamentoAntigo = NormalizeOptionalTombamentoAntigo(resumo.TombamentoAntigo),
+            Tipo = resumo.Tipo.Trim(),
+            Descricao = string.IsNullOrWhiteSpace(resumo.Descricao) ? "Descrição não informada" : resumo.Descricao.Trim(),
+            UrlConsulta = resumo.UrlConsulta.Trim(),
+            UltimaConsultaEEstadoEm = DateTime.UtcNow,
+        };
+
+        _context.Bens.Add(bem);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            _context.Entry(bem).State = EntityState.Detached;
+        }
+    }
+
     private static ItemInventariadoDto MapToDto(ItemInventariado entity)
     {
         return new ItemInventariadoDto
@@ -707,5 +780,22 @@ public class ItemInventariadoService : IItemInventariadoService
     private static string NormalizeDigits(string value)
     {
         return string.Concat(value.Where(char.IsDigit));
+    }
+
+    private static string FormatTombamento(string value)
+    {
+        var digits = NormalizeDigits(value);
+        if (digits.Length <= 3)
+        {
+            return digits;
+        }
+
+        if (digits.Length <= 6)
+        {
+            return $"{digits[..3]}.{digits[3..]}";
+        }
+
+        digits = digits[..Math.Min(9, digits.Length)];
+        return $"{digits[..3]}.{digits.Substring(3, 3)}.{digits[6..]}";
     }
 }

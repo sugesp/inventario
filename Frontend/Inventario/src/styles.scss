@@ -94,7 +94,6 @@ button,
 }
 
 .btn-standard-action,
-.btn-standard-danger,
 .btn-standard-edit {
   width: 120px;
   display: inline-flex;
@@ -129,6 +128,10 @@ button,
 }
 
 .btn-standard-danger {
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
   border-color: #f0a6af;
   color: #bf1d2d;

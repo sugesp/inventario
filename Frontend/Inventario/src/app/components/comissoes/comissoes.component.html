@@ -53,7 +53,7 @@
               <td class="text-end">
                 <div class="row-actions">
                   <button class="btn btn-sm btn-standard-action" type="button" *ngIf="canEdit(item)" (click)="edit(item)">Editar</button>
-                  <button class="btn btn-sm btn-outline-danger" type="button" *ngIf="canDelete()" (click)="remove(item)">Excluir</button>
+                  <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canDelete()" (click)="remove(item)">Excluir</button>
                 </div>
               </td>
             </tr>
@@ -140,7 +140,7 @@
                   <strong>{{ usuario.nome }}</strong>
                   <small>{{ usuario.cpf }}</small>
                 </div>
-                <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeMember(usuario.id)">Remover</button>
+                <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeMember(usuario.id)">Remover</button>
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@
                 </div>
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
-                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeLocal(local)">Excluir</button>
+                  <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeLocal(local)">Excluir</button>
                 </div>
               </div>
             </div>

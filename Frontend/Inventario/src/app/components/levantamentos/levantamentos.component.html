@@ -52,7 +52,7 @@
           Compartilhar
         </button>
         <button
-          class="btn btn-outline-danger btn-sm selected-levantamento-switch"
+          class="btn btn-standard-danger btn-sm selected-levantamento-switch"
           type="button"
           *ngIf="activeLevantamento.usuarioPodeGerenciar && activeLevantamento.itens.length === 0"
           (click)="deleteLevantamento(activeLevantamento)"
@@ -136,7 +136,7 @@
           Compartilhar
         </button>
         <button
-          class="btn btn-outline-danger btn-sm selected-levantamento-switch"
+          class="btn btn-standard-danger btn-sm selected-levantamento-switch"
           type="button"
           *ngIf="activeLevantamento.usuarioPodeGerenciar && activeLevantamento.itens.length === 0"
           (click)="deleteLevantamento(activeLevantamento)"
@@ -219,7 +219,7 @@
               <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
               <td class="text-end" *ngIf="activeLevantamento.usuarioPodeGerenciar">
                 <button
-                  class="btn btn-sm btn-outline-danger"
+                  class="btn btn-sm btn-standard-danger"
                   type="button"
                   (click)="deleteItem(item)"
                   [disabled]="deletingItemId === item.id"

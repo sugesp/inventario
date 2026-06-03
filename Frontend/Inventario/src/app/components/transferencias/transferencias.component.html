@@ -71,7 +71,7 @@
               <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">Abrir</a>
               <button
                 *ngIf="authService.isAdmin"
-                class="btn btn-sm btn-outline-danger"
+                class="btn btn-sm btn-standard-danger"
                 type="button"
                 (click)="deleteTransferencia(transferencia.id)"
               >

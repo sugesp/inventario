@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<Bem> Bens { get; set; }
     public DbSet<Equipe> Equipes { get; set; }
     public DbSet<Local> Locais { get; set; }
     public DbSet<LocalMembro> LocaisMembros { get; set; }
@@ -43,6 +44,18 @@ public class AppDbContext : DbContext
             entity.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
             entity.Property(x => x.PasswordSalt).HasMaxLength(500).IsRequired();
             entity.Property(x => x.MustChangePassword).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<Bem>(entity =>
+        {
+            entity.ToTable("Bens");
+            entity.HasIndex(x => x.Tombamento).IsUnique();
+            entity.Property(x => x.Tombamento).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.TombamentoFormatado).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
+            entity.Property(x => x.Tipo).HasMaxLength(200);
+            entity.Property(x => x.Descricao).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.UrlConsulta).HasMaxLength(500);
         });
 
         modelBuilder.Entity<Equipe>(entity =>
