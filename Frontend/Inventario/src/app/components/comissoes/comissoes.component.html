@@ -171,6 +171,7 @@
                 <div class="team-copy">
                   <strong>{{ local.nome }}</strong>
                   <small>Responsáveis: {{ getLocalMembrosLabel(local) }}</small>
+                  <small>{{ getLocalGeolocalizacaoLabel(local) }}</small>
                 </div>
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
@@ -352,6 +353,72 @@
             placeholder="Ex.: Depósito GTI"
             [readonly]="!canManageCurrentComissao"
           />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Endereço do local</label>
+          <div class="address-search-row">
+            <input
+              class="form-control"
+              type="text"
+              [(ngModel)]="localAddressTerm"
+              placeholder="Pesquisar endereço ou prédio"
+              [readonly]="!canManageCurrentComissao"
+              (keyup.enter)="searchLocalAddress()"
+            />
+            <button class="btn btn-outline-primary" type="button" (click)="searchLocalAddress()" [disabled]="searchingAddress || !canManageCurrentComissao">
+              {{ searchingAddress ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+
+          <div class="address-results" *ngIf="localAddressResults.length > 0">
+            <button
+              class="address-result"
+              type="button"
+              *ngFor="let result of localAddressResults"
+              (click)="selectLocalAddress(result)"
+            >
+              {{ result.display_name }}
+            </button>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="local-map-panel">
+            <div class="local-map" (click)="canManageCurrentComissao && setLocalFromMap($event)">
+              <img
+                *ngFor="let tile of localMapTiles"
+                class="local-map-tile"
+                [src]="tile.url"
+                alt=""
+                [style.left.%]="tile.left"
+                [style.top.%]="tile.top"
+              />
+              <span
+                class="local-map-marker"
+                *ngIf="localFormHasGeolocalizacao"
+                [style.left.%]="getLocalMarkerLeft()"
+                [style.top.%]="getLocalMarkerTop()"
+              ></span>
+              <a class="local-map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+                © OpenStreetMap contributors
+              </a>
+            </div>
+
+            <div class="local-map-summary">
+              <strong>Coordenadas do local</strong>
+              <span>{{ localFormGeolocalizacaoLabel }}</span>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                *ngIf="localFormHasGeolocalizacao"
+                (click)="clearLocalCoordinates()"
+                [disabled]="!canManageCurrentComissao"
+              >
+                Remover localização
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

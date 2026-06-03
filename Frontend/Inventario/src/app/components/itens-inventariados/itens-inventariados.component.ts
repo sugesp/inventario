@@ -21,6 +21,8 @@ interface MapMarker {
   label: string;
 }
 
+type GeolocationStatusTone = 'ok' | 'warning' | 'danger' | 'pending';
+
 @Component({
   selector: 'app-itens-inventariados',
   templateUrl: './itens-inventariados.component.html',
@@ -224,6 +226,52 @@ export class ItensInventariadosComponent implements OnInit {
     return `https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}#map=18/${item.latitude}/${item.longitude}`;
   }
 
+  getConferenciaLocalizacao(item: ItemInventariado): { label: string; tone: GeolocationStatusTone } {
+    const distance = this.getDistanciaAteLocal(item);
+    if (distance === null) {
+      return {
+        label: 'Pendente de justificativa',
+        tone: 'pending',
+      };
+    }
+
+    if (distance <= 50) {
+      return {
+        label: `OK · ${Math.round(distance)} m`,
+        tone: 'ok',
+      };
+    }
+
+    if (distance <= 150) {
+      return {
+        label: `Atenção · ${Math.round(distance)} m`,
+        tone: 'warning',
+      };
+    }
+
+    return {
+      label: `Divergência · ${Math.round(distance)} m`,
+      tone: 'danger',
+    };
+  }
+
+  getDistanciaAteLocal(item: ItemInventariado): number | null {
+    if (!this.hasGeolocalizacao(item)
+      || item.localLatitude === null
+      || item.localLatitude === undefined
+      || item.localLongitude === null
+      || item.localLongitude === undefined) {
+      return null;
+    }
+
+    return this.calculateDistanceInMeters(
+      item.latitude!,
+      item.longitude!,
+      item.localLatitude,
+      item.localLongitude
+    );
+  }
+
   openMap(): void {
     const items = this.itensGeolocalizados;
     if (!items.length) {
@@ -375,6 +423,30 @@ export class ItensInventariadosComponent implements OnInit {
       x: tile.x * 256,
       y: tile.y * 256,
     };
+  }
+
+  private calculateDistanceInMeters(
+    originLatitude: number,
+    originLongitude: number,
+    targetLatitude: number,
+    targetLongitude: number
+  ): number {
+    const earthRadiusInMeters = 6371000;
+    const originLatitudeRadians = this.toRadians(originLatitude);
+    const targetLatitudeRadians = this.toRadians(targetLatitude);
+    const latitudeDelta = this.toRadians(targetLatitude - originLatitude);
+    const longitudeDelta = this.toRadians(targetLongitude - originLongitude);
+    const haversine = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(originLatitudeRadians)
+      * Math.cos(targetLatitudeRadians)
+      * Math.sin(longitudeDelta / 2) ** 2;
+    const centralAngle = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+
+    return earthRadiusInMeters * centralAngle;
+  }
+
+  private toRadians(value: number): number {
+    return value * Math.PI / 180;
   }
 
   private async copyText(value: string): Promise<void> {

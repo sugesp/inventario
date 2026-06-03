@@ -744,6 +744,14 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(10, 8)
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(11, 8)
+                        .HasColumnType("decimal(11,8)");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)

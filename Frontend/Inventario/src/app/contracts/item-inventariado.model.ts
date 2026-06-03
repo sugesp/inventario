@@ -13,6 +13,8 @@ export interface ItemInventariado {
   localId: string;
   localNome: string;
   localMembrosNomes: string[];
+  localLatitude?: number | null;
+  localLongitude?: number | null;
   usuarioId: string;
   usuarioNome: string;
   comissaoId?: string | null;

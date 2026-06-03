@@ -6,6 +6,8 @@ public class LocalDto
     public string Nome { get; set; } = string.Empty;
     public Guid ComissaoId { get; set; }
     public int ComissaoAno { get; set; }
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
     public IReadOnlyCollection<LocalMembroDto> Membros { get; set; } = Array.Empty<LocalMembroDto>();
 }
 

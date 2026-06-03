@@ -699,6 +699,8 @@ public class ItemInventariadoService : IItemInventariadoService
                 .OrderBy(x => x.Usuario!.Nome)
                 .Select(x => x.Usuario!.Nome)
                 .ToArray() ?? Array.Empty<string>(),
+            LocalLatitude = entity.Local?.Latitude,
+            LocalLongitude = entity.Local?.Longitude,
             UsuarioId = entity.UsuarioId,
             UsuarioNome = entity.Usuario?.Nome ?? string.Empty,
             ComissaoId = entity.ComissaoId,

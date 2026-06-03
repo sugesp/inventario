@@ -49,6 +49,8 @@ public class LocalService : ILocalService
         {
             Nome = dto.Nome.Trim(),
             ComissaoId = dto.ComissaoId,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
             Membros = membroIds
                 .Select(usuarioId => new LocalMembro { UsuarioId = usuarioId })
                 .ToList()
@@ -77,6 +79,8 @@ public class LocalService : ILocalService
 
         entity.Nome = dto.Nome.Trim();
         entity.ComissaoId = dto.ComissaoId;
+        entity.Latitude = dto.Latitude;
+        entity.Longitude = dto.Longitude;
 
         _context.LocaisMembros.RemoveRange(entity.Membros);
         await _context.SaveChangesAsync(cancellationToken);
@@ -127,6 +131,21 @@ public class LocalService : ILocalService
             throw new InvalidOperationException("Comissão responsável não encontrada.");
         }
 
+        if (dto.Latitude.HasValue && (dto.Latitude.Value < -90 || dto.Latitude.Value > 90))
+        {
+            throw new InvalidOperationException("A latitude informada para o local é inválida.");
+        }
+
+        if (dto.Longitude.HasValue && (dto.Longitude.Value < -180 || dto.Longitude.Value > 180))
+        {
+            throw new InvalidOperationException("A longitude informada para o local é inválida.");
+        }
+
+        if ((dto.Latitude.HasValue && !dto.Longitude.HasValue) || (!dto.Latitude.HasValue && dto.Longitude.HasValue))
+        {
+            throw new InvalidOperationException("Informe latitude e longitude para salvar a localização do local.");
+        }
+
         var membroIds = (dto.MembroUsuarioIds ?? new List<Guid>())
             .Where(x => x != Guid.Empty)
             .Distinct()
@@ -165,6 +184,8 @@ public class LocalService : ILocalService
             Nome = entity.Nome,
             ComissaoId = entity.ComissaoId,
             ComissaoAno = entity.Comissao?.Ano ?? 0,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
             Membros = entity.Membros
                 .Where(x => x.DeletedAt == null)
                 .OrderBy(x => x.Usuario!.Nome)

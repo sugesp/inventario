@@ -11,6 +11,18 @@ import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
 
+interface LocalMapTile {
+  url: string;
+  left: number;
+  top: number;
+}
+
+interface AddressSearchResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 @Component({
   selector: 'app-comissoes',
   templateUrl: './comissoes.component.html',
@@ -43,12 +55,21 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   memberOptions: Array<{ id: string; nome: string; cpf: string }> = [];
   loadingMemberOptions = false;
   localMemberTerm = '';
+  localAddressTerm = '';
+  localAddressResults: AddressSearchResult[] = [];
+  searchingAddress = false;
+  localMapTiles: LocalMapTile[] = [];
+  localMapZoom = 17;
+  localMapCenterLatitude = -8.76077;
+  localMapCenterLongitude = -63.89990;
   private readonly memberSearchChanged$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
   form: ComissaoPayload = this.createEmptyForm();
   localForm = {
     nome: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
     membroUsuarioIds: [] as string[],
   };
 
@@ -202,7 +223,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.activeTab = 'dados';
     this.saving = false;
     this.savingLocal = false;
-    this.localForm = { nome: '', membroUsuarioIds: [] };
+    this.localForm = this.createEmptyLocalForm();
+    this.localAddressTerm = '';
+    this.localAddressResults = [];
     this.selectedMembers = [];
     this.syncComissaoCollections();
     this.form = this.createEmptyForm();
@@ -341,8 +364,13 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.localMemberTerm = '';
     this.localForm = {
       nome: '',
+      latitude: null,
+      longitude: null,
       membroUsuarioIds: [],
     };
+    this.localAddressTerm = '';
+    this.localAddressResults = [];
+    this.centerLocalMap(this.localMapCenterLatitude, this.localMapCenterLongitude);
     this.showLocalModal = true;
   }
 
@@ -351,8 +379,13 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.localMemberTerm = '';
     this.localForm = {
       nome: item.nome,
+      latitude: item.latitude ?? null,
+      longitude: item.longitude ?? null,
       membroUsuarioIds: item.membros.map((membro) => membro.usuarioId),
     };
+    this.localAddressTerm = '';
+    this.localAddressResults = [];
+    this.centerLocalMap(item.latitude ?? this.localMapCenterLatitude, item.longitude ?? this.localMapCenterLongitude);
     this.showLocalModal = true;
   }
 
@@ -360,10 +393,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.editingLocalId = null;
     this.showLocalModal = false;
     this.localMemberTerm = '';
-    this.localForm = {
-      nome: '',
-      membroUsuarioIds: [],
-    };
+    this.localAddressTerm = '';
+    this.localAddressResults = [];
+    this.localForm = this.createEmptyLocalForm();
   }
 
   submitLocal(): void {
@@ -392,6 +424,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     const payload = {
       nome,
       comissaoId: this.editingId,
+      latitude: this.localForm.latitude,
+      longitude: this.localForm.longitude,
       membroUsuarioIds: [...new Set(this.localForm.membroUsuarioIds)],
     };
 
@@ -479,6 +513,115 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       .sort((a, b) => a.localeCompare(b));
 
     return nomes.length > 0 ? nomes.join(', ') : 'Nenhum responsável informado';
+  }
+
+  getLocalGeolocalizacaoLabel(local: Local): string {
+    return this.hasLocalGeolocalizacao(local)
+      ? `${local.latitude!.toFixed(6)}, ${local.longitude!.toFixed(6)}`
+      : 'Localização não definida';
+  }
+
+  hasLocalGeolocalizacao(local: Local): boolean {
+    return local.latitude !== null
+      && local.latitude !== undefined
+      && local.longitude !== null
+      && local.longitude !== undefined;
+  }
+
+  get localFormHasGeolocalizacao(): boolean {
+    return this.localForm.latitude !== null
+      && this.localForm.latitude !== undefined
+      && this.localForm.longitude !== null
+      && this.localForm.longitude !== undefined;
+  }
+
+  get localFormGeolocalizacaoLabel(): string {
+    return this.localFormHasGeolocalizacao
+      ? `${this.localForm.latitude!.toFixed(6)}, ${this.localForm.longitude!.toFixed(6)}`
+      : 'Clique no mapa ou pesquise um endereço para posicionar o local.';
+  }
+
+  searchLocalAddress(): void {
+    const term = this.localAddressTerm.trim();
+    if (!term) {
+      this.toastr.warning('Informe um endereço para pesquisar.');
+      return;
+    }
+
+    this.searchingAddress = true;
+    this.localAddressResults = [];
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(term)}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Falha na busca de endereço.');
+        }
+
+        return response.json() as Promise<AddressSearchResult[]>;
+      })
+      .then((results) => {
+        this.searchingAddress = false;
+        this.localAddressResults = results;
+        if (results.length === 0) {
+          this.toastr.info('Nenhum endereço encontrado.');
+        }
+      })
+      .catch(() => {
+        this.searchingAddress = false;
+        this.toastr.error('Não foi possível pesquisar o endereço.');
+      });
+  }
+
+  selectLocalAddress(result: AddressSearchResult): void {
+    const latitude = Number(result.lat);
+    const longitude = Number(result.lon);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      this.toastr.warning('O endereço selecionado não possui coordenadas válidas.');
+      return;
+    }
+
+    this.localAddressTerm = result.display_name;
+    this.localAddressResults = [];
+    this.setLocalCoordinates(latitude, longitude);
+  }
+
+  setLocalFromMap(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const percentX = (event.clientX - rect.left) / rect.width;
+    const percentY = (event.clientY - rect.top) / rect.height;
+    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    const startX = Math.floor(centerTile.x) - 1;
+    const startY = Math.floor(centerTile.y) - 1;
+    const tileX = startX + percentX * 3;
+    const tileY = startY + percentY * 3;
+    const coordinates = this.unprojectTile(tileX, tileY, this.localMapZoom);
+
+    this.setLocalCoordinates(coordinates.latitude, coordinates.longitude);
+  }
+
+  clearLocalCoordinates(): void {
+    this.localForm = {
+      ...this.localForm,
+      latitude: null,
+      longitude: null,
+    };
+  }
+
+  getLocalMarkerLeft(): number {
+    if (!this.localFormHasGeolocalizacao) {
+      return 50;
+    }
+
+    return this.getLocalMarkerPosition().left;
+  }
+
+  getLocalMarkerTop(): number {
+    if (!this.localFormHasGeolocalizacao) {
+      return 50;
+    }
+
+    return this.getLocalMarkerPosition().top;
   }
 
   getLocalMembersSelectedCount(): number {
@@ -589,6 +732,15 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     };
   }
 
+  private createEmptyLocalForm(): { nome: string; latitude: number | null; longitude: number | null; membroUsuarioIds: string[] } {
+    return {
+      nome: '',
+      latitude: null,
+      longitude: null,
+      membroUsuarioIds: [],
+    };
+  }
+
   private syncComissaoCollections(): void {
     if (!this.editingId) {
       this.locaisDaComissaoEmEdicao = [];
@@ -617,5 +769,74 @@ export class ComissoesComponent implements OnInit, OnDestroy {
         mustChangePassword: false,
         permissoes: ['Inventario'],
       }));
+  }
+
+  private setLocalCoordinates(latitude: number, longitude: number): void {
+    this.localForm = {
+      ...this.localForm,
+      latitude,
+      longitude,
+    };
+    this.centerLocalMap(latitude, longitude);
+  }
+
+  private centerLocalMap(latitude: number, longitude: number): void {
+    this.localMapCenterLatitude = latitude;
+    this.localMapCenterLongitude = longitude;
+    this.localMapTiles = this.buildLocalMapTiles();
+  }
+
+  private buildLocalMapTiles(): LocalMapTile[] {
+    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    const startX = Math.floor(centerTile.x) - 1;
+    const startY = Math.floor(centerTile.y) - 1;
+    const tiles: LocalMapTile[] = [];
+
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 3; col += 1) {
+        const tileX = startX + col;
+        const tileY = startY + row;
+        tiles.push({
+          url: `https://tile.openstreetmap.org/${this.localMapZoom}/${tileX}/${tileY}.png`,
+          left: (col / 3) * 100,
+          top: (row / 3) * 100,
+        });
+      }
+    }
+
+    return tiles;
+  }
+
+  private getLocalMarkerPosition(): { left: number; top: number } {
+    const centerTile = this.projectToTile(this.localMapCenterLatitude, this.localMapCenterLongitude, this.localMapZoom);
+    const startX = Math.floor(centerTile.x) - 1;
+    const startY = Math.floor(centerTile.y) - 1;
+    const point = this.projectToTile(this.localForm.latitude!, this.localForm.longitude!, this.localMapZoom);
+
+    return {
+      left: ((point.x - startX) / 3) * 100,
+      top: ((point.y - startY) / 3) * 100,
+    };
+  }
+
+  private projectToTile(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
+    const scale = 2 ** zoom;
+    const sinLatitude = Math.sin(latitude * Math.PI / 180);
+
+    return {
+      x: scale * ((longitude + 180) / 360),
+      y: scale * (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)),
+    };
+  }
+
+  private unprojectTile(x: number, y: number, zoom: number): { latitude: number; longitude: number } {
+    const scale = 2 ** zoom;
+    const longitude = x / scale * 360 - 180;
+    const latitudeRadians = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / scale)));
+
+    return {
+      latitude: latitudeRadians * 180 / Math.PI,
+      longitude,
+    };
   }
 }

@@ -44,6 +44,112 @@
   margin-bottom: 16px;
 }
 
+.address-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.address-results {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.address-result {
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid #d8e2ef;
+  border-radius: 10px;
+  background: #fbfdff;
+  color: #2f4965;
+}
+
+.address-result:hover {
+  border-color: #9bb8d3;
+  background: #f3f8fd;
+}
+
+.local-map-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.local-map {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #dbe7ef;
+  cursor: crosshair;
+}
+
+.local-map-tile {
+  position: absolute;
+  width: 33.3334%;
+  height: 33.3334%;
+  object-fit: cover;
+  user-select: none;
+}
+
+.local-map-marker {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: #d33f2f;
+  transform: translate(-50%, -100%);
+  box-shadow: 0 8px 18px rgba(24, 36, 48, 0.28);
+}
+
+.local-map-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 12px;
+  height: 12px;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  background: #d33f2f;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.local-map-attribution {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #34516d;
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.local-map-summary {
+  display: grid;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.local-map-summary strong {
+  color: #21384f;
+}
+
+.local-map-summary span {
+  color: #61788f;
+  overflow-wrap: anywhere;
+}
+
 .search-box {
   flex: 1;
 }
@@ -257,6 +363,17 @@
 .list-pagination-label {
   color: #5b6f88;
   font-size: 0.95rem;
+}
+
+@media (max-width: 767.98px) {
+  .address-search-row,
+  .local-map-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .local-map {
+    min-height: 280px;
+  }
 }
 
 .list-pagination-actions {

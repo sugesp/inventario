@@ -9,6 +9,8 @@ public class ItemInventariadoDto
     public Guid LocalId { get; set; }
     public string LocalNome { get; set; } = string.Empty;
     public IReadOnlyCollection<string> LocalMembrosNomes { get; set; } = Array.Empty<string>();
+    public decimal? LocalLatitude { get; set; }
+    public decimal? LocalLongitude { get; set; }
     public Guid UsuarioId { get; set; }
     public string UsuarioNome { get; set; } = string.Empty;
     public Guid? ComissaoId { get; set; }

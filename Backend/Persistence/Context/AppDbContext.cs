@@ -72,6 +72,8 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Locais");
             entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Latitude).HasPrecision(10, 8);
+            entity.Property(x => x.Longitude).HasPrecision(11, 8);
             entity.HasOne(x => x.Comissao)
                 .WithMany(x => x.Locais)
                 .HasForeignKey(x => x.ComissaoId)
