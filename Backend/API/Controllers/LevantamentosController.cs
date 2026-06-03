@@ -22,14 +22,14 @@ public class LevantamentosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LevantamentoDto>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAllAsync(GetUsuarioId(), cancellationToken));
+        return Ok(await _service.GetAllAsync(GetUsuarioId(), User.IsInRole("Administrador"), cancellationToken));
     }
 
     [Authorize(Roles = "Administrador,Levantamento")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LevantamentoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var levantamento = await _service.GetByIdAsync(id, GetUsuarioId(), cancellationToken);
+        var levantamento = await _service.GetByIdAsync(id, GetUsuarioId(), User.IsInRole("Administrador"), cancellationToken);
         return levantamento is null ? NotFound() : Ok(levantamento);
     }
 

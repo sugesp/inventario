@@ -1,6 +1,6 @@
 {
-  "name": "Inventario",
-  "short_name": "Inventario",
+  "name": "SGPA",
+  "short_name": "SGPA",
   "start_url": "__BASE_HREF__",
   "scope": "__BASE_HREF__",
   "display": "standalone",

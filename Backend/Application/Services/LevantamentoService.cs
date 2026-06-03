@@ -22,28 +22,45 @@ public class LevantamentoService : ILevantamentoService
         _itemInventariadoService = itemInventariadoService;
     }
 
-    public async Task<IEnumerable<LevantamentoDto>> GetAllAsync(Guid usuarioAutenticadoId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<LevantamentoDto>> GetAllAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
     {
-        var entities = await QueryBase()
-            .Where(x =>
-                x.CriadoPorUsuarioId == usuarioAutenticadoId
-                || x.Compartilhamentos.Any(compartilhamento =>
-                    compartilhamento.UsuarioId == usuarioAutenticadoId
-                    && compartilhamento.DeletedAt == null
-                )
-            )
+        var query = QueryBase();
+
+        if (!usuarioAdministrador)
+        {
+            query = query.Where(x =>
+                    x.CriadoPorUsuarioId == usuarioAutenticadoId
+                    || x.Compartilhamentos.Any(compartilhamento =>
+                        compartilhamento.UsuarioId == usuarioAutenticadoId
+                        && compartilhamento.DeletedAt == null
+                    )
+                );
+        }
+
+        var entities = await query
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return entities.Select(entity => MapToDto(entity, usuarioAutenticadoId));
     }
 
-    public async Task<LevantamentoDto?> GetByIdAsync(Guid id, Guid usuarioAutenticadoId, CancellationToken cancellationToken = default)
+    public async Task<LevantamentoDto?> GetByIdAsync(
+        Guid id,
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
     {
         var entity = await QueryBase()
             .FirstOrDefaultAsync(x =>
                 x.Id == id
                 && (
+                    usuarioAdministrador
+                    ||
                     x.CriadoPorUsuarioId == usuarioAutenticadoId
                     || x.Compartilhamentos.Any(compartilhamento =>
                         compartilhamento.UsuarioId == usuarioAutenticadoId
@@ -87,7 +104,7 @@ public class LevantamentoService : ILevantamentoService
         _context.Levantamentos.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return (await GetByIdAsync(entity.Id, usuarioAutenticadoId, cancellationToken))!;
+        return (await GetByIdAsync(entity.Id, usuarioAutenticadoId, false, cancellationToken))!;
     }
 
     public async Task<LevantamentoDto?> CompartilharAsync(
@@ -190,7 +207,7 @@ public class LevantamentoService : ILevantamentoService
             );
         }
 
-        return await GetByIdAsync(id, usuarioAutenticadoId, cancellationToken);
+        return await GetByIdAsync(id, usuarioAutenticadoId, false, cancellationToken);
     }
 
     public async Task<LevantamentoItemDto> ConfirmarItemAsync(

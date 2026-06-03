@@ -60,6 +60,14 @@
   text-transform: uppercase;
 }
 
+.brand small {
+  display: block;
+  margin-top: 6px;
+  color: #8aa4af;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
 .menu {
   display: flex;
   flex-direction: column;

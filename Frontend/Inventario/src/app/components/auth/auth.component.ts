@@ -17,8 +17,8 @@ export class AuthComponent {
   showPassword = false;
   showPreRegisterPassword = false;
   showPreRegisterModal = false;
-  readonly appTitle = environment.title?.trim() || 'Inventario';
-  readonly appEyebrow = 'Sistema de Inventário';
+  readonly appTitle = environment.title?.trim() || 'SGPA';
+  readonly appEyebrow = 'Sistema de Gestão Patrimonial';
 
   loginForm: LoginPayload = {
     cpf: '',

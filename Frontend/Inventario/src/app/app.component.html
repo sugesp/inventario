@@ -6,7 +6,8 @@
     <div class="brand">
       <img src="assets/sugesp-fundo-branco.png" alt="SUGESP" class="brand-logo" />
       <div class="brand-copy">
-        <strong>Inventário</strong>
+        <strong>SGPA</strong>
+        <small>Sistema de Gestão Patrimonial</small>
       </div>
     </div>
 
@@ -19,7 +20,7 @@
       </div>
 
       <div class="menu-group" *ngIf="authService.canManageInventario || authService.canManageComissoes">
-        <span class="menu-section-label">Comissao de Inventario</span>
+        <span class="menu-section-label">Gestão Patrimonial</span>
         <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/inventariar" routerLinkActive="active"
           (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
@@ -121,7 +122,7 @@
         ☰
       </button>
       <div class="mobile-topbar-copy">
-        <strong>Inventário</strong>
+        <strong>SGPA</strong>
         <small>{{ userName }}</small>
       </div>
     </header>

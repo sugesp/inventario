@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class PageTitleService {
-  private readonly appTitle = environment.title?.trim() || 'Inventario';
+  private readonly appTitle = environment.title?.trim() || 'SGPA';
 
   constructor(private readonly title: Title) { }
 
