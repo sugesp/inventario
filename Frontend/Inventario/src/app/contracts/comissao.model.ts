@@ -2,13 +2,10 @@ export interface ComissaoMembro {
   usuarioId: string;
   nome: string;
   cpf: string;
-  equipeId?: string | null;
-  equipeDescricao?: string | null;
 }
 
 export interface ComissaoMembroPayload {
   usuarioId: string;
-  equipeId?: string | null;
 }
 
 export interface Comissao {

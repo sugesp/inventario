@@ -62,8 +62,7 @@ public class ComissaoService : IComissaoService
             Membros = membros
                 .Select(membro => new ComissaoMembro
                 {
-                    UsuarioId = membro.UsuarioId,
-                    EquipeId = membro.EquipeId
+                    UsuarioId = membro.UsuarioId
                 })
                 .ToList()
         };
@@ -112,8 +111,7 @@ public class ComissaoService : IComissaoService
                 .Select(membro => new ComissaoMembro
                 {
                     ComissaoId = entity.Id,
-                    UsuarioId = membro.UsuarioId,
-                    EquipeId = membro.EquipeId
+                    UsuarioId = membro.UsuarioId
                 })
                 .ToList();
 
@@ -162,9 +160,7 @@ public class ComissaoService : IComissaoService
             .Where(x => x.DeletedAt == null)
             .Include(x => x.Presidente)
             .Include(x => x.Membros.Where(m => m.DeletedAt == null))
-                .ThenInclude(x => x.Usuario)
-            .Include(x => x.Membros.Where(m => m.DeletedAt == null))
-                .ThenInclude(x => x.Equipe);
+                .ThenInclude(x => x.Usuario);
     }
 
     private async Task<List<ComissaoMembroSaveDto>> ValidateAsync(
@@ -238,29 +234,6 @@ public class ComissaoService : IComissaoService
             throw new InvalidOperationException("Um ou mais membros informados não foram encontrados ou estão inativos.");
         }
 
-        var equipeIds = membros
-            .Where(x => x.EquipeId.HasValue && x.EquipeId.Value != Guid.Empty)
-            .Select(x => x.EquipeId!.Value)
-            .Distinct()
-            .ToList();
-
-        if (equipeIds.Count > 0)
-        {
-            var equipesValidas = await _context.Equipes
-                .AsNoTracking()
-                .Where(x =>
-                    x.DeletedAt == null
-                    && equipeIds.Contains(x.Id)
-                    && (!comissaoId.HasValue || x.ComissaoId == comissaoId.Value))
-                .Select(x => x.Id)
-                .ToListAsync(cancellationToken);
-
-            if (equipesValidas.Count != equipeIds.Count)
-            {
-                throw new InvalidOperationException("Uma ou mais equipes informadas para os membros não pertencem a esta comissão.");
-            }
-        }
-
         return membros;
     }
 
@@ -292,9 +265,7 @@ public class ComissaoService : IComissaoService
                 {
                     UsuarioId = x.UsuarioId,
                     Nome = x.Usuario?.Nome ?? string.Empty,
-                    Cpf = x.Usuario?.Cpf ?? string.Empty,
-                    EquipeId = x.EquipeId,
-                    EquipeDescricao = x.Equipe?.Descricao
+                    Cpf = x.Usuario?.Cpf ?? string.Empty
                 })
                 .ToArray()
         };

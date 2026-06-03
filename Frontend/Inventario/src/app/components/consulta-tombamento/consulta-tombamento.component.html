@@ -214,10 +214,10 @@
               <strong>{{ item.descricao }}</strong>
               <small>{{ item.tombamentoNovo }} · antigo {{ item.tombamentoAntigo || 'não informado' }}</small>
             </td>
-            <td>
-              <strong>{{ item.localNome || 'Não informado' }}</strong>
-              <small>{{ item.equipeDescricao || 'Equipe não informada' }}</small>
-            </td>
+	            <td>
+	              <strong>{{ item.localNome || 'Não informado' }}</strong>
+	              <small>{{ item.localMembrosNomes || 'Responsáveis não informados' }}</small>
+	            </td>
             <td>{{ item.usuarioNome || 'Não informado' }}</td>
             <td>{{ item.status || 'Não informado' }} · {{ item.estadoConservacao || 'Sem conservação' }}</td>
             <td>{{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}</td>

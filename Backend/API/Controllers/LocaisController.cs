@@ -12,13 +12,11 @@ namespace API.Controllers;
 public class LocaisController : ControllerBase
 {
     private readonly ILocalService _service;
-    private readonly IEquipeService _equipeService;
     private readonly IComissaoService _comissaoService;
 
-    public LocaisController(ILocalService service, IEquipeService equipeService, IComissaoService comissaoService)
+    public LocaisController(ILocalService service, IComissaoService comissaoService)
     {
         _service = service;
-        _equipeService = equipeService;
         _comissaoService = comissaoService;
     }
 
@@ -41,7 +39,7 @@ public class LocaisController : ControllerBase
     {
         try
         {
-            if (!await CanManageEquipeAsync(dto.EquipeId, cancellationToken))
+            if (!await CanManageComissaoAsync(dto.ComissaoId, cancellationToken))
             {
                 return Forbid();
             }
@@ -67,7 +65,8 @@ public class LocaisController : ControllerBase
                 return NotFound();
             }
 
-            if (!await CanManageEquipeAsync(atual.EquipeId, cancellationToken))
+            if (!await CanManageComissaoAsync(atual.ComissaoId, cancellationToken)
+                || !await CanManageComissaoAsync(dto.ComissaoId, cancellationToken))
             {
                 return Forbid();
             }
@@ -91,7 +90,7 @@ public class LocaisController : ControllerBase
             return NotFound();
         }
 
-        if (!await CanManageEquipeAsync(atual.EquipeId, cancellationToken))
+        if (!await CanManageComissaoAsync(atual.ComissaoId, cancellationToken))
         {
             return Forbid();
         }
@@ -100,21 +99,20 @@ public class LocaisController : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 
-    private async Task<bool> CanManageEquipeAsync(Guid equipeId, CancellationToken cancellationToken)
+    private async Task<bool> CanManageComissaoAsync(Guid comissaoId, CancellationToken cancellationToken)
     {
         if (User.IsInRole("Administrador"))
         {
             return true;
         }
 
-        var equipe = await _equipeService.GetByIdAsync(equipeId, cancellationToken);
-        if (equipe?.ComissaoId is null || equipe.ComissaoId == Guid.Empty)
+        if (comissaoId == Guid.Empty)
         {
             return false;
         }
 
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         return Guid.TryParse(value, out var usuarioId)
-            && await _comissaoService.IsPresidentAsync(equipe.ComissaoId.Value, usuarioId, cancellationToken);
+            && await _comissaoService.IsPresidentAsync(comissaoId, usuarioId, cancellationToken);
     }
 }

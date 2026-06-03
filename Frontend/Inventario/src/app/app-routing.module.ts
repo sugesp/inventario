@@ -11,7 +11,6 @@ import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
 import { ConsultaTombamentoComponent } from './components/consulta-tombamento/consulta-tombamento.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { EquipesComponent } from './components/equipes/equipes.component';
 import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.component';
@@ -32,7 +31,6 @@ const routes: Routes = [
   { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [AdminGuard], data: { title: 'Consulta por tombamento' } },
   { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Comissões' } },
   { path: 'comissoes/:id', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Editar comissão' } },
-  { path: 'equipes', component: EquipesComponent, canActivate: [AdminGuard], data: { title: 'Equipes' } },
   { path: 'unidades-administrativas', component: UnidadesAdministrativasComponent, canActivate: [AdminGuard], data: { title: 'Unidades Administrativas' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [InventarioGuard], data: { title: 'Inventariar item' } },
   { path: 'levantamentos', component: LevantamentosComponent, canActivate: [LevantamentoGuard], data: { title: 'Levantamentos' } },

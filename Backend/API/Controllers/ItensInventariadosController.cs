@@ -22,7 +22,7 @@ public class ItensInventariadosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ItemInventariadoDto>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAllAsync(cancellationToken));
+        return Ok(await _service.GetAllAsync(GetUsuarioId(), User.IsInRole("Administrador"), cancellationToken));
     }
 
     [Authorize(Roles = "Administrador,Inventario")]

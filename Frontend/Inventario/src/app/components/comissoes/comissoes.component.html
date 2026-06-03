@@ -70,7 +70,7 @@
       <div class="list-header-copy">
         <span class="list-header-eyebrow">Comissão em edição</span>
         <h2 class="list-header-title">Comissão {{ comissaoEmEdicao.ano }}</h2>
-        <p class="list-header-subtitle">Gerencie os dados básicos, membros, equipes, locais e vínculos desta comissão.</p>
+        <p class="list-header-subtitle">Gerencie os dados básicos, membros e locais desta comissão.</p>
       </div>
       <button class="btn btn-outline-secondary" type="button" (click)="goBackToList()">Voltar</button>
     </div>
@@ -102,9 +102,7 @@
           <div class="comissao-tabs">
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
-            <button class="comissao-tab" type="button" [class.active]="activeTab === 'equipes'" (click)="setActiveTab('equipes')">Equipes</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
-            <button class="comissao-tab" type="button" [class.active]="activeTab === 'vinculos'" (click)="setActiveTab('vinculos')">Vínculos</button>
           </div>
         </div>
 
@@ -117,7 +115,7 @@
                 </div>
               </div>
               <div class="inline-hint" *ngIf="!canEditCurrentComissaoBasics">
-                Como presidente, você pode gerenciar membros, equipes, locais e vínculos. Ano, status e presidente ficam restritos ao administrador.
+                Como presidente, você pode gerenciar membros e locais. Ano, status e presidente ficam restritos ao administrador.
               </div>
             </div>
         </div>
@@ -148,90 +146,20 @@
           </div>
         </div>
 
-        <div class="col-12" *ngIf="activeTab === 'equipes'">
-          <div class="section-card">
-            <div class="section-card-header">
-              <div>
-                <label class="form-label mb-1">Equipes</label>
-                <p class="section-card-hint mb-0">Crie e mantenha as equipes da comissão.</p>
-              </div>
-            </div>
-
-            <div class="team-form">
-              <input
-                class="form-control"
-                name="paginaEquipeDescricao"
-                [(ngModel)]="equipeForm.descricao"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Nome da equipe"
-                [readonly]="!canManageCurrentComissao"
-              />
-              <button class="btn btn-primary" type="button" (click)="submitEquipe()" [disabled]="savingEquipe || !canManageCurrentComissao">
-                {{ savingEquipe ? 'Salvando...' : (editingEquipeId ? 'Salvar equipe' : 'Adicionar equipe') }}
-              </button>
-              <button class="btn btn-outline-secondary" type="button" *ngIf="editingEquipeId" (click)="cancelEquipeEdit()">Cancelar</button>
-            </div>
-
-            <div class="inline-hint" *ngIf="equipesDaComissaoEmEdicao.length === 0">
-              Nenhuma equipe cadastrada nesta comissão até o momento.
-            </div>
-
-            <div class="team-list" *ngIf="equipesDaComissaoEmEdicao.length > 0">
-              <div class="team-item" *ngFor="let equipe of equipesDaComissaoEmEdicao">
-                <div class="team-copy">
-                  <strong>{{ equipe.descricao }}</strong>
-                  <small>{{ getLocaisByEquipe(equipe.id).length }} local(is) vinculado(s)</small>
-                  <div class="team-local-tags" *ngIf="getLocaisByEquipe(equipe.id).length > 0">
-                    <span class="team-local-tag" *ngFor="let local of getLocaisByEquipe(equipe.id)">
-                      {{ local.nome }}
-                    </span>
-                  </div>
-                </div>
-                <div class="team-actions" *ngIf="canManageCurrentComissao">
-                  <button class="btn btn-sm btn-standard-action" type="button" (click)="startEquipeEdit(equipe)">Editar</button>
-                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeEquipe(equipe)">Excluir</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="col-12" *ngIf="activeTab === 'locais'">
           <div class="section-card">
             <div class="section-card-header">
               <div>
                 <label class="form-label mb-1">Locais</label>
-                <p class="section-card-hint mb-0">Cadastre os locais inventariados da comissão e informe qual equipe responde por cada um.</p>
+                <p class="section-card-hint mb-0">Cadastre os locais inventariados da comissão e informe quais membros respondem por cada um.</p>
               </div>
-            </div>
-
-            <div class="inline-hint" *ngIf="equipesDaComissaoEmEdicao.length === 0">
-              Cadastre ao menos uma equipe antes de criar locais nesta comissão.
-            </div>
-
-            <div class="team-form" *ngIf="equipesDaComissaoEmEdicao.length > 0">
-              <input
-                class="form-control"
-                name="paginaLocalNome"
-                [(ngModel)]="localForm.nome"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Nome do local"
-                [readonly]="!canManageCurrentComissao"
-              />
-              <select
-                class="form-select"
-                name="paginaLocalEquipeId"
-                [(ngModel)]="localForm.equipeId"
-                [ngModelOptions]="{ standalone: true }"
-                [disabled]="!canManageCurrentComissao"
-              >
-                <option value="" disabled>Selecione a equipe</option>
-                <option *ngFor="let equipe of equipesDaComissaoEmEdicao" [value]="equipe.id">{{ equipe.descricao }}</option>
-              </select>
-              <button class="btn btn-primary" type="button" (click)="submitLocal()" [disabled]="savingLocal || !canManageCurrentComissao">
-                {{ savingLocal ? 'Salvando...' : (editingLocalId ? 'Salvar local' : 'Adicionar local') }}
+              <button class="btn btn-primary" type="button" *ngIf="selectedMembers.length > 0" (click)="startLocalCreate()" [disabled]="!canManageCurrentComissao">
+                Novo local
               </button>
-              <button class="btn btn-outline-secondary" type="button" *ngIf="editingLocalId" (click)="cancelLocalEdit()">Cancelar</button>
+            </div>
+
+            <div class="inline-hint" *ngIf="selectedMembers.length === 0">
+              Adicione ao menos um membro antes de criar locais nesta comissão.
             </div>
 
             <div class="inline-hint" *ngIf="!loadingLocais && locaisDaComissaoEmEdicao.length === 0">
@@ -242,7 +170,7 @@
               <div class="team-item" *ngFor="let local of locaisDaComissaoEmEdicao">
                 <div class="team-copy">
                   <strong>{{ local.nome }}</strong>
-                  <small>Equipe responsável: {{ local.equipeDescricao }}</small>
+                  <small>Responsáveis: {{ getLocalMembrosLabel(local) }}</small>
                 </div>
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
@@ -253,44 +181,6 @@
           </div>
         </div>
 
-        <div class="col-12" *ngIf="activeTab === 'vinculos'">
-          <div class="section-card">
-            <div class="section-card-header">
-              <div>
-                <label class="form-label mb-1">Vincular membros às equipes</label>
-                <p class="section-card-hint mb-0">Defina em qual equipe cada membro participa.</p>
-              </div>
-            </div>
-
-            <div class="inline-hint" *ngIf="selectedMembers.length === 0">
-              Adicione membros na aba “Membros” para começar os vínculos.
-            </div>
-
-            <div class="inline-hint" *ngIf="selectedMembers.length > 0 && equipesDaComissaoEmEdicao.length === 0">
-              Cadastre ao menos uma equipe na aba “Equipes” antes de fazer os vínculos.
-            </div>
-
-            <div class="vinculo-list" *ngIf="selectedMembers.length > 0">
-              <div class="vinculo-item" *ngFor="let usuario of selectedMembers">
-                <div class="vinculo-copy">
-                  <strong>{{ usuario.nome }}</strong>
-                  <small>{{ usuario.cpf }}</small>
-                </div>
-                <select
-                  class="form-select"
-                  [ngModel]="getMemberEquipeId(usuario.id)"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="setMemberEquipeId(usuario.id, $event)"
-                >
-                  <option [ngValue]="null">Sem equipe definida</option>
-                  <option *ngFor="let equipe of equipesDaComissaoEmEdicao" [ngValue]="equipe.id">
-                    {{ equipe.descricao }}
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="modal-footer-custom editor-footer">
@@ -338,13 +228,11 @@
           <ng-container *ngIf="editingId; else createFlowHint">
             <div class="col-12">
               <div class="comissao-tabs">
-                <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
-                <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
-                <button class="comissao-tab" type="button" [class.active]="activeTab === 'equipes'" (click)="setActiveTab('equipes')">Equipes</button>
-                <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
-                <button class="comissao-tab" type="button" [class.active]="activeTab === 'vinculos'" (click)="setActiveTab('vinculos')">Vínculos</button>
-              </div>
-            </div>
+	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
+	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
+	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
+	              </div>
+	            </div>
 
             <div class="col-12" *ngIf="activeTab === 'dados'">
               <div class="section-card">
@@ -360,11 +248,11 @@
           </ng-container>
 
           <ng-template #createFlowHint>
-            <div class="col-12">
-              <div class="inline-hint">
-                A comissão será criada só com ano e presidente. Depois, na edição, você poderá adicionar membros, criar equipes, cadastrar locais e fazer os vínculos em abas separadas.
-              </div>
-            </div>
+	            <div class="col-12">
+	              <div class="inline-hint">
+	                A comissão será criada só com ano e presidente. Depois, na edição, você poderá adicionar membros e cadastrar locais em abas separadas.
+	              </div>
+	            </div>
           </ng-template>
         </div>
       </div>
@@ -381,7 +269,7 @@
 
 <div class="modal-backdrop-custom" *ngIf="showAddMemberModal" (click)="closeAddMemberModal()"></div>
 <div class="modal-custom" *ngIf="showAddMemberModal" (click)="closeAddMemberModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="modal-card modal-card-list" (click)="$event.stopPropagation()">
     <div class="modal-header-custom">
       <h4>Adicionar usuário</h4>
       <button class="btn-close" type="button" aria-label="Close" (click)="closeAddMemberModal()"></button>
@@ -404,16 +292,29 @@
       <div class="inline-hint" *ngIf="loadingMemberOptions">Carregando usuários...</div>
       <div class="inline-hint" *ngIf="!loadingMemberOptions && memberOptions.length === 0">Nenhum usuário encontrado.</div>
 
-      <div class="member-grid" *ngIf="!loadingMemberOptions && memberOptions.length > 0">
-        <div class="member-card member-card-static" *ngFor="let usuario of memberOptions">
-          <div class="member-copy">
-            <strong>{{ usuario.nome }}</strong>
-            <small>{{ usuario.cpf }}</small>
-          </div>
-          <button class="btn btn-sm btn-primary" type="button" (click)="addMemberFromModal(usuario)" [disabled]="isMemberSelected(usuario.id)">
-            {{ isMemberSelected(usuario.id) ? 'Adicionado' : 'Adicionar' }}
-          </button>
-        </div>
+      <div class="table-responsive" *ngIf="!loadingMemberOptions && memberOptions.length > 0">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>CPF</th>
+              <th class="text-end">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of memberOptions">
+              <td>
+                <strong>{{ usuario.nome }}</strong>
+              </td>
+              <td>{{ usuario.cpf }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-primary" type="button" (click)="addMemberFromModal(usuario)" [disabled]="isMemberSelected(usuario.id)">
+                  {{ isMemberSelected(usuario.id) ? 'Adicionado' : 'Adicionar' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -426,6 +327,88 @@
         <span class="list-pagination-label">{{ memberPageLabel }}</span>
         <button class="btn btn-outline-secondary" type="button" (click)="goToNextMemberPage()" [disabled]="memberPageNumber >= memberTotalPages || memberTotalPages === 0">
           Próxima
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showLocalModal" (click)="cancelLocalEdit()"></div>
+<div class="modal-custom" *ngIf="showLocalModal" (click)="cancelLocalEdit()">
+  <div class="modal-card modal-card-list" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>{{ editingLocalId ? 'Editar local' : 'Novo local' }}</h4>
+      <button class="btn-close" type="button" aria-label="Close" (click)="cancelLocalEdit()"></button>
+    </div>
+
+    <div class="modal-body-custom">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nome do local</label>
+          <input
+            class="form-control"
+            name="modalLocalNome"
+            [(ngModel)]="localForm.nome"
+            placeholder="Ex.: Depósito GTI"
+            [readonly]="!canManageCurrentComissao"
+          />
+        </div>
+      </div>
+
+      <div class="list-toolbar mt-3">
+        <div class="search-box">
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="localMemberTerm"
+            placeholder="Buscar membro por nome ou CPF"
+          />
+        </div>
+      </div>
+
+      <div class="inline-hint" *ngIf="selectedMembers.length === 0">
+        Nenhum membro disponível nesta comissão.
+      </div>
+      <div class="inline-hint" *ngIf="selectedMembers.length > 0 && filteredLocalMembers.length === 0">
+        Nenhum membro encontrado para a busca.
+      </div>
+
+      <div class="table-responsive" *ngIf="filteredLocalMembers.length > 0">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th class="select-column"></th>
+              <th>Membro</th>
+              <th>CPF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of filteredLocalMembers">
+              <td class="select-column">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [checked]="isLocalMemberSelected(usuario.id)"
+                  [disabled]="!canManageCurrentComissao"
+                  (change)="toggleLocalMember(usuario.id, $any($event.target).checked)"
+                />
+              </td>
+              <td>
+                <strong>{{ usuario.nome }}</strong>
+              </td>
+              <td>{{ usuario.cpf }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <span class="list-pagination-summary">{{ getLocalMembersSelectedCount() }} responsável(is) selecionado(s).</span>
+      <div class="list-pagination-actions">
+        <button class="btn btn-secondary" type="button" (click)="cancelLocalEdit()">Cancelar</button>
+        <button class="btn btn-primary" type="button" (click)="submitLocal()" [disabled]="savingLocal || !canManageCurrentComissao">
+          {{ savingLocal ? 'Salvando...' : 'Salvar local' }}
         </button>
       </div>
     </div>

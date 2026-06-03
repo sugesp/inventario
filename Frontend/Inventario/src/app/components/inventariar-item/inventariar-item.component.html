@@ -53,7 +53,7 @@
         [class.local-card-selected]="selectedLocalId === local.id"
         (click)="selectLocal(local.id)"
       >
-        <span class="local-card-eyebrow">{{ local.equipeDescricao }}</span>
+        <span class="local-card-eyebrow">{{ getLocalResponsaveisLabel(local) }}</span>
         <strong class="local-card-title">{{ local.nome }}</strong>
         <span class="local-card-action">Selecionar local</span>
       </button>
@@ -77,7 +77,7 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ localSelecionado.equipeDescricao }}</small>
+        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToLocalStep()">Trocar local</button>
     </div>
@@ -131,7 +131,7 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ localSelecionado.equipeDescricao }}</small>
+        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar</button>
     </div>
@@ -184,7 +184,7 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ localSelecionado.equipeDescricao }}</small>
+        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button
         class="btn btn-outline-secondary btn-sm"

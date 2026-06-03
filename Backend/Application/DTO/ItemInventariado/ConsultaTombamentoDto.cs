@@ -69,7 +69,7 @@ public class ConsultaTombamentoItemInventariadoDto
     public string TombamentoAntigo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public string LocalNome { get; set; } = string.Empty;
-    public string EquipeDescricao { get; set; } = string.Empty;
+    public string LocalMembrosNomes { get; set; } = string.Empty;
     public string UsuarioNome { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string EstadoConservacao { get; set; } = string.Empty;

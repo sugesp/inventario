@@ -17,7 +17,7 @@
       <span class="step-number">A</span>
       <div>
         <h3>Listagem dos itens</h3>
-        <p>Consulta disponível apenas para administradores.</p>
+        <p>Consulte os itens das comissões em que você participa ou preside.</p>
       </div>
     </div>
 
@@ -27,20 +27,20 @@
       </button>
     </div>
 
-    <div class="filters-grid" *ngIf="!loadingItens && itensInventariados.length > 0">
+    <div class="filters-grid" *ngIf="!loadingItens && itensAcessiveis.length > 0">
+      <div>
+        <label class="form-label">Filtrar por comissão</label>
+        <select class="form-select" [(ngModel)]="selectedComissaoFilter" (ngModelChange)="onComissaoFilterChange()">
+          <option value="">Todas as comissões</option>
+          <option *ngFor="let comissao of comissoes" [value]="comissao.id">{{ getComissaoLabel(comissao) }}</option>
+        </select>
+      </div>
+
       <div>
         <label class="form-label">Filtrar por setor</label>
         <select class="form-select" [(ngModel)]="selectedLocalFilter">
           <option value="">Todos os setores</option>
           <option *ngFor="let local of localOptions" [value]="local">{{ local }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="form-label">Filtrar por equipe</label>
-        <select class="form-select" [(ngModel)]="selectedEquipeFilter">
-          <option value="">Todas as equipes</option>
-          <option *ngFor="let equipe of equipeOptions" [value]="equipe">{{ equipe }}</option>
         </select>
       </div>
 
@@ -68,24 +68,24 @@
           class="btn btn-outline-secondary"
           type="button"
           (click)="clearFilters()"
-          [disabled]="!selectedLocalFilter && !selectedEquipeFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'"
+          [disabled]="!selectedComissaoFilter && !selectedLocalFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'"
         >
           Limpar filtros
         </button>
       </div>
     </div>
 
-    <div class="scan-feedback" *ngIf="!loadingItens && itensInventariados.length > 0">
-      Exibindo {{ filteredItensInventariados.length }} de {{ itensInventariados.length }} itens.
+    <div class="scan-feedback" *ngIf="!loadingItens && itensAcessiveis.length > 0">
+      Exibindo {{ filteredItensInventariados.length }} de {{ itensAcessiveis.length }} itens.
     </div>
 
-    <div class="scan-feedback" *ngIf="loadingItens">Carregando itens inventariados...</div>
+    <div class="scan-feedback" *ngIf="loadingItens || loadingComissoes">Carregando itens inventariados...</div>
 
-    <div class="empty-state" *ngIf="!loadingItens && itensInventariados.length === 0">
+    <div class="empty-state" *ngIf="!loadingItens && !loadingComissoes && itensAcessiveis.length === 0">
       Nenhum item inventariado foi cadastrado até o momento.
     </div>
 
-    <div class="empty-state" *ngIf="!loadingItens && itensInventariados.length > 0 && filteredItensInventariados.length === 0">
+    <div class="empty-state" *ngIf="!loadingItens && itensAcessiveis.length > 0 && filteredItensInventariados.length === 0">
       Nenhum item foi encontrado com os filtros selecionados.
     </div>
 
@@ -99,7 +99,7 @@
               <th>Descrição</th>
             <th>Classificação</th>
             <th>Local</th>
-            <th>Equipe</th>
+            <th>Responsáveis do local</th>
             <th>Responsável</th>
             <th>E-Estado</th>
             <th>Data</th>
@@ -129,7 +129,7 @@
             <td>{{ item.descricao || '-' }}</td>
             <td>{{ item.status || '-' }}</td>
             <td>{{ item.localNome || '-' }}</td>
-            <td>{{ item.equipeDescricao || '-' }}</td>
+            <td>{{ getLocalMembrosLabel(item) }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
             <td>
               <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado" [class.eestado-badge-pending]="!item.lancadoEEstado">

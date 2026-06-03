@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { AuthService } from '../../auth/auth.service';
+import { Comissao } from '../../contracts/comissao.model';
+import { ComissaoService } from '../../contracts/comissao.service';
 import { ItemInventariado, ItemInventarioFoto } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 
@@ -12,10 +15,12 @@ import { ItemInventariadoService } from '../../contracts/item-inventariado.servi
 })
 export class ItensInventariadosComponent implements OnInit {
   itensInventariados: ItemInventariado[] = [];
+  comissoes: Comissao[] = [];
 
   loadingItens = false;
+  loadingComissoes = false;
+  selectedComissaoFilter = '';
   selectedLocalFilter = '';
-  selectedEquipeFilter = '';
   selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
   selectedTombamentoFilter: 'todos' | 'sem-tombamento-eestado' | 'sem-tombamento-antigo' | 'sem-ambos-tombamentos' = 'todos';
   selectedItemFotos: ItemInventariado | null = null;
@@ -25,11 +30,14 @@ export class ItensInventariadosComponent implements OnInit {
   updatingLancamentoIds = new Set<string>();
 
   constructor(
+    readonly authService: AuthService,
+    private readonly comissaoService: ComissaoService,
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
   ) { }
 
   ngOnInit(): void {
+    this.loadComissoes();
     this.loadItensInventariados();
   }
 
@@ -43,6 +51,27 @@ export class ItensInventariadosComponent implements OnInit {
       error: () => {
         this.loadingItens = false;
         this.toastr.error('Não foi possível carregar a listagem de itens inventariados.');
+      },
+    });
+  }
+
+  loadComissoes(): void {
+    this.loadingComissoes = true;
+    this.comissaoService.getAll().subscribe({
+      next: (data) => {
+        const usuarioId = this.authService.session?.userId;
+        this.comissoes = data
+          .filter((item) =>
+            this.authService.isAdmin
+            || item.presidenteId === usuarioId
+            || item.membros.some((membro) => membro.usuarioId === usuarioId)
+          )
+          .sort((a, b) => b.ano - a.ano);
+        this.loadingComissoes = false;
+      },
+      error: () => {
+        this.loadingComissoes = false;
+        this.toastr.error('Não foi possível carregar as comissões disponíveis.');
       },
     });
   }
@@ -94,17 +123,26 @@ export class ItensInventariadosComponent implements OnInit {
   }
 
   get localOptions(): string[] {
-    return [...new Set(this.itensInventariados.map((item) => item.localNome).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    return [...new Set(this.itensAcessiveis
+      .filter((item) => !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter)
+      .map((item) => item.localNome)
+      .filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
   }
 
-  get equipeOptions(): string[] {
-    return [...new Set(this.itensInventariados.map((item) => item.equipeDescricao).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  get itensAcessiveis(): ItemInventariado[] {
+    const comissaoIdsAcessiveis = new Set(this.comissoes.map((item) => item.id));
+
+    return this.itensInventariados.filter((item) =>
+      this.authService.isAdmin
+      || (!!item.comissaoId && comissaoIdsAcessiveis.has(item.comissaoId))
+    );
   }
 
   get filteredItensInventariados(): ItemInventariado[] {
-    return this.itensInventariados.filter((item) => {
+    return this.itensAcessiveis.filter((item) => {
+      const matchesComissao = !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter;
       const matchesLocal = !this.selectedLocalFilter || item.localNome === this.selectedLocalFilter;
-      const matchesEquipe = !this.selectedEquipeFilter || item.equipeDescricao === this.selectedEquipeFilter;
       const matchesLancamento =
         this.selectedLancamentoFilter === 'todos'
         || (this.selectedLancamentoFilter === 'lancados' && item.lancadoEEstado)
@@ -117,15 +155,29 @@ export class ItensInventariadosComponent implements OnInit {
         || (this.selectedTombamentoFilter === 'sem-tombamento-antigo' && !hasTombamentoAntigo)
         || (this.selectedTombamentoFilter === 'sem-ambos-tombamentos' && !hasTombamentoNovo && !hasTombamentoAntigo);
 
-      return matchesLocal && matchesEquipe && matchesLancamento && matchesTombamento;
+      return matchesComissao && matchesLocal && matchesLancamento && matchesTombamento;
     });
   }
 
   clearFilters(): void {
+    this.selectedComissaoFilter = '';
     this.selectedLocalFilter = '';
-    this.selectedEquipeFilter = '';
     this.selectedLancamentoFilter = 'todos';
     this.selectedTombamentoFilter = 'todos';
+  }
+
+  onComissaoFilterChange(): void {
+    this.selectedLocalFilter = '';
+  }
+
+  getComissaoLabel(comissao: Comissao): string {
+    return `Comissão ${comissao.ano} - ${comissao.status}`;
+  }
+
+  getLocalMembrosLabel(item: ItemInventariado): string {
+    return item.localMembrosNomes?.length
+      ? item.localMembrosNomes.join(', ')
+      : '-';
   }
 
   marcarLancamentoEEstado(item: ItemInventariado, lancado: boolean): void {

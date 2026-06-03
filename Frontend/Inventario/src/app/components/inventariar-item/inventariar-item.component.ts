@@ -129,20 +129,26 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       ? this.locais.filter((item) => item.comissaoId === this.activeComissao?.id)
       : [];
 
-    const equipeId = this.activeComissao?.membros.find(
-      (item) => item.usuarioId === this.authService.session?.userId
-    )?.equipeId;
-
-    if (!equipeId || this.authService.isAdmin) {
+    if (this.authService.isAdmin) {
       return locaisDaComissao;
     }
 
-    const locaisDaEquipe = locaisDaComissao.filter((item) => item.equipeId === equipeId);
-    return locaisDaEquipe.length > 0 ? locaisDaEquipe : locaisDaComissao;
+    return locaisDaComissao.filter((item) =>
+      item.membros.some((membro) => membro.usuarioId === this.authService.session?.userId)
+    );
   }
 
   get localSelecionado(): Local | null {
     return this.locaisDisponiveis.find((item) => item.id === this.selectedLocalId) ?? null;
+  }
+
+  getLocalResponsaveisLabel(local: Local): string {
+    const nomes = local.membros
+      .map((membro) => membro.nome)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return nomes.length > 0 ? nomes.join(', ') : 'Responsáveis não informados';
   }
 
   get canAdvanceToScan(): boolean {

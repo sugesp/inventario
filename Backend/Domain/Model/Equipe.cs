@@ -6,5 +6,4 @@ public class Equipe : BaseEntity
     public Guid? ComissaoId { get; set; }
 
     public Comissao? Comissao { get; set; }
-    public ICollection<Local> Locais { get; set; } = new List<Local>();
 }

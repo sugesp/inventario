@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Equipe> Equipes { get; set; }
     public DbSet<Local> Locais { get; set; }
+    public DbSet<LocalMembro> LocaisMembros { get; set; }
     public DbSet<UnidadeAdministrativa> UnidadesAdministrativas { get; set; }
     public DbSet<Comissao> Comissoes { get; set; }
     public DbSet<ComissaoMembro> ComissoesMembros { get; set; }
@@ -58,9 +59,24 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Locais");
             entity.Property(x => x.Nome).HasMaxLength(200).IsRequired();
-            entity.HasOne(x => x.Equipe)
+            entity.HasOne(x => x.Comissao)
                 .WithMany(x => x.Locais)
-                .HasForeignKey(x => x.EquipeId)
+                .HasForeignKey(x => x.ComissaoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LocalMembro>(entity =>
+        {
+            entity.ToTable("LocaisMembros");
+            entity.HasIndex(x => new { x.LocalId, x.UsuarioId })
+                .IsUnique();
+            entity.HasOne(x => x.Local)
+                .WithMany(x => x.Membros)
+                .HasForeignKey(x => x.LocalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Usuario)
+                .WithMany()
+                .HasForeignKey(x => x.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -99,10 +115,6 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.Usuario)
                 .WithMany(x => x.ComissoesMembro)
                 .HasForeignKey(x => x.UsuarioId)
-                .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(x => x.Equipe)
-                .WithMany()
-                .HasForeignKey(x => x.EquipeId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

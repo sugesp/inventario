@@ -69,7 +69,7 @@ export class DashboardComponent implements OnInit {
     },
     {
       title: 'Locais',
-      description: 'Estruture os locais inventariados e vincule cada um à equipe responsável.',
+      description: 'Estruture os locais inventariados e vincule membros responsáveis.',
       route: '/locais',
       icon: 'fa-location-dot',
       visible: () => this.authService.isAdmin,
@@ -99,11 +99,13 @@ export class DashboardComponent implements OnInit {
     return this.itensInventariados.length;
   }
 
-  get equipeCards(): DashboardCountCard[] {
+  get responsavelCards(): DashboardCountCard[] {
     const grouped = new Map<string, number>();
 
     this.itensInventariados.forEach((item) => {
-      const key = item.equipeDescricao?.trim() || 'Equipe não informada';
+      const key = item.localMembrosNomes?.length
+        ? item.localMembrosNomes.join(', ')
+        : 'Responsáveis não informados';
       grouped.set(key, (grouped.get(key) ?? 0) + 1);
     });
 

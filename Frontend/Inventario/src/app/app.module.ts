@@ -16,7 +16,6 @@ import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
 import { ConsultaTombamentoComponent } from './components/consulta-tombamento/consulta-tombamento.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { EquipesComponent } from './components/equipes/equipes.component';
 import { InventariarItemComponent } from './components/inventariar-item/inventariar-item.component';
 import { ItensInventariadosComponent } from './components/itens-inventariados/itens-inventariados.component';
 import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.component';
@@ -43,7 +42,6 @@ registerLocaleData(localePt);
     UsuariosComponent,
     NotFoundComponent,
     SearchableSelectComponent,
-    EquipesComponent,
     InventariarItemComponent,
     LevantamentosComponent,
     LevantamentosListaComponent,

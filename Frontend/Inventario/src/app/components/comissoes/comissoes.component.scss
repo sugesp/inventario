@@ -107,7 +107,7 @@
 
 .team-form {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 280px) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
 }
@@ -204,6 +204,16 @@
   cursor: default;
 }
 
+.local-member-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.member-card-check {
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
 .modal-body-custom .member-grid {
   margin-top: 4px;
 }
@@ -223,6 +233,20 @@
 
 .modal-card-large {
   max-width: 920px;
+}
+
+.modal-card-list {
+  width: min(980px, 100%);
+}
+
+.modal-card-list .modal-body-custom {
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.select-column {
+  width: 48px;
+  text-align: center;
 }
 
 .editor-footer {

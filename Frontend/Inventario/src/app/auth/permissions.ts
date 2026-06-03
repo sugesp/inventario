@@ -12,7 +12,7 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
   {
     value: 'Administrador',
     label: 'Administrador',
-    description: 'Gerencia usuários, comissões, equipes, locais e unidades administrativas.',
+    description: 'Gerencia usuários, comissões, locais e unidades administrativas.',
   },
   {
     value: 'Inventario',

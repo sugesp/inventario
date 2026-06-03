@@ -29,9 +29,28 @@ public class ItemInventariadoService : IItemInventariadoService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<IEnumerable<ItemInventariadoDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ItemInventariadoDto>> GetAllAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
     {
-        var items = await QueryBase()
+        var query = QueryBase();
+
+        if (!usuarioAdministrador)
+        {
+            query = query.Where(x =>
+                x.Comissao != null
+                && (
+                    x.Comissao.PresidenteId == usuarioAutenticadoId
+                    || x.Comissao.Membros.Any(m =>
+                        m.UsuarioId == usuarioAutenticadoId
+                        && m.DeletedAt == null)
+                )
+            );
+        }
+
+        var items = await query
             .OrderByDescending(x => x.DataInventario)
             .ThenBy(x => x.Descricao)
             .ToListAsync(cancellationToken);
@@ -182,16 +201,20 @@ public class ItemInventariadoService : IItemInventariadoService
             })
             .ToListAsync(cancellationToken);
 
-        var itensInventariados = await _context.ItensInventariados
+        var itensInventariadosEntities = await _context.ItensInventariados
             .AsNoTracking()
             .Where(x =>
                 x.DeletedAt == null
                 && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
             )
             .Include(x => x.Local)
-                .ThenInclude(x => x!.Equipe)
+                .ThenInclude(x => x!.Membros)
+                    .ThenInclude(x => x.Usuario)
             .Include(x => x.Usuario)
             .OrderByDescending(x => x.DataInventario)
+            .ToListAsync(cancellationToken);
+
+        var itensInventariados = itensInventariadosEntities
             .Select(x => new ConsultaTombamentoItemInventariadoDto
             {
                 Id = x.Id,
@@ -199,14 +222,16 @@ public class ItemInventariadoService : IItemInventariadoService
                 TombamentoAntigo = x.TombamentoAntigo,
                 Descricao = x.Descricao,
                 LocalNome = x.Local != null ? x.Local.Nome : string.Empty,
-                EquipeDescricao = x.Local != null && x.Local.Equipe != null ? x.Local.Equipe.Descricao : string.Empty,
+                LocalMembrosNomes = x.Local != null
+                    ? string.Join(", ", x.Local.Membros.Where(m => m.DeletedAt == null && m.Usuario != null).Select(m => m.Usuario!.Nome))
+                    : string.Empty,
                 UsuarioNome = x.Usuario != null ? x.Usuario.Nome : string.Empty,
                 Status = x.Status,
                 EstadoConservacao = x.EstadoConservacao,
                 LancadoEEstado = x.LancadoEEstado,
                 DataInventario = x.DataInventario,
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return new ConsultaTombamentoDto
         {
@@ -388,7 +413,8 @@ public class ItemInventariadoService : IItemInventariadoService
             .AsNoTracking()
             .Where(x => x.DeletedAt == null)
             .Include(x => x.Local)
-                .ThenInclude(x => x!.Equipe)
+                .ThenInclude(x => x!.Membros.Where(m => m.DeletedAt == null))
+                    .ThenInclude(x => x.Usuario)
             .Include(x => x.Usuario)
             .Include(x => x.LancadoEEstadoPorUsuario)
             .Include(x => x.Comissao)
@@ -428,11 +454,14 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("Selecione um estado de conservação válido para o item.");
         }
 
-        var localExiste = await _context.Locais.AnyAsync(
-            x => x.Id == dto.LocalId && x.DeletedAt == null,
-            cancellationToken
-        );
-        if (!localExiste)
+        var local = await _context.Locais
+            .AsNoTracking()
+            .Include(x => x.Membros.Where(m => m.DeletedAt == null))
+            .FirstOrDefaultAsync(
+                x => x.Id == dto.LocalId && x.DeletedAt == null,
+                cancellationToken
+            );
+        if (local is null)
         {
             throw new InvalidOperationException("Local informado não encontrado.");
         }
@@ -468,22 +497,21 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("A comissão informada não está ativa para receber novos inventários.");
         }
 
+        if (local.ComissaoId != dto.ComissaoId.Value)
+        {
+            throw new InvalidOperationException("O local informado não pertence à comissão ativa.");
+        }
+
         if (usuarioAdministrador)
         {
             return;
         }
 
-        var usuarioPodeInventariar = await _context.ComissoesMembros.AnyAsync(
-            x =>
-                x.ComissaoId == dto.ComissaoId.Value
-                && x.UsuarioId == usuarioId
-                && x.DeletedAt == null,
-            cancellationToken
-        );
+        var usuarioPodeInventariar = local.Membros.Any(x => x.UsuarioId == usuarioId && x.DeletedAt == null);
 
         if (!usuarioPodeInventariar)
         {
-            throw new InvalidOperationException("Somente membros da comissão ativa podem realizar inventários.");
+            throw new InvalidOperationException("Somente membros responsáveis pelo local podem realizar inventários neste local.");
         }
     }
 
@@ -567,8 +595,11 @@ public class ItemInventariadoService : IItemInventariadoService
             Descricao = entity.Descricao,
             LocalId = entity.LocalId,
             LocalNome = entity.Local?.Nome ?? string.Empty,
-            EquipeId = entity.Local?.EquipeId ?? Guid.Empty,
-            EquipeDescricao = entity.Local?.Equipe?.Descricao ?? string.Empty,
+            LocalMembrosNomes = entity.Local?.Membros
+                .Where(x => x.DeletedAt == null && x.Usuario != null)
+                .OrderBy(x => x.Usuario!.Nome)
+                .Select(x => x.Usuario!.Nome)
+                .ToArray() ?? Array.Empty<string>(),
             UsuarioId = entity.UsuarioId,
             UsuarioNome = entity.Usuario?.Nome ?? string.Empty,
             ComissaoId = entity.ComissaoId,

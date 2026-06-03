@@ -3,5 +3,6 @@ namespace Application.DTO.Local;
 public class LocalCreateUpdateDto
 {
     public string Nome { get; set; } = string.Empty;
-    public Guid EquipeId { get; set; }
+    public Guid ComissaoId { get; set; }
+    public List<Guid> MembroUsuarioIds { get; set; } = new();
 }

@@ -8,8 +8,7 @@ public class ItemInventariadoDto
     public string Descricao { get; set; } = string.Empty;
     public Guid LocalId { get; set; }
     public string LocalNome { get; set; } = string.Empty;
-    public Guid EquipeId { get; set; }
-    public string EquipeDescricao { get; set; } = string.Empty;
+    public IReadOnlyCollection<string> LocalMembrosNomes { get; set; } = Array.Empty<string>();
     public Guid UsuarioId { get; set; }
     public string UsuarioNome { get; set; } = string.Empty;
     public Guid? ComissaoId { get; set; }

@@ -12,8 +12,7 @@ export interface ItemInventariado {
   descricao: string;
   localId: string;
   localNome: string;
-  equipeId: string;
-  equipeDescricao: string;
+  localMembrosNomes: string[];
   usuarioId: string;
   usuarioNome: string;
   comissaoId?: string | null;
@@ -101,7 +100,7 @@ export interface ConsultaTombamentoItemInventariado {
   tombamentoAntigo: string;
   descricao: string;
   localNome: string;
-  equipeDescricao: string;
+  localMembrosNomes: string;
   usuarioNome: string;
   status: string;
   estadoConservacao: string;

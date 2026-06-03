@@ -3,8 +3,9 @@ namespace Domain.Model;
 public class Local : BaseEntity
 {
     public string Nome { get; set; } = string.Empty;
-    public Guid EquipeId { get; set; }
+    public Guid ComissaoId { get; set; }
 
-    public Equipe? Equipe { get; set; }
+    public Comissao? Comissao { get; set; }
+    public ICollection<LocalMembro> Membros { get; set; } = new List<LocalMembro>();
     public ICollection<ItemInventariado> ItensInventariados { get; set; } = new List<ItemInventariado>();
 }
