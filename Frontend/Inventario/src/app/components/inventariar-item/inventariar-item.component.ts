@@ -49,6 +49,12 @@ interface PersistedInventoryState {
   aguardandoConfirmacaoResumo: boolean;
 }
 
+interface InventoryGeolocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+}
+
 @Component({
   selector: 'app-inventariar-item',
   templateUrl: './inventariar-item.component.html',
@@ -93,6 +99,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   consultaPublicaMensagem = '';
   consultaPublicaResumo: ConsultaPublicaBem | null = null;
   aguardandoConfirmacaoResumo = false;
+  geolocationMessage = '';
+  geolocationLoading = false;
   identificationMode: IdentificationMode = null;
   private scannerStream: MediaStream | null = null;
   private scannerFrameId: number | null = null;
@@ -554,11 +562,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (!this.canSubmit) {
       this.toastr.warning(this.saveBlockingReasons[0] ?? 'Confira os dados obrigatórios antes de salvar.');
       return;
     }
+
+    this.saving = true;
+    const geolocation = await this.getCurrentGeolocation();
 
     const payload = new FormData();
     payload.append('comissaoId', this.activeComissao!.id);
@@ -569,11 +580,17 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     payload.append('status', this.form.status.trim());
     payload.append('estadoConservacao', this.form.estadoConservacao.trim());
     payload.append('observacao', this.form.observacao.trim());
+    if (geolocation) {
+      payload.append('latitude', geolocation.latitude.toString());
+      payload.append('longitude', geolocation.longitude.toString());
+      if (geolocation.accuracy !== null) {
+        payload.append('precisaoLocalizacao', geolocation.accuracy.toString());
+      }
+    }
     payload.append('fotos', this.etiquetaPhoto!.file, this.etiquetaPhoto!.file.name);
     payload.append('fotos', this.frontalPhoto!.file, this.frontalPhoto!.file.name);
     payload.append('fotos', this.traseiraPhoto!.file, this.traseiraPhoto!.file.name);
 
-    this.saving = true;
     this.itemInventariadoService.create(payload).subscribe({
       next: () => {
         this.saving = false;
@@ -606,6 +623,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.traseiraPhoto = null;
     this.clearConsultaPublica();
     this.codeReadMessage = '';
+    this.geolocationMessage = '';
+    this.geolocationLoading = false;
     this.identificationMode = null;
     this.activeStep = this.selectedLocalId ? 'capture' : 'local';
     this.form = this.createEmptyForm();
@@ -788,6 +807,42 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     this.traseiraPhotoInput?.nativeElement.click();
+  }
+
+  private getCurrentGeolocation(): Promise<InventoryGeolocation | null> {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.geolocationMessage = 'Localização indisponível neste navegador. O item será salvo sem coordenadas.';
+      return Promise.resolve(null);
+    }
+
+    this.geolocationLoading = true;
+    this.geolocationMessage = 'Obtendo localização do dispositivo...';
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.geolocationLoading = false;
+          this.geolocationMessage = position.coords.accuracy
+            ? `Localização registrada com precisão aproximada de ${Math.round(position.coords.accuracy)} m.`
+            : 'Localização registrada.';
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null,
+          });
+        },
+        () => {
+          this.geolocationLoading = false;
+          this.geolocationMessage = 'Não foi possível obter a localização. O item será salvo sem coordenadas.';
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        }
+      );
+    });
   }
 
   private createEmptyForm(): ItemInventarioForm {

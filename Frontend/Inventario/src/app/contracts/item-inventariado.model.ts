@@ -22,6 +22,9 @@ export interface ItemInventariado {
   estadoConservacao: string;
   observacao: string;
   dataInventario: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  precisaoLocalizacao?: number | null;
   lancadoEEstado: boolean;
   lancadoEEstadoPorUsuarioId?: string | null;
   lancadoEEstadoPorUsuarioNome?: string | null;

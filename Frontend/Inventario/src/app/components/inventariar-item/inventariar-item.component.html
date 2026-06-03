@@ -519,6 +519,14 @@
       </div>
     </div>
 
+    <div class="geolocation-status">
+      <div>
+        <strong>Localização</strong>
+        <span>{{ geolocationMessage || 'Será solicitada ao cadastrar o item.' }}</span>
+      </div>
+      <span class="photo-step-status" *ngIf="geolocationLoading">Obtendo GPS</span>
+    </div>
+
     <div class="scan-feedback" *ngIf="saveBlockingReasons.length > 0">
       Falta concluir:
       {{ saveBlockingReasons.join(' ') }}
@@ -526,8 +534,8 @@
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoFrontalStep()">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="submit()" [disabled]="saving || processingPhoto">
-        {{ saving ? 'Salvando...' : 'Cadastrar item inventariado' }}
+      <button class="btn btn-primary" type="button" (click)="submit()" [disabled]="saving || processingPhoto || geolocationLoading">
+        {{ saving ? (geolocationLoading ? 'Obtendo localização...' : 'Salvando...') : 'Cadastrar item inventariado' }}
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>

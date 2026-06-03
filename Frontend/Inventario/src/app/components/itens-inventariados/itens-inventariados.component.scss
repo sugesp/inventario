@@ -172,6 +172,17 @@
   min-width: 180px;
 }
 
+.location-link {
+  color: #2e6fb0;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.location-link:hover {
+  text-decoration: underline;
+}
+
 .fotos-backdrop {
   position: fixed;
   inset: 0;

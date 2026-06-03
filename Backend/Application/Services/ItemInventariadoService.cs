@@ -309,7 +309,10 @@ public class ItemInventariadoService : IItemInventariadoService
             Status = NormalizeClassificationStatus(dto.Status)!,
             EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!,
             Observacao = dto.Observacao?.Trim() ?? string.Empty,
-            DataInventario = dto.DataInventario ?? DateTime.UtcNow
+            DataInventario = dto.DataInventario ?? DateTime.UtcNow,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
+            PrecisaoLocalizacao = dto.PrecisaoLocalizacao
         };
 
         foreach (var foto in fotos.Where(x => x.Length > 0))
@@ -352,6 +355,9 @@ public class ItemInventariadoService : IItemInventariadoService
         entity.EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!;
         entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
         entity.DataInventario = dto.DataInventario ?? entity.DataInventario;
+        entity.Latitude = dto.Latitude;
+        entity.Longitude = dto.Longitude;
+        entity.PrecisaoLocalizacao = dto.PrecisaoLocalizacao;
         entity.UpdatedAt = DateTime.UtcNow;
 
         var fotoIdsRemovidas = dto.FotoIdsRemovidas.Distinct().ToHashSet();
@@ -468,6 +474,26 @@ public class ItemInventariadoService : IItemInventariadoService
         if (NormalizeConservationState(dto.EstadoConservacao) is null)
         {
             throw new InvalidOperationException("Selecione um estado de conservação válido para o item.");
+        }
+
+        if (dto.Latitude.HasValue && (dto.Latitude.Value < -90 || dto.Latitude.Value > 90))
+        {
+            throw new InvalidOperationException("A latitude informada é inválida.");
+        }
+
+        if (dto.Longitude.HasValue && (dto.Longitude.Value < -180 || dto.Longitude.Value > 180))
+        {
+            throw new InvalidOperationException("A longitude informada é inválida.");
+        }
+
+        if ((dto.Latitude.HasValue && !dto.Longitude.HasValue) || (!dto.Latitude.HasValue && dto.Longitude.HasValue))
+        {
+            throw new InvalidOperationException("Informe latitude e longitude para salvar a localização.");
+        }
+
+        if (dto.PrecisaoLocalizacao.HasValue && dto.PrecisaoLocalizacao.Value < 0)
+        {
+            throw new InvalidOperationException("A precisão da localização não pode ser negativa.");
         }
 
         var local = await _context.Locais
@@ -682,6 +708,9 @@ public class ItemInventariadoService : IItemInventariadoService
             EstadoConservacao = entity.EstadoConservacao,
             Observacao = entity.Observacao,
             DataInventario = entity.DataInventario,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
+            PrecisaoLocalizacao = entity.PrecisaoLocalizacao,
             LancadoEEstado = entity.LancadoEEstado,
             LancadoEEstadoPorUsuarioId = entity.LancadoEEstadoPorUsuarioId,
             LancadoEEstadoPorUsuarioNome = entity.LancadoEEstadoPorUsuario?.Nome,

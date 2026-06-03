@@ -12,5 +12,8 @@ public class ItemInventariadoFormDto
     public string? EstadoConservacao { get; set; }
     public string? Observacao { get; set; }
     public DateTime? DataInventario { get; set; }
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
+    public decimal? PrecisaoLocalizacao { get; set; }
     public List<Guid> FotoIdsRemovidas { get; set; } = new();
 }

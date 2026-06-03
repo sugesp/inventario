@@ -12,6 +12,9 @@ public class ItemInventariado : BaseEntity
     public string EstadoConservacao { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; } = DateTime.UtcNow;
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
+    public decimal? PrecisaoLocalizacao { get; set; }
     public bool LancadoEEstado { get; set; }
     public Guid? LancadoEEstadoPorUsuarioId { get; set; }
     public DateTime? LancadoEEstadoEm { get; set; }

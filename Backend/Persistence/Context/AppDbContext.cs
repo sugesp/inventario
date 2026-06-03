@@ -140,6 +140,9 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
             entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Observacao).HasMaxLength(2000);
+            entity.Property(x => x.Latitude).HasPrecision(10, 8);
+            entity.Property(x => x.Longitude).HasPrecision(11, 8);
+            entity.Property(x => x.PrecisaoLocalizacao).HasPrecision(10, 2);
             entity.HasOne(x => x.LancadoEEstadoPorUsuario)
                 .WithMany()
                 .HasForeignKey(x => x.LancadoEEstadoPorUsuarioId)

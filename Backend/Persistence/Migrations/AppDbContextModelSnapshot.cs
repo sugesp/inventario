@@ -161,13 +161,25 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("LancadoEEstadoPorUsuarioId")
                         .HasColumnType("char(36)");
 
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(10, 8)
+                        .HasColumnType("decimal(10,8)");
+
                     b.Property<Guid>("LocalId")
                         .HasColumnType("char(36)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(11, 8)
+                        .HasColumnType("decimal(11,8)");
 
                     b.Property<string>("Observacao")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
+
+                    b.Property<decimal?>("PrecisaoLocalizacao")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()

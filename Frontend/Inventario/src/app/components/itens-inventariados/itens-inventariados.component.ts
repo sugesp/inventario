@@ -180,6 +180,33 @@ export class ItensInventariadosComponent implements OnInit {
       : '-';
   }
 
+  hasGeolocalizacao(item: ItemInventariado): boolean {
+    return item.latitude !== null
+      && item.latitude !== undefined
+      && item.longitude !== null
+      && item.longitude !== undefined;
+  }
+
+  getGeolocalizacaoLabel(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item)) {
+      return '-';
+    }
+
+    const accuracy = item.precisaoLocalizacao !== null && item.precisaoLocalizacao !== undefined
+      ? ` · ${Math.round(item.precisaoLocalizacao)} m`
+      : '';
+
+    return `${item.latitude!.toFixed(6)}, ${item.longitude!.toFixed(6)}${accuracy}`;
+  }
+
+  getMapaUrl(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item)) {
+      return '';
+    }
+
+    return `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
+  }
+
   marcarLancamentoEEstado(item: ItemInventariado, lancado: boolean): void {
     this.updatingLancamentoIds.add(item.id);
     this.itemInventariadoService.marcarLancamentoEEstado(item.id, lancado).subscribe({

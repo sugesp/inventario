@@ -99,6 +99,7 @@
               <th>Descrição</th>
             <th>Classificação</th>
             <th>Local</th>
+            <th>Localização</th>
             <th>Responsáveis do local</th>
             <th>Responsável</th>
             <th>E-Estado</th>
@@ -129,6 +130,18 @@
             <td>{{ item.descricao || '-' }}</td>
             <td>{{ item.status || '-' }}</td>
             <td>{{ item.localNome || '-' }}</td>
+            <td>
+              <a
+                *ngIf="hasGeolocalizacao(item); else semGeolocalizacao"
+                class="location-link"
+                [href]="getMapaUrl(item)"
+                target="_blank"
+                rel="noopener"
+              >
+                {{ getGeolocalizacaoLabel(item) }}
+              </a>
+              <ng-template #semGeolocalizacao>-</ng-template>
+            </td>
             <td>{{ getLocalMembrosLabel(item) }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
             <td>

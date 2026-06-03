@@ -282,6 +282,31 @@
   color: #61788f;
 }
 
+.geolocation-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid #dce6ef;
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.geolocation-status div {
+  display: grid;
+  gap: 4px;
+}
+
+.geolocation-status strong {
+  color: #21384f;
+}
+
+.geolocation-status span {
+  color: #61788f;
+}
+
 .step-actions {
   display: flex;
   justify-content: flex-end;
@@ -376,8 +401,13 @@
     grid-template-columns: 1fr;
   }
 
-  .selected-local-banner {
+  .selected-local-banner,
+  .geolocation-status {
     align-items: flex-start;
+  }
+
+  .geolocation-status {
+    flex-direction: column;
   }
 
   .photo-step-actions,
