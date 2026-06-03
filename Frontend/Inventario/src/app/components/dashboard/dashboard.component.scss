@@ -10,6 +10,7 @@
 .hero-card,
 .info-card,
 .shortcut-card,
+.summary-card,
 .stats-card {
   background: #fff;
   border: 1px solid #d8dde6;
@@ -19,6 +20,13 @@
 .hero-card {
   padding: 24px;
   background: linear-gradient(135deg, #f8fbff 0%, #edf4fb 100%);
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .eyebrow,
@@ -77,6 +85,48 @@
   gap: 12px;
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  display: grid;
+  gap: 8px;
+  min-height: 158px;
+  padding: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.summary-card-link {
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.summary-card-link:hover {
+  transform: translateY(-2px);
+  border-color: #9eb9d4;
+  box-shadow: 0 16px 32px rgba(26, 52, 79, 0.08);
+}
+
+.summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #eef4fb;
+  color: #295f96;
+  font-size: 1.05rem;
+}
+
+.summary-meta {
+  color: #61788f;
+  font-size: 0.92rem;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -104,6 +154,23 @@
   font-size: 2rem;
   line-height: 1;
   margin-bottom: 8px;
+}
+
+.mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mini-list span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #d8dde6;
+  border-radius: 10px;
+  color: #21384f;
+  background: #f8fbff;
 }
 
 .empty-stats,
@@ -150,7 +217,20 @@
 @media (max-width: 767.98px) {
   .info-grid,
   .shortcut-grid,
+  .summary-grid,
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .summary-grid,
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

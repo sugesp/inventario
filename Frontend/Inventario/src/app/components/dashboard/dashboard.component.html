@@ -1,5 +1,102 @@
 <div class="dashboard-grid">
   <section class="hero-card">
-    <span class="eyebrow">Início</span>
+    <span class="eyebrow">{{ dashboardScope }}</span>
+    <div class="hero-content">
+      <div>
+        <h2 class="hero-title">Dashboard SGPA</h2>
+        <p class="hero-text">Sistema de Gestão Patrimonial</p>
+      </div>
+      <button type="button" class="btn btn-outline-primary" (click)="loadDashboardStats()" [disabled]="loadingStats">
+        Atualizar painel
+      </button>
+    </div>
+  </section>
+
+  <div class="scan-feedback" *ngIf="loadingStats">Carregando indicadores...</div>
+
+  <section class="summary-grid" *ngIf="summaryCards.length">
+    <a
+      *ngFor="let card of summaryCards"
+      class="summary-card"
+      [routerLink]="card.route || null"
+      [class.summary-card-link]="card.route"
+    >
+      <span class="summary-icon"><i class="fa-solid" [ngClass]="card.icon"></i></span>
+      <span class="stats-label">{{ card.label }}</span>
+      <strong class="stats-value">{{ card.value }}</strong>
+      <span class="summary-meta">{{ card.meta }}</span>
+    </a>
+  </section>
+
+  <section class="stats-section" *ngIf="authService.canManageInventario">
+    <div class="section-heading">
+      <span class="eyebrow">Inventário por comissão</span>
+      <h3>Itens inventariados</h3>
+    </div>
+
+    <div class="stats-grid" *ngIf="itensPorComissao.length; else emptyInventario">
+      <article class="stats-card stats-card-highlight" *ngFor="let card of itensPorComissao">
+        <span class="stats-label">{{ card.label }}</span>
+        <strong class="stats-value">{{ card.value }}</strong>
+        <span class="summary-meta">{{ card.meta }}</span>
+      </article>
+    </div>
+
+    <ng-template #emptyInventario>
+      <div class="empty-stats">Nenhum item inventariado encontrado.</div>
+    </ng-template>
+  </section>
+
+  <section class="info-grid">
+    <article class="info-card" *ngIf="authService.canManageLevantamentos">
+      <span class="info-label">Levantamentos</span>
+      <strong class="info-value">{{ totalItensLevantamento }}</strong>
+      <p class="info-text">tombamento(s) confirmado(s) em {{ levantamentos.length }} levantamento(s).</p>
+    </article>
+
+    <article class="info-card" *ngIf="authService.canManageInventario">
+      <span class="info-label">E-Estado</span>
+      <strong class="info-value">{{ itensLancadosEEstado }} / {{ totalInventariados }}</strong>
+      <p class="info-text">item(ns) inventariado(s) marcado(s) como lançado(s).</p>
+    </article>
+
+    <article class="info-card" *ngIf="authService.canAccessGtiGestor">
+      <span class="info-label">Transferências por status</span>
+      <div class="mini-list" *ngIf="transferenciasPorStatus.length; else emptyTransferencias">
+        <span *ngFor="let card of transferenciasPorStatus">
+          <strong>{{ card.value }}</strong> {{ card.label }}
+        </span>
+      </div>
+      <ng-template #emptyTransferencias>
+        <p class="info-text">Nenhuma transferência encontrada.</p>
+      </ng-template>
+    </article>
+
+    <article class="info-card" *ngIf="authService.canAccessLaudos">
+      <span class="info-label">Laudos por classificação</span>
+      <div class="mini-list" *ngIf="laudosPorClassificacao.length; else emptyLaudos">
+        <span *ngFor="let card of laudosPorClassificacao">
+          <strong>{{ card.value }}</strong> {{ card.label }}
+        </span>
+      </div>
+      <ng-template #emptyLaudos>
+        <p class="info-text">Nenhum laudo encontrado.</p>
+      </ng-template>
+    </article>
+  </section>
+
+  <section class="shortcut-section" *ngIf="visibleShortcuts.length">
+    <div class="section-heading">
+      <span class="eyebrow">Acesso rápido</span>
+      <h3>Rotinas disponíveis</h3>
+    </div>
+
+    <div class="shortcut-grid">
+      <a class="shortcut-card" *ngFor="let shortcut of visibleShortcuts" [routerLink]="shortcut.route">
+        <span class="shortcut-icon"><i class="fa-solid" [ngClass]="shortcut.icon"></i></span>
+        <strong class="shortcut-title">{{ shortcut.title }}</strong>
+        <p class="shortcut-text">{{ shortcut.description }}</p>
+      </a>
+    </div>
   </section>
 </div>
