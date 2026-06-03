@@ -1,10 +1,13 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Persistence.Context;
 
 #nullable disable
 
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
     [Migration("20260603120000_AddGeolocalizacaoItensInventariados")]
     public partial class AddGeolocalizacaoItensInventariados : Migration
     {

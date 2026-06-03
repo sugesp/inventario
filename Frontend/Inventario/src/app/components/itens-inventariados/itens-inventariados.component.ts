@@ -8,6 +8,19 @@ import { ComissaoService } from '../../contracts/comissao.service';
 import { ItemInventariado, ItemInventarioFoto } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 
+interface MapTile {
+  url: string;
+  left: number;
+  top: number;
+}
+
+interface MapMarker {
+  item: ItemInventariado;
+  left: number;
+  top: number;
+  label: string;
+}
+
 @Component({
   selector: 'app-itens-inventariados',
   templateUrl: './itens-inventariados.component.html',
@@ -28,6 +41,12 @@ export class ItensInventariadosComponent implements OnInit {
   loadingFotos = false;
   fotoObjectUrls: Record<string, string> = {};
   updatingLancamentoIds = new Set<string>();
+  mapOpen = false;
+  mapTiles: MapTile[] = [];
+  mapMarkers: MapMarker[] = [];
+  mapZoom = 16;
+  mapCenterLatitude = 0;
+  mapCenterLongitude = 0;
 
   constructor(
     readonly authService: AuthService,
@@ -159,6 +178,10 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
+  get itensGeolocalizados(): ItemInventariado[] {
+    return this.filteredItensInventariados.filter((item) => this.hasGeolocalizacao(item));
+  }
+
   clearFilters(): void {
     this.selectedComissaoFilter = '';
     this.selectedLocalFilter = '';
@@ -204,7 +227,33 @@ export class ItensInventariadosComponent implements OnInit {
       return '';
     }
 
-    return `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
+    return `https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}#map=18/${item.latitude}/${item.longitude}`;
+  }
+
+  openMap(): void {
+    const items = this.itensGeolocalizados;
+    if (!items.length) {
+      this.toastr.warning('Nenhum item filtrado possui geolocalização registrada.');
+      return;
+    }
+
+    this.mapCenterLatitude = items.reduce((total, item) => total + item.latitude!, 0) / items.length;
+    this.mapCenterLongitude = items.reduce((total, item) => total + item.longitude!, 0) / items.length;
+    this.mapZoom = this.getBestMapZoom(items);
+    this.mapTiles = this.buildMapTiles();
+    this.mapMarkers = this.buildMapMarkers(items);
+    this.mapOpen = true;
+  }
+
+  closeMap(): void {
+    this.mapOpen = false;
+    this.mapTiles = [];
+    this.mapMarkers = [];
+  }
+
+  getMapMarkerTitle(marker: MapMarker): string {
+    const tombamento = marker.item.tombamentoNovo || marker.item.tombamentoAntigo || 'Sem tombamento';
+    return `${tombamento} - ${marker.item.descricao || 'Item inventariado'}`;
   }
 
   marcarLancamentoEEstado(item: ItemInventariado, lancado: boolean): void {
@@ -255,6 +304,83 @@ export class ItensInventariadosComponent implements OnInit {
   private releaseFotoObjectUrls(): void {
     Object.values(this.fotoObjectUrls).forEach((url) => URL.revokeObjectURL(url));
     this.fotoObjectUrls = {};
+  }
+
+  private buildMapTiles(): MapTile[] {
+    const centerTile = this.projectToTile(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
+    const startX = Math.floor(centerTile.x) - 1;
+    const startY = Math.floor(centerTile.y) - 1;
+    const tiles: MapTile[] = [];
+
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 3; col += 1) {
+        const tileX = startX + col;
+        const tileY = startY + row;
+        tiles.push({
+          url: `https://tile.openstreetmap.org/${this.mapZoom}/${tileX}/${tileY}.png`,
+          left: (col / 3) * 100,
+          top: (row / 3) * 100,
+        });
+      }
+    }
+
+    return tiles;
+  }
+
+  private buildMapMarkers(items: ItemInventariado[]): MapMarker[] {
+    const centerTile = this.projectToTile(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
+    const startX = Math.floor(centerTile.x) - 1;
+    const startY = Math.floor(centerTile.y) - 1;
+
+    return items.map((item, index) => {
+      const point = this.projectToTile(item.latitude!, item.longitude!, this.mapZoom);
+
+      return {
+        item,
+        left: ((point.x - startX) / 3) * 100,
+        top: ((point.y - startY) / 3) * 100,
+        label: String(index + 1),
+      };
+    });
+  }
+
+  private getBestMapZoom(items: ItemInventariado[]): number {
+    if (items.length <= 1) {
+      return 17;
+    }
+
+    for (let zoom = 17; zoom >= 4; zoom -= 1) {
+      const points = items.map((item) => this.projectToPixel(item.latitude!, item.longitude!, zoom));
+      const minX = Math.min(...points.map((point) => point.x));
+      const maxX = Math.max(...points.map((point) => point.x));
+      const minY = Math.min(...points.map((point) => point.y));
+      const maxY = Math.max(...points.map((point) => point.y));
+
+      if (maxX - minX <= 560 && maxY - minY <= 560) {
+        return zoom;
+      }
+    }
+
+    return 4;
+  }
+
+  private projectToTile(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
+    const scale = 2 ** zoom;
+    const sinLatitude = Math.sin(latitude * Math.PI / 180);
+
+    return {
+      x: scale * ((longitude + 180) / 360),
+      y: scale * (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)),
+    };
+  }
+
+  private projectToPixel(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
+    const tile = this.projectToTile(latitude, longitude, zoom);
+
+    return {
+      x: tile.x * 256,
+      y: tile.y * 256,
+    };
   }
 
   private async copyText(value: string): Promise<void> {

@@ -25,6 +25,14 @@
       <button class="btn btn-outline-secondary" type="button" (click)="loadItensInventariados()" [disabled]="loadingItens">
         {{ loadingItens ? 'Atualizando...' : 'Atualizar listagem' }}
       </button>
+      <button
+        class="btn btn-outline-primary"
+        type="button"
+        (click)="openMap()"
+        [disabled]="loadingItens || itensGeolocalizados.length === 0"
+      >
+        Ver mapa
+      </button>
     </div>
 
     <div class="filters-grid" *ngIf="!loadingItens && itensAcessiveis.length > 0">
@@ -77,6 +85,7 @@
 
     <div class="scan-feedback" *ngIf="!loadingItens && itensAcessiveis.length > 0">
       Exibindo {{ filteredItensInventariados.length }} de {{ itensAcessiveis.length }} itens.
+      {{ itensGeolocalizados.length }} com localização.
     </div>
 
     <div class="scan-feedback" *ngIf="loadingItens || loadingComissoes">Carregando itens inventariados...</div>
@@ -183,6 +192,63 @@
       </table>
     </div>
   </section>
+</div>
+
+<div class="mapa-backdrop" *ngIf="mapOpen" (click)="closeMap()"></div>
+<div class="mapa-modal" *ngIf="mapOpen">
+  <div class="mapa-card" (click)="$event.stopPropagation()">
+    <div class="mapa-header">
+      <div>
+        <h3>Mapa dos itens localizados</h3>
+        <p>{{ mapMarkers.length }} itens com coordenadas nos filtros atuais</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeMap()"></button>
+    </div>
+
+    <div class="mapa-body">
+      <div class="openstreet-map">
+        <img
+          *ngFor="let tile of mapTiles"
+          class="map-tile"
+          [src]="tile.url"
+          alt=""
+          [style.left.%]="tile.left"
+          [style.top.%]="tile.top"
+        />
+        <a
+          *ngFor="let marker of mapMarkers"
+          class="map-marker"
+          [href]="getMapaUrl(marker.item)"
+          target="_blank"
+          rel="noopener"
+          [title]="getMapMarkerTitle(marker)"
+          [style.left.%]="marker.left"
+          [style.top.%]="marker.top"
+        >
+          {{ marker.label }}
+        </a>
+        <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+          © OpenStreetMap contributors
+        </a>
+      </div>
+
+      <div class="mapa-lista">
+        <a
+          class="mapa-lista-item"
+          *ngFor="let marker of mapMarkers"
+          [href]="getMapaUrl(marker.item)"
+          target="_blank"
+          rel="noopener"
+        >
+          <span class="mapa-lista-marker">{{ marker.label }}</span>
+          <span>
+            <strong>{{ marker.item.tombamentoNovo || marker.item.tombamentoAntigo || 'Sem tombamento' }}</strong>
+            <small>{{ marker.item.descricao || 'Item inventariado' }} · {{ marker.item.localNome || '-' }}</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="fotos-backdrop" *ngIf="selectedItemFotos" (click)="closeFotos()"></div>
