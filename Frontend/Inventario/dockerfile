@@ -10,7 +10,7 @@ ARG API_BASE_URL=/api
 RUN sed -i "s|\${API_BASE_URL}|${API_BASE_URL}|g" src/environments/environment.ts \
   && npm run build
 
-FROM nginx:1.27-alpine AS final
+FROM nginx:1.29.5-alpine AS final
 WORKDIR /usr/share/nginx/html
 
 ENV BASE_HREF=/
