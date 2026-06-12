@@ -45,7 +45,7 @@ public class LevantamentoService : ILevantamentoService
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return entities.Select(entity => MapToDto(entity, usuarioAutenticadoId));
+        return entities.Select(entity => MapToDto(entity, usuarioAutenticadoId, usuarioAdministrador));
     }
 
     public async Task<LevantamentoDto?> GetByIdAsync(
@@ -70,7 +70,7 @@ public class LevantamentoService : ILevantamentoService
                 cancellationToken
             );
 
-        return entity is null ? null : MapToDto(entity, usuarioAutenticadoId);
+        return entity is null ? null : MapToDto(entity, usuarioAutenticadoId, usuarioAdministrador);
     }
 
     public async Task<LevantamentoDto> CreateAsync(
@@ -111,6 +111,7 @@ public class LevantamentoService : ILevantamentoService
         Guid id,
         LevantamentoCompartilharDto dto,
         Guid usuarioAutenticadoId,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     )
     {
@@ -123,7 +124,7 @@ public class LevantamentoService : ILevantamentoService
             return null;
         }
 
-        if (levantamento.CriadoPorUsuarioId != usuarioAutenticadoId)
+        if (!usuarioAdministrador && levantamento.CriadoPorUsuarioId != usuarioAutenticadoId)
         {
             throw new InvalidOperationException("Somente o criador pode compartilhar este levantamento.");
         }
@@ -207,7 +208,7 @@ public class LevantamentoService : ILevantamentoService
             );
         }
 
-        return await GetByIdAsync(id, usuarioAutenticadoId, false, cancellationToken);
+        return await GetByIdAsync(id, usuarioAutenticadoId, usuarioAdministrador, cancellationToken);
     }
 
     public async Task<LevantamentoItemDto> ConfirmarItemAsync(
@@ -383,7 +384,7 @@ public class LevantamentoService : ILevantamentoService
                 .ThenInclude(x => x.ConfirmadoPorUsuario);
     }
 
-    private static LevantamentoDto MapToDto(Levantamento entity, Guid usuarioAutenticadoId)
+    private static LevantamentoDto MapToDto(Levantamento entity, Guid usuarioAutenticadoId, bool usuarioAdministrador)
     {
         return new LevantamentoDto
         {
@@ -395,7 +396,7 @@ public class LevantamentoService : ILevantamentoService
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             UsuarioPodeGerenciar = entity.CriadoPorUsuarioId == usuarioAutenticadoId,
-            UsuarioPodeCompartilhar = entity.CriadoPorUsuarioId == usuarioAutenticadoId,
+            UsuarioPodeCompartilhar = usuarioAdministrador || entity.CriadoPorUsuarioId == usuarioAutenticadoId,
             Compartilhamentos = entity.Compartilhamentos
                 .Where(x => x.DeletedAt == null)
                 .OrderBy(x => x.Usuario?.Nome)

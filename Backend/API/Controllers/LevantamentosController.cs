@@ -54,7 +54,7 @@ public class LevantamentosController : ControllerBase
     {
         try
         {
-            var updated = await _service.CompartilharAsync(id, dto, GetUsuarioId(), cancellationToken);
+            var updated = await _service.CompartilharAsync(id, dto, GetUsuarioId(), User.IsInRole("Administrador"), cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)

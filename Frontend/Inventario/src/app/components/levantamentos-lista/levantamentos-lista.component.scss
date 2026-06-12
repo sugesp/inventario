@@ -68,6 +68,7 @@
 .step-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -95,6 +96,16 @@
 
 .table {
   margin-bottom: 0;
+}
+
+.selection-cell {
+  width: 42px;
+  text-align: center;
+}
+
+.selection-cell input {
+  width: 18px;
+  height: 18px;
 }
 
 .actions-cell {

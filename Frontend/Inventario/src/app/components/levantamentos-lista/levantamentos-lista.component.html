@@ -25,6 +25,22 @@
       <button class="btn btn-outline-secondary" type="button" (click)="loadLevantamentos()" [disabled]="loading">
         {{ loading ? 'Atualizando...' : 'Atualizar listagem' }}
       </button>
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="exportSelectedCsv()"
+        [disabled]="selectedLevantamentoIds.size === 0"
+      >
+        Exportar CSV selecionados
+      </button>
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="exportSelectedPdf()"
+        [disabled]="selectedLevantamentoIds.size === 0"
+      >
+        Exportar PDF selecionados
+      </button>
     </div>
 
     <div class="scan-feedback" *ngIf="loading">Carregando levantamentos...</div>
@@ -37,6 +53,14 @@
       <table class="table table-hover align-middle">
         <thead>
           <tr>
+            <th class="selection-cell">
+              <input
+                type="checkbox"
+                aria-label="Selecionar todos os levantamentos"
+                [checked]="allLevantamentosSelected"
+                (change)="toggleAllLevantamentos($any($event.target).checked)"
+              />
+            </th>
             <th>Nome</th>
             <th>Descrição</th>
             <th>Criado por</th>
@@ -47,6 +71,14 @@
         </thead>
         <tbody>
           <tr *ngFor="let levantamento of levantamentos">
+            <td class="selection-cell">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Selecionar levantamento ' + (levantamento.nome || '')"
+                [checked]="selectedLevantamentoIds.has(levantamento.id)"
+                (change)="toggleLevantamentoSelection(levantamento.id, $any($event.target).checked)"
+              />
+            </td>
             <td>{{ levantamento.nome || '-' }}</td>
             <td>{{ levantamento.descricao || '-' }}</td>
             <td>{{ levantamento.criadoPorUsuarioNome || '-' }}</td>

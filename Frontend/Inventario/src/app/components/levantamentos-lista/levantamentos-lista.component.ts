@@ -19,6 +19,7 @@ export class LevantamentosListaComponent implements OnInit {
   loadingSharingUsers = false;
   savingSharing = false;
   sharingSelection = new Set<string>();
+  selectedLevantamentoIds = new Set<string>();
   deletingLevantamentoId = '';
   deletingItemId = '';
 
@@ -37,6 +38,7 @@ export class LevantamentosListaComponent implements OnInit {
     this.levantamentoService.getAll().subscribe({
       next: (data) => {
         this.levantamentos = data;
+        this.syncSelectedLevantamentos();
         this.loading = false;
       },
       error: () => {
@@ -69,6 +71,35 @@ export class LevantamentosListaComponent implements OnInit {
   get usuariosCompartilhamentoDisponiveis(): Array<{ id: string; nome: string; cpf: string }> {
     const criadoPorUsuarioId = this.sharingLevantamento?.criadoPorUsuarioId;
     return this.usuariosLevantamento.filter((usuario) => usuario.id !== criadoPorUsuarioId);
+  }
+
+  get selectedLevantamentos(): Levantamento[] {
+    return this.levantamentos.filter((levantamento) => this.selectedLevantamentoIds.has(levantamento.id));
+  }
+
+  get allLevantamentosSelected(): boolean {
+    return this.levantamentos.length > 0 && this.selectedLevantamentoIds.size === this.levantamentos.length;
+  }
+
+  toggleLevantamentoSelection(levantamentoId: string, checked: boolean): void {
+    if (checked) {
+      this.selectedLevantamentoIds.add(levantamentoId);
+      return;
+    }
+
+    this.selectedLevantamentoIds.delete(levantamentoId);
+  }
+
+  toggleAllLevantamentos(checked: boolean): void {
+    this.selectedLevantamentoIds.clear();
+
+    if (!checked) {
+      return;
+    }
+
+    for (const levantamento of this.levantamentos) {
+      this.selectedLevantamentoIds.add(levantamento.id);
+    }
   }
 
   openSharing(levantamento: Levantamento): void {
@@ -146,6 +177,7 @@ export class LevantamentosListaComponent implements OnInit {
       next: () => {
         this.deletingLevantamentoId = '';
         this.levantamentos = this.levantamentos.filter((item) => item.id !== levantamento.id);
+        this.selectedLevantamentoIds.delete(levantamento.id);
 
         if (this.activeLevantamento?.id === levantamento.id) {
           this.closeModal();
@@ -216,6 +248,66 @@ export class LevantamentosListaComponent implements OnInit {
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = `${this.slugify(levantamento.nome || 'levantamento')}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  exportSelectedCsv(): void {
+    const levantamentos = this.selectedLevantamentos;
+    if (levantamentos.length === 0) {
+      this.toastr.warning('Selecione ao menos um levantamento para exportar.');
+      return;
+    }
+
+    const headers = [
+      'Levantamento',
+      'Descricao do levantamento',
+      'Criado por',
+      'Tombamento',
+      'Tombamento antigo',
+      'Descricao',
+      'Tipo',
+      'Levantamento feito por',
+      'Data',
+    ];
+
+    const rows = levantamentos.flatMap((levantamento) => {
+      if (levantamento.itens.length === 0) {
+        return [[
+          levantamento.nome || '',
+          levantamento.descricao || '',
+          levantamento.criadoPorUsuarioNome || '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+        ]];
+      }
+
+      return levantamento.itens.map((item) => [
+        levantamento.nome || '',
+        levantamento.descricao || '',
+        levantamento.criadoPorUsuarioNome || '',
+        item.tombamento || '',
+        item.tombamentoAntigo || '',
+        item.descricao || '',
+        item.tipo || '',
+        item.confirmadoPorUsuarioNome || '',
+        this.formatDateTime(item.createdAt),
+      ]);
+    });
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((value) => this.escapeCsv(value)).join(';'))
+      .join('\n');
+
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'levantamentos-selecionados.csv';
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -295,6 +387,98 @@ export class LevantamentosListaComponent implements OnInit {
     }, 350);
   }
 
+  exportSelectedPdf(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const levantamentos = this.selectedLevantamentos;
+    if (levantamentos.length === 0) {
+      this.toastr.warning('Selecione ao menos um levantamento para exportar.');
+      return;
+    }
+
+    const sectionsHtml = levantamentos.map((levantamento) => {
+      const rowsHtml = levantamento.itens.map((item) => `
+        <tr>
+          <td>${this.escapeHtml(item.tombamento || '-')}</td>
+          <td>${this.escapeHtml(item.tombamentoAntigo || '-')}</td>
+          <td>${this.escapeHtml(item.descricao || '-')}</td>
+          <td>${this.escapeHtml(item.tipo || '-')}</td>
+          <td>${this.escapeHtml(item.confirmadoPorUsuarioNome || '-')}</td>
+          <td>${this.escapeHtml(this.formatDateTime(item.createdAt) || '-')}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <section>
+          <h2>${this.escapeHtml(levantamento.nome || 'Levantamento')}</h2>
+          <div class="meta">
+            <p><strong>Descrição:</strong> ${this.escapeHtml(levantamento.descricao || '-')}</p>
+            <p><strong>Criado por:</strong> ${this.escapeHtml(levantamento.criadoPorUsuarioNome || '-')}</p>
+            <p><strong>Total de itens:</strong> ${levantamento.itens.length}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Tombamento</th>
+                <th>Tombamento antigo</th>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Levantamento feito por</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml || '<tr><td colspan="6">Nenhum item confirmado.</td></tr>'}
+            </tbody>
+          </table>
+        </section>
+      `;
+    }).join('');
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWindow) {
+      this.toastr.error('Não foi possível abrir a janela de impressão do PDF.');
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <title>Levantamentos selecionados</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+          h1 { margin: 0 0 16px; font-size: 24px; }
+          h2 { margin: 0 0 8px; font-size: 19px; }
+          p { margin: 0 0 8px; color: #4b5563; }
+          section { page-break-inside: avoid; margin-bottom: 28px; }
+          .meta { margin-bottom: 14px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; vertical-align: top; }
+          th { background: #eff6ff; }
+          @media print {
+            body { margin: 12px; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Levantamentos selecionados</h1>
+        ${sectionsHtml}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    window.setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 350);
+  }
+
   private formatDateTime(value: string | null | undefined): string {
     if (!value) {
       return '';
@@ -342,6 +526,16 @@ export class LevantamentosListaComponent implements OnInit {
         this.toastr.error('Não foi possível carregar os usuários para compartilhamento.');
       },
     });
+  }
+
+  private syncSelectedLevantamentos(): void {
+    const levantamentoIds = new Set(this.levantamentos.map((levantamento) => levantamento.id));
+
+    for (const selectedId of Array.from(this.selectedLevantamentoIds)) {
+      if (!levantamentoIds.has(selectedId)) {
+        this.selectedLevantamentoIds.delete(selectedId);
+      }
+    }
   }
 
   private applyUpdatedLevantamento(updated: Levantamento): void {
