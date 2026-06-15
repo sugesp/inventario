@@ -22,6 +22,12 @@ export class ItemInventariadoService {
     return this.http.get<ConsultaTombamento>(`${this.baseUrl}/consulta-tombamento/${encodeURIComponent(tombamento)}`);
   }
 
+  existeTombamentoNoLocal(localId: string, tombamento: string): Observable<{ existe: boolean }> {
+    return this.http.get<{ existe: boolean }>(
+      `${this.baseUrl}/locais/${localId}/tombamentos/${encodeURIComponent(tombamento)}/existe`
+    );
+  }
+
   getFoto(itemId: string, fotoId: string): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/${itemId}/fotos/${fotoId}`, {
       responseType: 'blob',

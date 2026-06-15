@@ -268,6 +268,28 @@ public class ItemInventariadoService : IItemInventariadoService
         };
     }
 
+    public async Task<bool> ExisteTombamentoNoLocalAsync(
+        string tombamento,
+        Guid localId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var tombamentoNormalizado = NormalizeDigits(tombamento);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado) || localId == Guid.Empty)
+        {
+            return false;
+        }
+
+        return await _context.ItensInventariados
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.DeletedAt == null
+                && x.LocalId == localId
+                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado,
+                cancellationToken
+            );
+    }
+
     public async Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
         Guid itemId,
         Guid fotoId,

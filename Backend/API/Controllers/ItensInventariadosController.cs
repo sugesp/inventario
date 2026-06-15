@@ -67,6 +67,18 @@ public class ItensInventariadosController : ControllerBase
     }
 
     [Authorize(Roles = "Administrador,Inventario")]
+    [HttpGet("locais/{localId:guid}/tombamentos/{tombamento}/existe")]
+    public async Task<ActionResult<object>> ExisteTombamentoNoLocal(
+        Guid localId,
+        string tombamento,
+        CancellationToken cancellationToken
+    )
+    {
+        var existe = await _service.ExisteTombamentoNoLocalAsync(tombamento, localId, cancellationToken);
+        return Ok(new { existe });
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
     public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)
     {

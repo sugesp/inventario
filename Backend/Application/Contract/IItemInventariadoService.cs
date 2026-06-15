@@ -13,6 +13,11 @@ public interface IItemInventariadoService
     Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default);
     Task<ConsultaTombamentoDto> ConsultarTombamentoAsync(string tombamento, CancellationToken cancellationToken = default);
+    Task<bool> ExisteTombamentoNoLocalAsync(
+        string tombamento,
+        Guid localId,
+        CancellationToken cancellationToken = default
+    );
     Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
         Guid itemId,
         Guid fotoId,

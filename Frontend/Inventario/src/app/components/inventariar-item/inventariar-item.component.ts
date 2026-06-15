@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import jsQR from 'jsqr';
 import { ToastrService } from 'ngx-toastr';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { Comissao } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
@@ -326,8 +326,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.clearConsultaPublica();
     this.identificationMode = 'qr';
     this.codeReadMessage = '';
-    await this.readCodeFromFile(file);
-    this.activeStep = 'details';
+    const canContinue = await this.readCodeFromFile(file);
+    if (canContinue) {
+      this.activeStep = 'details';
+    }
     this.persistState();
     input.value = '';
   }
@@ -368,7 +370,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
-  buscarPatrimonioManual(): void {
+  async buscarPatrimonioManual(): Promise<void> {
     const tombamento = this.normalizeScannedValue(this.form.tombamentoNovo);
 
     if (tombamento.length !== 9) {
@@ -378,6 +380,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.identificationMode = 'manual';
     this.form.tombamentoNovo = this.formatTombamentoValue(tombamento);
+    if (!await this.canContinueWithTombamento(tombamento)) {
+      this.persistState();
+      return;
+    }
+
     this.codeReadMessage = 'Patrimônio informado manualmente. Consultando dados do bem.';
     this.consultarResumoPublico();
     this.activeStep = 'details';
@@ -533,7 +540,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
   }
 
-  async readCodeFromFile(file: File): Promise<void> {
+  async readCodeFromFile(file: File): Promise<boolean> {
     this.readingCode = true;
 
     try {
@@ -542,9 +549,15 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       if (rawValue) {
         this.playScanBeep();
         this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
+        if (!await this.canContinueWithTombamento(rawValue)) {
+          this.persistState();
+          return false;
+        }
+
         this.codeReadMessage = 'Tombamento identificado automaticamente pela imagem.';
         this.consultarResumoPublico();
         this.persistState();
+        return true;
       } else {
         this.codeReadMessage = 'Não foi possível ler o QR code. Você pode informar o tombamento manualmente.';
       }
@@ -553,6 +566,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     } finally {
       this.readingCode = false;
     }
+
+    return false;
   }
 
   async submit(): Promise<void> {
@@ -876,11 +891,17 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     this.detectCodeFromVideoFrame(video)
-      .then((rawValue) => {
+      .then(async (rawValue) => {
         if (rawValue) {
           this.playScanBeep();
           this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
           this.identificationMode = 'qr';
+          if (!await this.canContinueWithTombamento(rawValue)) {
+            this.closeScanner();
+            this.persistState();
+            return;
+          }
+
           this.codeReadMessage = 'Tombamento identificado automaticamente pela câmera.';
           this.consultarResumoPublico();
           this.activeStep = 'details';
@@ -1165,6 +1186,29 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       });
   }
 
+  private async canContinueWithTombamento(tombamento: string): Promise<boolean> {
+    const tombamentoNormalizado = this.normalizeScannedValue(tombamento);
+    if (!tombamentoNormalizado || !this.selectedLocalId) {
+      return true;
+    }
+
+    try {
+      const result = await firstValueFrom(
+        this.itemInventariadoService.existeTombamentoNoLocal(this.selectedLocalId, tombamentoNormalizado)
+      );
+      if (!result.existe) {
+        return true;
+      }
+
+      this.clearConsultaPublica();
+      this.codeReadMessage = 'Este tombamento já foi inventariado neste local.';
+      this.toastr.warning(this.codeReadMessage);
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
   confirmarResumo(condiz: boolean): void {
     if (!condiz) {
       this.toastr.info('Você poderá ajustar a descrição manualmente antes de salvar.');
@@ -1230,7 +1274,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
   }
 
-  onTombamentoNovoBlur(): void {
+  async onTombamentoNovoBlur(): Promise<void> {
     const tombamentoNormalizado = this.normalizeScannedValue(this.form.tombamentoNovo);
     if (!tombamentoNormalizado) {
       this.clearConsultaPublica();
@@ -1246,6 +1290,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.form.tombamentoNovo = this.formatTombamentoValue(tombamentoNormalizado);
     this.persistState();
+    if (!await this.canContinueWithTombamento(tombamentoNormalizado)) {
+      this.persistState();
+      return;
+    }
+
     this.consultarResumoPublico();
   }
 
