@@ -31,6 +31,8 @@ export class AppComponent {
   private activeComissaoLoaded = false;
   private activeComissaoLoading = false;
   private previousAuditedPath: string | null = null;
+  private readonly permissionsPromptKey = 'inventario.required-accesses.prompted';
+  private requestingBrowserAccesses = false;
   passwordForm: ChangePasswordPayload & { confirmarNovaSenha: string } = {
     senhaAtual: '',
     novaSenha: '',
@@ -251,6 +253,7 @@ export class AppComponent {
     this.gravatarFailed = false;
     this.pageTitleService.setPageTitle(this.resolveRouteTitle());
     this.syncActiveComissaoContext();
+    this.requestRequiredBrowserAccesses();
   }
 
   private auditPageView(url: string): void {
@@ -319,6 +322,89 @@ export class AppComponent {
         this.activeComissaoLoaded = true;
         this.activeComissaoLoading = false;
       },
+    });
+  }
+
+  private requestRequiredBrowserAccesses(): void {
+    if (
+      this.isAuthRoute
+      || !this.authService.isAuthenticated
+      || this.requestingBrowserAccesses
+      || typeof window === 'undefined'
+    ) {
+      return;
+    }
+
+    if (sessionStorage.getItem(this.permissionsPromptKey) === 'true') {
+      return;
+    }
+
+    sessionStorage.setItem(this.permissionsPromptKey, 'true');
+    this.requestingBrowserAccesses = true;
+    void this.requestCameraAndGeolocation();
+  }
+
+  private async requestCameraAndGeolocation(): Promise<void> {
+    if (!window.isSecureContext) {
+      this.requestingBrowserAccesses = false;
+      this.toastr.warning('Camera e localizacao precisam de HTTPS para funcionar.');
+      return;
+    }
+
+    const cameraAllowed = await this.requestCameraAccess();
+    const geolocationAllowed = await this.requestGeolocationAccess();
+    this.requestingBrowserAccesses = false;
+
+    if (cameraAllowed && geolocationAllowed) {
+      return;
+    }
+
+    if (!cameraAllowed && !geolocationAllowed) {
+      this.toastr.warning('Permita o acesso a camera e localizacao para inventariar itens.');
+      return;
+    }
+
+    if (!cameraAllowed) {
+      this.toastr.warning('Permita o acesso a camera para ler QR Code e fotografar o item.');
+      return;
+    }
+
+    this.toastr.warning('Permita o acesso a localizacao para registrar o inventario.');
+  }
+
+  private async requestCameraAccess(): Promise<boolean> {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      return false;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private requestGeolocationAccess(): Promise<boolean> {
+    if (!navigator.geolocation) {
+      return Promise.resolve(false);
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        () => resolve(true),
+        () => resolve(false),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
     });
   }
 
