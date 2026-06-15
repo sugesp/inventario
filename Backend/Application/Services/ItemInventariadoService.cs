@@ -301,7 +301,7 @@ public class ItemInventariadoService : IItemInventariadoService
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, null, cancellationToken);
 
         var entity = new ItemInventariado
         {
@@ -348,7 +348,7 @@ public class ItemInventariadoService : IItemInventariadoService
             return null;
         }
 
-        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, entity.Id, cancellationToken);
 
         entity.TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty;
         entity.TombamentoAntigo = NormalizeOptionalTombamentoAntigo(dto.TombamentoAntigo);
@@ -453,6 +453,7 @@ public class ItemInventariadoService : IItemInventariadoService
         Guid usuarioId,
         bool requireActiveComissao,
         bool usuarioAdministrador,
+        Guid? ignoredItemId,
         CancellationToken cancellationToken
     )
     {
@@ -513,6 +514,8 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("Local informado não encontrado.");
         }
 
+        await EnsureTombamentoDisponivelNoLocalAsync(dto.TombamentoNovo, dto.LocalId, ignoredItemId, cancellationToken);
+
         var usuarioExiste = await _context.Usuarios.AnyAsync(
             x => x.Id == usuarioId && x.DeletedAt == null,
             cancellationToken
@@ -559,6 +562,35 @@ public class ItemInventariadoService : IItemInventariadoService
         if (!usuarioPodeInventariar)
         {
             throw new InvalidOperationException("Somente membros responsáveis pelo local podem realizar inventários neste local.");
+        }
+    }
+
+    private async Task EnsureTombamentoDisponivelNoLocalAsync(
+        string? tombamentoNovo,
+        Guid localId,
+        Guid? ignoredItemId,
+        CancellationToken cancellationToken
+    )
+    {
+        var tombamentoNormalizado = NormalizeDigits(tombamentoNovo ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
+        {
+            return;
+        }
+
+        var jaInventariadoNoLocal = await _context.ItensInventariados
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.DeletedAt == null
+                && x.LocalId == localId
+                && (!ignoredItemId.HasValue || x.Id != ignoredItemId.Value)
+                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado,
+                cancellationToken
+            );
+
+        if (jaInventariadoNoLocal)
+        {
+            throw new InvalidOperationException("Este tombamento já foi inventariado neste local.");
         }
     }
 
