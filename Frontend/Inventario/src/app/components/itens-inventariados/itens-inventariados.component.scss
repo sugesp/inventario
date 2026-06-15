@@ -1,10 +1,15 @@
 :host {
   display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .inventario-grid {
   display: grid;
   gap: 20px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hero-card,
@@ -12,6 +17,8 @@
   background: #fff;
   border: 1px solid #d8dde6;
   border-radius: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hero-card {
@@ -25,6 +32,7 @@
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .hero-copy {
@@ -41,16 +49,19 @@
   display: flex;
   gap: 14px;
   margin-bottom: 18px;
+  min-width: 0;
 }
 
 .step-head h3 {
   margin: 0 0 4px;
   color: #21384f;
+  overflow-wrap: anywhere;
 }
 
 .step-head p {
   margin: 0;
   color: #61788f;
+  overflow-wrap: anywhere;
 }
 
 .step-number {
@@ -103,6 +114,8 @@
 .table-responsive {
   border: 1px solid #e4eaf1;
   border-radius: 12px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .table {
@@ -441,10 +454,32 @@
   .hero-header,
   .step-actions {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .filters-grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-card,
+  .step-card {
+    padding: 18px;
+  }
+
+  .hero-header .btn,
+  .step-actions .btn,
+  .filters-actions .btn {
+    width: 100%;
+  }
+
+  .form-select,
+  .form-control {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .table {
+    min-width: 980px;
   }
 
   .tombamento-cell {
