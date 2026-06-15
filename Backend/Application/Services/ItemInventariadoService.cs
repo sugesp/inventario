@@ -41,11 +41,16 @@ public class ItemInventariadoService : IItemInventariadoService
         {
             query = query.Where(x =>
                 x.Comissao != null
+                && x.Comissao.DeletedAt == null
+                && x.Comissao.Status == "Ativa"
                 && (
                     x.Comissao.PresidenteId == usuarioAutenticadoId
-                    || x.Comissao.Membros.Any(m =>
-                        m.UsuarioId == usuarioAutenticadoId
-                        && m.DeletedAt == null)
+                    || (
+                        x.Local != null
+                        && x.Local.Membros.Any(m =>
+                            m.UsuarioId == usuarioAutenticadoId
+                            && m.DeletedAt == null)
+                    )
                 )
             );
         }

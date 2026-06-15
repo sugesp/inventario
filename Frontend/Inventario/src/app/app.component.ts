@@ -4,6 +4,8 @@ import { filter } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from './auth/auth.service';
 import { ChangePasswordPayload } from './auth/auth.model';
+import { Comissao } from './contracts/comissao.model';
+import { ComissaoService } from './contracts/comissao.service';
 import { AuditService } from './core/audit.service';
 import { BackendStatusService } from './core/backend-status.service';
 import { PageTitleService } from './core/page-title.service';
@@ -25,6 +27,9 @@ export class AppComponent {
   showNewPassword = false;
   showConfirmPassword = false;
   checkingBackendStatus = false;
+  activeComissao: Comissao | null = null;
+  private activeComissaoLoaded = false;
+  private activeComissaoLoading = false;
   private previousAuditedPath: string | null = null;
   passwordForm: ChangePasswordPayload & { confirmarNovaSenha: string } = {
     senhaAtual: '',
@@ -71,9 +76,49 @@ export class AppComponent {
     return this.authService.isAuthenticated && !this.isAuthRoute;
   }
 
+  get canShowInventoryGroup(): boolean {
+    return this.authService.canManageInventario || this.canShowComissoesMenu;
+  }
+
+  get canShowDashboardMenu(): boolean {
+    return !this.isInventoryOnlyUser || (this.activeComissaoLoaded && !this.isInventoryOnlyActiveMember);
+  }
+
+  get canShowComissoesMenu(): boolean {
+    return this.authService.isAdmin || this.isActiveComissaoPresident;
+  }
+
+  private get currentUserId(): string | null {
+    return this.authService.session?.userId ?? null;
+  }
+
+  private get isActiveComissaoPresident(): boolean {
+    return !!this.currentUserId && this.activeComissao?.presidenteId === this.currentUserId;
+  }
+
+  private get isActiveComissaoMember(): boolean {
+    return !!this.currentUserId
+      && !!this.activeComissao?.membros.some((membro) => membro.usuarioId === this.currentUserId);
+  }
+
+  private get isInventoryOnlyActiveMember(): boolean {
+    return this.isInventoryOnlyUser
+      && this.isActiveComissaoMember
+      && !this.isActiveComissaoPresident;
+  }
+
+  private get isInventoryOnlyUser(): boolean {
+    return this.authService.hasPermission('Inventario')
+      && !this.authService.isAdmin
+      && !this.authService.hasPermission('Levantamento')
+      && !this.authService.hasPermission('GTI.Tecnico')
+      && !this.authService.hasPermission('GTI.Gestor');
+  }
+
   constructor(
     readonly authService: AuthService,
     readonly backendStatusService: BackendStatusService,
+    private readonly comissaoService: ComissaoService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
@@ -205,6 +250,7 @@ export class AppComponent {
     this.showChangePasswordModal = !this.isAuthRoute && this.mustChangePassword;
     this.gravatarFailed = false;
     this.pageTitleService.setPageTitle(this.resolveRouteTitle());
+    this.syncActiveComissaoContext();
   }
 
   private auditPageView(url: string): void {
@@ -248,6 +294,32 @@ export class AppComponent {
     if (!this.isMobileViewport) {
       this.mobileSidebarOpen = false;
     }
+  }
+
+  private syncActiveComissaoContext(): void {
+    if (!this.authService.isAuthenticated || this.isAuthRoute || !this.authService.hasPermission('Inventario')) {
+      this.activeComissao = null;
+      this.activeComissaoLoaded = false;
+      return;
+    }
+
+    if (this.activeComissaoLoaded || this.activeComissaoLoading) {
+      return;
+    }
+
+    this.activeComissaoLoading = true;
+    this.comissaoService.getActive().subscribe({
+      next: (comissao) => {
+        this.activeComissao = comissao;
+        this.activeComissaoLoaded = true;
+        this.activeComissaoLoading = false;
+      },
+      error: () => {
+        this.activeComissao = null;
+        this.activeComissaoLoaded = true;
+        this.activeComissaoLoading = false;
+      },
+    });
   }
 
   private md5(value: string): string {

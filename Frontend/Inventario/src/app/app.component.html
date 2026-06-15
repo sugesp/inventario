@@ -12,21 +12,21 @@
     </div>
 
     <nav class="menu">
-      <div class="menu-group">
+      <div class="menu-group" *ngIf="canShowDashboardMenu">
         <a class="menu-item" routerLink="/dashboard" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
           <span>Inicio</span>
         </a>
       </div>
 
-      <div class="menu-group" *ngIf="authService.canManageInventario || authService.canManageComissoes">
-        <span class="menu-section-label">Gestão Patrimonial</span>
+      <div class="menu-group" *ngIf="canShowInventoryGroup">
+        <span class="menu-section-label">Comissão de Inventário</span>
         <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/inventariar" routerLinkActive="active"
           (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar</span>
         </a>
-        <a class="menu-item" *ngIf="authService.canManageComissoes" routerLink="/comissoes" routerLinkActive="active"
+        <a class="menu-item" *ngIf="canShowComissoesMenu" routerLink="/comissoes" routerLinkActive="active"
           (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
           <span>Comissões</span>
