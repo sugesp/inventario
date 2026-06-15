@@ -76,7 +76,7 @@ public class ItensInventariadosController : ControllerBase
             return NotFound();
         }
 
-        return File(foto.Value.Stream, foto.Value.ContentType);
+        return File(foto.Value.Stream, foto.Value.ContentType, foto.Value.FileName);
     }
 
     [Authorize(Roles = "Administrador,Inventario")]

@@ -1,3 +1,4 @@
+using API.Auditing;
 using Application.Contract;
 using Application.Services;
 using Domain.Model;
@@ -9,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Persistence.Context;
 using Persistence.Contract;
 using Persistence.Repository;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -48,9 +50,40 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var usuarioIdValue = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? context.Principal?.FindFirstValue("sub");
+
+                if (!Guid.TryParse(usuarioIdValue, out var usuarioId))
+                {
+                    context.Fail("Usuário inválido.");
+                    return;
+                }
+
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                var usuarioAtivo = await dbContext.Usuarios
+                    .AsNoTracking()
+                    .AnyAsync(usuario =>
+                        usuario.Id == usuarioId
+                        && usuario.DeletedAt == null
+                        && usuario.Status == "Ativo");
+
+                if (!usuarioAtivo)
+                {
+                    context.Fail("Usuário desativado ou excluído.");
+                }
+            }
+        };
     });
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IAuditContextAccessor, HttpAuditContextAccessor>();
+builder.Services.AddSingleton<JsonlAuditWriter>();
+builder.Services.AddSingleton<IAuditSink>(services => services.GetRequiredService<JsonlAuditWriter>());
+builder.Services.AddHostedService(services => services.GetRequiredService<JsonlAuditWriter>());
 builder.Services.AddHttpClient("MapaCnpj", client =>
 {
     client.BaseAddress = new Uri("https://mapacnpj.seunegocionanuvem.com.br/api/");
@@ -115,6 +148,21 @@ if (app.Environment.IsDevelopment())
 app.UseCors("DefaultCors");
 app.UseStaticFiles();
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.TryAdd("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        context.Response.Headers.TryAdd("Cache-Control", "no-store");
+    }
+
+    await next();
+});
+app.UseMiddleware<ApiAccessAuditMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

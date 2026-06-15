@@ -4,6 +4,7 @@ import { filter } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from './auth/auth.service';
 import { ChangePasswordPayload } from './auth/auth.model';
+import { AuditService } from './core/audit.service';
 import { BackendStatusService } from './core/backend-status.service';
 import { PageTitleService } from './core/page-title.service';
 
@@ -24,6 +25,7 @@ export class AppComponent {
   showNewPassword = false;
   showConfirmPassword = false;
   checkingBackendStatus = false;
+  private previousAuditedPath: string | null = null;
   passwordForm: ChangePasswordPayload & { confirmarNovaSenha: string } = {
     senhaAtual: '',
     novaSenha: '',
@@ -75,13 +77,17 @@ export class AppComponent {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
+    private readonly auditService: AuditService,
     private readonly pageTitleService: PageTitleService
   ) {
     this.updateViewportState();
     this.syncRouteState(this.router.url);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.syncRouteState(event.urlAfterRedirects));
+      .subscribe((event) => {
+        this.syncRouteState(event.urlAfterRedirects);
+        this.auditPageView(event.urlAfterRedirects);
+      });
   }
 
   @HostListener('window:resize')
@@ -199,6 +205,20 @@ export class AppComponent {
     this.showChangePasswordModal = !this.isAuthRoute && this.mustChangePassword;
     this.gravatarFailed = false;
     this.pageTitleService.setPageTitle(this.resolveRouteTitle());
+  }
+
+  private auditPageView(url: string): void {
+    if (this.isAuthRoute || !this.authService.isAuthenticated) {
+      this.previousAuditedPath = null;
+      return;
+    }
+
+    this.auditService.trackPageView({
+      path: url,
+      title: this.resolveRouteTitle(),
+      previousPath: this.previousAuditedPath,
+    });
+    this.previousAuditedPath = url;
   }
 
   private resolveRouteTitle(): string | null {

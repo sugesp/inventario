@@ -11,9 +11,9 @@ public class FileStorageService : IFileStorageService
     public FileStorageService(IConfiguration configuration)
     {
         var uploadsRoot = configuration["Storage:UploadsRoot"]?.Trim();
-        _rootPath = string.IsNullOrWhiteSpace(uploadsRoot)
+        _rootPath = Path.GetFullPath(string.IsNullOrWhiteSpace(uploadsRoot)
             ? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")
-            : Path.GetFullPath(uploadsRoot);
+            : uploadsRoot);
     }
 
     public async Task<(string NomeArquivo, string CaminhoRelativo, string Url)> SaveAsync(
@@ -27,9 +27,9 @@ public class FileStorageService : IFileStorageService
             throw new InvalidOperationException("Arquivo inválido.");
         }
 
-        var extension = Path.GetExtension(file.FileName);
+        var extension = Path.GetExtension(Path.GetFileName(file.FileName));
         var fileName = $"{Guid.NewGuid():N}{extension}";
-        var safeFolder = folder.Trim().Replace("\\", "/").Trim('/');
+        var safeFolder = SanitizeRelativePath(folder);
         var targetDirectory = Path.Combine(_rootPath, safeFolder);
         Directory.CreateDirectory(targetDirectory);
 
@@ -56,7 +56,9 @@ public class FileStorageService : IFileStorageService
         }
 
         var stream = File.OpenRead(absolutePath);
-        var fileName = string.IsNullOrWhiteSpace(downloadFileName) ? Path.GetFileName(absolutePath) : downloadFileName.Trim();
+        var fileName = string.IsNullOrWhiteSpace(downloadFileName)
+            ? Path.GetFileName(absolutePath)
+            : Path.GetFileName(downloadFileName.Trim());
         var contentType = GetContentType(fileName);
 
         return Task.FromResult<(Stream Stream, string ContentType, string FileName)?>((stream, contentType, fileName));
@@ -78,12 +80,38 @@ public class FileStorageService : IFileStorageService
 
     private string ResolveAbsolutePath(string relativePath)
     {
-        var normalizedPath = relativePath.Trim().TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
+        var normalizedPath = SanitizeRelativePath(relativePath);
         var uploadsPrefix = $"uploads{Path.DirectorySeparatorChar}";
         var relativeToRoot = normalizedPath.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase)
             ? normalizedPath[uploadsPrefix.Length..]
             : normalizedPath;
-        return Path.Combine(_rootPath, relativeToRoot);
+        var absolutePath = Path.GetFullPath(Path.Combine(_rootPath, relativeToRoot));
+
+        if (!absolutePath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Caminho de arquivo inválido.");
+        }
+
+        return absolutePath;
+    }
+
+    private static string SanitizeRelativePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var segments = path
+            .Trim()
+            .TrimStart('/', '\\')
+            .Replace("\\", "/")
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Where(segment => segment is not "." and not "..")
+            .Select(segment => Path.GetFileName(segment)!)
+            .Where(segment => !string.IsNullOrWhiteSpace(segment));
+
+        return Path.Combine(segments.ToArray());
     }
 
     private static string GetContentType(string fileName)

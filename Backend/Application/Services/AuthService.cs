@@ -395,6 +395,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, usuario.Email),
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
+            new Claim("login", usuario.Cpf),
             new Claim("cpf", usuario.Cpf)
         };
 

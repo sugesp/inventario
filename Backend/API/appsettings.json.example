@@ -11,6 +11,9 @@
     "Audience": "Inventario.App",
     "ExpiresMinutes": 480
   },
+  "Audit": {
+    "LogsPath": "logs/audit"
+  },
   "Logging": {
     "LogLevel": {
       "Default": "Information",

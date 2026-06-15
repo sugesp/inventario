@@ -1,13 +1,33 @@
 using Domain.Model;
 using Microsoft.EntityFrameworkCore;
+using Persistence.Contract;
 
 namespace Persistence.Context;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private static readonly HashSet<string> IgnoredAuditFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "CreatedAt",
+        "UpdatedAt",
+        "PasswordHash",
+        "PasswordSalt",
+        "Token",
+        "RefreshToken"
+    };
+
+    private readonly IAuditSink? _auditSink;
+    private readonly IAuditContextAccessor? _auditContextAccessor;
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        IAuditSink? auditSink = null,
+        IAuditContextAccessor? auditContextAccessor = null
+    )
         : base(options)
     {
+        _auditSink = auditSink;
+        _auditContextAccessor = auditContextAccessor;
     }
 
     public DbSet<Usuario> Usuarios { get; set; }
@@ -319,7 +339,7 @@ public class AppDbContext : DbContext
         }
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker.Entries<BaseEntity>();
         var utcNow = DateTime.UtcNow;
@@ -337,6 +357,112 @@ public class AppDbContext : DbContext
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        var auditEntries = BuildAuditEntries(utcNow);
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        if (_auditSink is not null)
+        {
+            foreach (var auditEntry in auditEntries)
+            {
+                await _auditSink.EnqueueAsync("entity-changes", auditEntry, cancellationToken);
+            }
+        }
+
+        return result;
+    }
+
+    private List<object> BuildAuditEntries(DateTime utcNow)
+    {
+        var auditContext = _auditContextAccessor?.Current ?? new AuditContext();
+        var entries = ChangeTracker.Entries<BaseEntity>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Where(entry => entry.Entity.GetType().Name.StartsWith("Audit", StringComparison.OrdinalIgnoreCase) is false)
+            .ToList();
+
+        var auditEntries = new List<object>();
+
+        foreach (var entry in entries)
+        {
+            var changes = new Dictionary<string, object?>();
+            var action = ResolveAuditAction(entry);
+
+            foreach (var property in entry.Properties)
+            {
+                if (IgnoredAuditFields.Contains(property.Metadata.Name))
+                {
+                    continue;
+                }
+
+                if (entry.State == EntityState.Added)
+                {
+                    changes[property.Metadata.Name] = new
+                    {
+                        oldValue = (object?)null,
+                        newValue = property.CurrentValue
+                    };
+                    continue;
+                }
+
+                if (entry.State == EntityState.Deleted)
+                {
+                    changes[property.Metadata.Name] = new
+                    {
+                        oldValue = property.OriginalValue,
+                        newValue = (object?)null
+                    };
+                    continue;
+                }
+
+                if (!property.IsModified || Equals(property.OriginalValue, property.CurrentValue))
+                {
+                    continue;
+                }
+
+                changes[property.Metadata.Name] = new
+                {
+                    oldValue = property.OriginalValue,
+                    newValue = property.CurrentValue
+                };
+            }
+
+            auditEntries.Add(new
+            {
+                timestampUtc = utcNow,
+                action,
+                entityName = entry.Metadata.ClrType.Name,
+                tableName = entry.Metadata.GetTableName(),
+                entityId = entry.Entity.Id,
+                changes,
+                userId = auditContext.UsuarioId,
+                login = auditContext.Login,
+                roles = auditContext.Perfis,
+                endpoint = auditContext.Path,
+                httpMethod = auditContext.MetodoHttp,
+                traceId = auditContext.TraceId
+            });
+        }
+
+        return auditEntries;
+    }
+
+    private static string ResolveAuditAction(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<BaseEntity> entry)
+    {
+        if (entry.State == EntityState.Added)
+        {
+            return "create";
+        }
+
+        if (entry.State == EntityState.Deleted)
+        {
+            return "delete";
+        }
+
+        var deletedAt = entry.Property(nameof(BaseEntity.DeletedAt));
+        if (deletedAt.IsModified && deletedAt.OriginalValue is null && deletedAt.CurrentValue is not null)
+        {
+            return "soft-delete";
+        }
+
+        return "update";
     }
 }
