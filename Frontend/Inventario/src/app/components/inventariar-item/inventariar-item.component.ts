@@ -63,9 +63,9 @@ interface InventoryGeolocation {
 export class InventariarItemComponent implements OnInit, OnDestroy {
   private static readonly CLASSIFICACOES = ['SERVIVEL', 'INSERVIVEL', 'OBSOLETO'] as const;
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
-  private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 1920;
-  private static readonly UPLOAD_IMAGE_QUALITY = 0.82;
-  private static readonly PHOTO_CAPTURE_MAX_DIMENSION = 1600;
+  private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 3840;
+  private static readonly UPLOAD_IMAGE_QUALITY = 0.92;
+  private static readonly PHOTO_CAPTURE_MAX_DIMENSION = 3200;
   private static readonly STORAGE_KEY = 'inventario.flow.state';
 
   @ViewChild('scannerVideo') scannerVideo?: ElementRef<HTMLVideoElement>;
@@ -412,6 +412,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'environment' },
+          width: { ideal: InventariarItemComponent.UPLOAD_IMAGE_MAX_DIMENSION },
+          height: { ideal: 2160 },
         },
         audio: false,
       });
