@@ -125,6 +125,7 @@
             class="form-control"
             [ngModel]="form.tombamentoNovo"
             (ngModelChange)="onTombamentoNovoChange($event)"
+            (blur)="onTombamentoNovoBlur()"
             placeholder="000.000.000"
             inputmode="numeric"
           />
