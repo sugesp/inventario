@@ -7,26 +7,10 @@
     </p>
   </section>
 
-  <section class="step-card">
-    <div class="scan-feedback" *ngIf="loadingComissao">Carregando comissão ativa...</div>
-    <div class="summary-card" *ngIf="activeComissao">
-      <div>
-        <strong>Comissão ativa</strong>
-        <span>{{ activeComissao.ano }}</span>
-      </div>
-      <div>
-        <strong>Presidente</strong>
-        <span>{{ activeComissao.presidenteNome }}</span>
-      </div>
-      <div>
-        <strong>Membros</strong>
-        <span>{{ activeComissao.membros.length }}</span>
-      </div>
-    </div>
-    <div class="alert alert-warning mb-0" *ngIf="!loadingComissao && !activeComissao">
-      Nenhuma comissão ativa foi encontrada. Ative uma comissão para liberar novos inventários.
-    </div>
-  </section>
+  <div class="scan-feedback" *ngIf="loadingComissao">Carregando comissão ativa...</div>
+  <div class="alert alert-warning mb-0" *ngIf="!loadingComissao && !activeComissao">
+    Nenhuma comissão ativa foi encontrada. Ative uma comissão para liberar novos inventários.
+  </div>
 
   <section class="step-card" *ngIf="isLocalStep">
     <div class="step-head">
@@ -53,7 +37,6 @@
         [class.local-card-selected]="selectedLocalId === local.id"
         (click)="selectLocal(local.id)"
       >
-        <span class="local-card-eyebrow">{{ getLocalResponsaveisLabel(local) }}</span>
         <strong class="local-card-title">{{ local.nome }}</strong>
         <span class="local-card-action">Selecionar local</span>
       </button>
@@ -77,7 +60,6 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToLocalStep()">Trocar local</button>
     </div>
@@ -131,7 +113,6 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar</button>
     </div>
@@ -184,7 +165,6 @@
       <div>
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ localSelecionado.nome }}</strong>
-        <small>{{ getLocalResponsaveisLabel(localSelecionado) }}</small>
       </div>
       <button
         class="btn btn-outline-secondary btn-sm"

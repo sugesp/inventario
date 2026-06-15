@@ -150,15 +150,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.locaisDisponiveis.find((item) => item.id === this.selectedLocalId) ?? null;
   }
 
-  getLocalResponsaveisLabel(local: Local): string {
-    const nomes = local.membros
-      .map((membro) => membro.nome)
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
-    return nomes.length > 0 ? nomes.join(', ') : 'Responsáveis não informados';
-  }
-
   get canAdvanceToScan(): boolean {
     return !!this.selectedLocalId && !!this.activeComissao;
   }
