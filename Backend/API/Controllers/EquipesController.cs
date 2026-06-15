@@ -55,6 +55,7 @@ public class EquipesController : ControllerBase
 
     [Authorize(Roles = "Administrador,Inventario")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     public async Task<ActionResult<EquipeDto>> Update(Guid id, [FromBody] EquipeCreateUpdateDto dto, CancellationToken cancellationToken)
     {
         try

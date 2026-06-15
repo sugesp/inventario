@@ -54,6 +54,7 @@ public class AuthController : ControllerBase
 
     [Authorize(Roles = "Administrador")]
     [HttpPut("users/{id:guid}")]
+    [HttpPost("users/{id:guid}/update")]
     public async Task<ActionResult<UsuarioDto>> UpdateUser(
         Guid id,
         [FromBody] RegisterDto dto,

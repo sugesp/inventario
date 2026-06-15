@@ -87,7 +87,7 @@ export class AuthService {
   }
 
   updateUser(userId: string, payload: RegisterPayload): Observable<UserSummary> {
-    return this.http.put<UserSummary>(`${this.baseUrl}/users/${userId}`, payload);
+    return this.http.post<UserSummary>(`${this.baseUrl}/users/${userId}/update`, payload);
   }
 
   getUsers(): Observable<UserSummary[]> {

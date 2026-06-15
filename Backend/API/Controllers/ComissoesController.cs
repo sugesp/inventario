@@ -60,6 +60,7 @@ public class ComissoesController : ControllerBase
 
     [Authorize(Roles = "Administrador,Inventario")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     public async Task<ActionResult<ComissaoDto>> Update(
         Guid id,
         [FromBody] ComissaoCreateUpdateDto dto,

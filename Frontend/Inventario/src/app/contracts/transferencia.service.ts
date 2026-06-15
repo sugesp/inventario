@@ -23,7 +23,7 @@ export class TransferenciaService {
   }
 
   update(id: string, payload: TransferenciaPayload): Observable<Transferencia> {
-    return this.http.put<Transferencia>(`${this.baseUrl}/${id}`, payload);
+    return this.http.post<Transferencia>(`${this.baseUrl}/${id}/update`, payload);
   }
 
   delete(id: string): Observable<void> {

@@ -27,7 +27,7 @@ export class ComissaoService {
   }
 
   update(id: string, payload: ComissaoPayload): Observable<Comissao> {
-    return this.http.put<Comissao>(`${this.baseUrl}/${id}`, payload);
+    return this.http.post<Comissao>(`${this.baseUrl}/${id}/update`, payload);
   }
 
   delete(id: string): Observable<void> {

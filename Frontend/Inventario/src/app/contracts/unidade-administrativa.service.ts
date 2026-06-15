@@ -19,7 +19,7 @@ export class UnidadeAdministrativaService {
   }
 
   update(id: string, payload: UnidadeAdministrativaPayload): Observable<UnidadeAdministrativa> {
-    return this.http.put<UnidadeAdministrativa>(`${this.baseUrl}/${id}`, payload);
+    return this.http.post<UnidadeAdministrativa>(`${this.baseUrl}/${id}/update`, payload);
   }
 
   delete(id: string): Observable<void> {

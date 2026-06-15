@@ -50,6 +50,7 @@ public class TransferenciasController : ControllerBase
 
     [Authorize(Roles = "Administrador,GTI.Gestor")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     public async Task<ActionResult<TransferenciaDto>> Update(Guid id, [FromBody] TransferenciaSaveDto dto, CancellationToken cancellationToken)
     {
         try

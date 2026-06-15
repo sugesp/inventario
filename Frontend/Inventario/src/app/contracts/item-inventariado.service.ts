@@ -29,7 +29,7 @@ export class ItemInventariadoService {
   }
 
   marcarLancamentoEEstado(itemId: string, lancado: boolean): Observable<ItemInventariado> {
-    return this.http.patch<ItemInventariado>(`${this.baseUrl}/${itemId}/lancamento-eestado`, { lancado });
+    return this.http.post<ItemInventariado>(`${this.baseUrl}/${itemId}/lancamento-eestado`, { lancado });
   }
 
   create(payload: FormData): Observable<ItemInventariado> {

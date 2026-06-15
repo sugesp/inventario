@@ -23,7 +23,7 @@ export class LevantamentoService {
   }
 
   compartilhar(levantamentoId: string, payload: LevantamentoCompartilharPayload): Observable<Levantamento> {
-    return this.http.put<Levantamento>(`${this.baseUrl}/${levantamentoId}/compartilhamentos`, payload);
+    return this.http.post<Levantamento>(`${this.baseUrl}/${levantamentoId}/compartilhamentos/update`, payload);
   }
 
   confirmarItem(levantamentoId: string, tombamento: string, tombamentoAntigo = '', descricao = ''): Observable<LevantamentoItem> {

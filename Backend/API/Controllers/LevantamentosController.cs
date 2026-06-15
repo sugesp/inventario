@@ -50,6 +50,7 @@ public class LevantamentosController : ControllerBase
 
     [Authorize(Roles = "Administrador,Levantamento")]
     [HttpPut("{id:guid}/compartilhamentos")]
+    [HttpPost("{id:guid}/compartilhamentos/update")]
     public async Task<ActionResult<LevantamentoDto>> Compartilhar(Guid id, [FromBody] LevantamentoCompartilharDto dto, CancellationToken cancellationToken)
     {
         try

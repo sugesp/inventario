@@ -19,7 +19,7 @@ export class EquipeService {
   }
 
   update(id: string, payload: EquipePayload): Observable<Equipe> {
-    return this.http.put<Equipe>(`${this.baseUrl}/${id}`, payload);
+    return this.http.post<Equipe>(`${this.baseUrl}/${id}/update`, payload);
   }
 
   delete(id: string): Observable<void> {

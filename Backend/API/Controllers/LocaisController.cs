@@ -55,6 +55,7 @@ public class LocaisController : ControllerBase
 
     [Authorize(Roles = "Administrador,Inventario")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     public async Task<ActionResult<LocalDto>> Update(Guid id, [FromBody] LocalCreateUpdateDto dto, CancellationToken cancellationToken)
     {
         try

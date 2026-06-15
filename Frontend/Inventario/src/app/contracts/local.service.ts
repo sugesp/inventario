@@ -19,7 +19,7 @@ export class LocalService {
   }
 
   update(id: string, payload: LocalPayload): Observable<Local> {
-    return this.http.put<Local>(`${this.baseUrl}/${id}`, payload);
+    return this.http.post<Local>(`${this.baseUrl}/${id}/update`, payload);
   }
 
   delete(id: string): Observable<void> {

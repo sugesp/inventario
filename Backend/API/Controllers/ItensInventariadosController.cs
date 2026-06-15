@@ -81,6 +81,7 @@ public class ItensInventariadosController : ControllerBase
 
     [Authorize(Roles = "Administrador,Inventario")]
     [HttpPatch("{id:guid}/lancamento-eestado")]
+    [HttpPost("{id:guid}/lancamento-eestado")]
     public async Task<ActionResult<ItemInventariadoDto>> MarcarLancamentoEEstado(
         Guid id,
         [FromBody] ItemInventariadoLancamentoEEstadoDto dto,
@@ -126,6 +127,7 @@ public class ItensInventariadosController : ControllerBase
 
     [Authorize(Roles = "Administrador")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     [RequestSizeLimit(50_000_000)]
     public async Task<ActionResult<ItemInventariadoDto>> Update(
         Guid id,

@@ -50,6 +50,7 @@ public class UnidadesAdministrativasController : ControllerBase
 
     [Authorize(Roles = "Administrador")]
     [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/update")]
     public async Task<ActionResult<UnidadeAdministrativaDto>> Update(
         Guid id,
         [FromBody] UnidadeAdministrativaCreateUpdateDto dto,
