@@ -151,15 +151,15 @@
             <div class="section-card-header">
               <div>
                 <label class="form-label mb-1">Locais</label>
-                <p class="section-card-hint mb-0">Cadastre os locais inventariados da comissão e informe quais membros respondem por cada um.</p>
+                <p class="section-card-hint mb-0">Cadastre os locais inventariados da comissão e, se necessário, informe quais membros respondem por cada um.</p>
               </div>
-              <button class="btn btn-primary" type="button" *ngIf="selectedMembers.length > 0" (click)="startLocalCreate()" [disabled]="!canManageCurrentComissao">
+              <button class="btn btn-primary" type="button" (click)="startLocalCreate()" [disabled]="!canManageCurrentComissao">
                 Novo local
               </button>
             </div>
 
             <div class="inline-hint" *ngIf="selectedMembers.length === 0">
-              Adicione ao menos um membro antes de criar locais nesta comissão.
+              Nenhum membro vinculado nesta comissão. Você ainda pode criar locais sem responsáveis.
             </div>
 
             <div class="inline-hint" *ngIf="!loadingLocais && locaisDaComissaoEmEdicao.length === 0">

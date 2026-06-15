@@ -151,11 +151,6 @@ public class LocalService : ILocalService
             .Distinct()
             .ToList();
 
-        if (membroIds.Count == 0)
-        {
-            throw new InvalidOperationException("Informe ao menos um membro responsável pelo local.");
-        }
-
         var membrosValidos = await _context.ComissoesMembros
             .AsNoTracking()
             .Where(x =>

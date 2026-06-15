@@ -28,9 +28,23 @@
     </div>
 
     <div class="filters-grid" *ngIf="!loading && transferencias.length > 0">
+      <div class="filters-grid-search">
+        <label class="form-label">Buscar</label>
+        <div class="search-box">
+          <input
+            class="form-control"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onFiltersChanged()"
+            placeholder="Destino, responsável, ID SEI ou data"
+          />
+          <button class="search-clear" type="button" *ngIf="searchTerm" (click)="clearSearch()" aria-label="Limpar busca">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
       <div>
         <label class="form-label">Filtrar por status</label>
-        <select class="form-select" [(ngModel)]="selectedStatus">
+        <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="onFiltersChanged()">
           <option value="">Todos</option>
           <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
         </select>
@@ -40,6 +54,9 @@
     <div class="scan-feedback" *ngIf="loading">Carregando transferências...</div>
     <div class="empty-state" *ngIf="!loading && transferencias.length === 0">
       Nenhuma transferência foi cadastrada até o momento.
+    </div>
+    <div class="empty-state" *ngIf="!loading && transferencias.length > 0 && filteredTransferencias.length === 0">
+      Nenhuma transferência foi encontrada com os filtros informados.
     </div>
 
     <div class="table-responsive" *ngIf="!loading && filteredTransferencias.length > 0">
@@ -58,7 +75,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let transferencia of filteredTransferencias">
+          <tr *ngFor="let transferencia of paginatedTransferencias">
             <td>{{ transferencia.unidadeAdministrativaDestinoSigla ? (transferencia.unidadeAdministrativaDestinoSigla + ' - ' + transferencia.unidadeAdministrativaDestinoNome) : (transferencia.unidadeAdministrativaDestinoNome || '-') }}</td>
             <td>{{ transferencia.responsavelDestino || '-' }}</td>
             <td>{{ transferencia.status || '-' }}</td>
@@ -81,6 +98,21 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="list-pagination" *ngIf="!loading && filteredTransferencias.length > 0">
+      <span class="list-pagination-summary">
+        Exibindo {{ paginatedTransferencias.length }} de {{ totalCount }} transferência(s).
+      </span>
+      <div class="list-pagination-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber <= 1">
+          Anterior
+        </button>
+        <span class="list-pagination-label">{{ pageLabel }}</span>
+        <button class="btn btn-outline-secondary" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages || totalPages === 0">
+          Próxima
+        </button>
+      </div>
     </div>
   </section>
 </div>

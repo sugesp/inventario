@@ -425,11 +425,6 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.localForm.membroUsuarioIds.length === 0) {
-      this.toastr.warning('Selecione ao menos um responsável pelo local.');
-      return;
-    }
-
     this.savingLocal = true;
     const payload = {
       nome,

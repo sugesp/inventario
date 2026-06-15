@@ -13,6 +13,9 @@ export class TransferenciasComponent implements OnInit {
   transferencias: Transferencia[] = [];
   loading = false;
   selectedStatus = '';
+  searchTerm = '';
+  pageNumber = 1;
+  readonly pageSize = 20;
 
   constructor(
     readonly authService: AuthService,
@@ -29,7 +32,52 @@ export class TransferenciasComponent implements OnInit {
   }
 
   get filteredTransferencias(): Transferencia[] {
-    return this.transferencias.filter((item) => !this.selectedStatus || item.status === this.selectedStatus);
+    const normalizedTerm = this.normalize(this.searchTerm);
+
+    return this.transferencias.filter((item) => {
+      const matchesStatus = !this.selectedStatus || item.status === this.selectedStatus;
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!normalizedTerm) {
+        return true;
+      }
+
+      const destino = [
+        item.unidadeAdministrativaDestinoSigla,
+        item.unidadeAdministrativaDestinoNome,
+      ].filter(Boolean).join(' ');
+      const dataEntrega = this.formatDateForSearch(item.dataEntrega);
+
+      return [
+        destino,
+        item.responsavelDestino,
+        item.idSeiTermo,
+        dataEntrega,
+      ].some((value) => this.normalize(value).includes(normalizedTerm));
+    });
+  }
+
+  get paginatedTransferencias(): Transferencia[] {
+    const startIndex = (this.pageNumber - 1) * this.pageSize;
+    return this.filteredTransferencias.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  get totalCount(): number {
+    return this.filteredTransferencias.length;
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize);
+  }
+
+  get pageLabel(): string {
+    if (this.totalPages === 0) {
+      return 'Página 0 de 0';
+    }
+
+    return `Página ${this.pageNumber} de ${this.totalPages}`;
   }
 
   loadTransferencias(): void {
@@ -37,6 +85,7 @@ export class TransferenciasComponent implements OnInit {
     this.transferenciaService.getAll().subscribe({
       next: (data) => {
         this.transferencias = data;
+        this.ensureValidPage();
         this.loading = false;
       },
       error: () => {
@@ -44,6 +93,31 @@ export class TransferenciasComponent implements OnInit {
         this.toastr.error('Não foi possível carregar as transferências.');
       },
     });
+  }
+
+  onFiltersChanged(): void {
+    this.pageNumber = 1;
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.onFiltersChanged();
+  }
+
+  goToPreviousPage(): void {
+    if (this.pageNumber <= 1) {
+      return;
+    }
+
+    this.pageNumber -= 1;
+  }
+
+  goToNextPage(): void {
+    if (this.pageNumber >= this.totalPages) {
+      return;
+    }
+
+    this.pageNumber += 1;
   }
 
   deleteTransferencia(id: string): void {
@@ -60,5 +134,37 @@ export class TransferenciasComponent implements OnInit {
         this.toastr.error('Não foi possível excluir a transferência.');
       },
     });
+  }
+
+  private ensureValidPage(): void {
+    if (this.totalPages === 0) {
+      this.pageNumber = 1;
+      return;
+    }
+
+    if (this.pageNumber > this.totalPages) {
+      this.pageNumber = this.totalPages;
+    }
+  }
+
+  private normalize(value: string | null | undefined): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  private formatDateForSearch(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = value.slice(0, 10).split('-');
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year} ${value}`;
   }
 }
