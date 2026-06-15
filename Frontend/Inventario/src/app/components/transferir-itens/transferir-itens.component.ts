@@ -68,6 +68,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   scannerMessage = '';
   codeReadMessage = '';
   consultaEmAndamento = false;
+  manualLookupMessage = '';
   unidadesAdministrativas: UnidadeAdministrativa[] = [];
   manualItem: DraftItem = this.createEmptyDraftItem();
   form: TransferenciaForm = this.createEmptyForm();
@@ -321,6 +322,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   closeManualModal(): void {
     this.manualModalOpen = false;
     this.manualItem = this.createEmptyDraftItem();
+    this.manualLookupMessage = '';
   }
 
   confirmarAdicionarItemPendente(): void {
@@ -346,6 +348,46 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
   onTombamentoAntigoChange(item: TransferenciaItem, value: string): void {
     item.tombamentoAntigo = this.normalizeTombamentoAntigoValue(value);
+  }
+
+  onManualTombamentoBlur(): void {
+    const tombamento = this.formatTombamentoValue(this.manualItem.tombamento);
+    const digits = tombamento.replace(/\D/g, '');
+    this.manualItem.tombamento = tombamento;
+    this.manualLookupMessage = '';
+
+    if (digits.length !== 9 || this.consultaEmAndamento) {
+      return;
+    }
+
+    if (this.itens.some((item) => item.tombamentoNovo === tombamento)) {
+      this.toastr.info('Esse tombamento já foi adicionado à transferência.');
+      return;
+    }
+
+    this.consultaEmAndamento = true;
+    this.manualLookupMessage = 'Consultando dados do item...';
+    this.itemInventariadoService.consultarResumoPublico(digits)
+      .pipe(finalize(() => {
+        this.consultaEmAndamento = false;
+      }))
+      .subscribe({
+        next: (resumo) => {
+          this.manualItem.tombamento = this.formatTombamentoValue(resumo.tombamento || tombamento);
+          this.manualItem.tombamentoAntigo = this.normalizeTombamentoAntigoValue(resumo.tombamentoAntigo);
+          this.manualItem.descricao = resumo.descricao || resumo.tipo || this.manualItem.descricao;
+          this.manualLookupMessage = 'Dados do item carregados.';
+        },
+        error: (error) => {
+          this.manualLookupMessage = '';
+          if (error?.status === 404) {
+            this.toastr.info('Tombamento não localizado no e-Estado. Preencha os dados manualmente.');
+            return;
+          }
+
+          this.toastr.error('Não foi possível consultar o tombamento informado.');
+        },
+      });
   }
 
   save(status?: string): void {

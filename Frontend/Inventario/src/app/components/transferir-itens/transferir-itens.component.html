@@ -305,7 +305,7 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Tombamento novo</label>
-          <input class="form-control" [(ngModel)]="manualItem.tombamento" placeholder="000.000.000" />
+          <input class="form-control" [(ngModel)]="manualItem.tombamento" (blur)="onManualTombamentoBlur()" placeholder="000.000.000" />
         </div>
         <div class="col-md-6">
           <label class="form-label">Tombamento antigo</label>
@@ -329,12 +329,15 @@
           <label class="form-label">Observação</label>
           <input class="form-control" [(ngModel)]="manualItem.observacao" />
         </div>
+        <div class="col-12" *ngIf="manualLookupMessage">
+          <div class="scan-feedback mt-0">{{ manualLookupMessage }}</div>
+        </div>
       </div>
     </div>
 
     <div class="scanner-footer manual-modal-footer">
       <button class="btn btn-outline-secondary w-100" type="button" (click)="closeManualModal()">Cancelar</button>
-      <button class="btn btn-primary w-100" type="button" (click)="addManualItem()">Ver resumo para confirmar</button>
+      <button class="btn btn-primary w-100" type="button" (click)="addManualItem()" [disabled]="consultaEmAndamento">Ver resumo para confirmar</button>
     </div>
   </div>
 </div>
