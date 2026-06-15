@@ -31,7 +31,6 @@ export class AppComponent {
   private activeComissaoLoaded = false;
   private activeComissaoLoading = false;
   private previousAuditedPath: string | null = null;
-  private readonly permissionsPromptKey = 'inventario.required-accesses.prompted';
   private requestingBrowserAccesses = false;
   passwordForm: ChangePasswordPayload & { confirmarNovaSenha: string } = {
     senhaAtual: '',
@@ -253,7 +252,7 @@ export class AppComponent {
     this.gravatarFailed = false;
     this.pageTitleService.setPageTitle(this.resolveRouteTitle());
     this.syncActiveComissaoContext();
-    this.requestRequiredBrowserAccesses();
+    this.requestRequiredBrowserAccesses(url);
   }
 
   private auditPageView(url: string): void {
@@ -325,29 +324,32 @@ export class AppComponent {
     });
   }
 
-  private requestRequiredBrowserAccesses(): void {
+  private requestRequiredBrowserAccesses(url: string): void {
     if (
       this.isAuthRoute
       || !this.authService.isAuthenticated
       || this.requestingBrowserAccesses
+      || !this.shouldRequestBrowserAccesses(url)
       || typeof window === 'undefined'
     ) {
       return;
     }
 
-    if (sessionStorage.getItem(this.permissionsPromptKey) === 'true') {
-      return;
-    }
-
-    sessionStorage.setItem(this.permissionsPromptKey, 'true');
     this.requestingBrowserAccesses = true;
     void this.requestCameraAndGeolocation();
+  }
+
+  private shouldRequestBrowserAccesses(url: string): boolean {
+    const path = url.split('?')[0].split('#')[0];
+    return path === '/inventariar' || path === '/levantamentos';
   }
 
   private async requestCameraAndGeolocation(): Promise<void> {
     if (!window.isSecureContext) {
       this.requestingBrowserAccesses = false;
-      this.toastr.warning('Camera e localizacao precisam de HTTPS para funcionar.');
+      if (this.isMobileViewport) {
+        this.toastr.warning('Camera e localizacao precisam de HTTPS para funcionar.');
+      }
       return;
     }
 
@@ -356,6 +358,10 @@ export class AppComponent {
     this.requestingBrowserAccesses = false;
 
     if (cameraAllowed && geolocationAllowed) {
+      return;
+    }
+
+    if (!this.isMobileViewport) {
       return;
     }
 
