@@ -165,7 +165,7 @@
               </summary>
 
               <div class="permissions-grid">
-                <label class="permission-card" *ngFor="let permissao of permissionOptions">
+                <label class="permission-card" *ngFor="let permissao of permissionOptions" [attr.data-tooltip]="permissao.description" tabindex="0">
                   <input
                     class="permission-checkbox"
                     type="checkbox"
@@ -174,7 +174,6 @@
                   />
                   <div class="permission-copy">
                     <strong class="permission-title">{{ permissao.label }}</strong>
-                    <small class="permission-description">{{ permissao.description }}</small>
                   </div>
                 </label>
               </div>

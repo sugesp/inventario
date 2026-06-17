@@ -271,7 +271,7 @@
   border: 1px solid #d8e2ef;
   border-radius: 14px;
   background: #fbfdff;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .permissions-collapse summary {
@@ -321,13 +321,16 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
+  overflow: visible;
 }
 
 .permission-card {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border: 1px solid #d8e2ef;
   border-radius: 16px;
   background: linear-gradient(180deg, #fbfdff 0%, #f5f8fc 100%);
@@ -335,14 +338,73 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.permission-card:hover {
+.permission-card:hover,
+.permission-card:focus-within,
+.permission-card:focus {
   border-color: #b8cae3;
   box-shadow: 0 10px 20px rgba(39, 73, 109, 0.08);
   transform: translateY(-1px);
+  outline: none;
+  z-index: 30;
+}
+
+.permission-card[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 14px;
+  top: calc(100% + 10px);
+  z-index: 20;
+  width: min(280px, calc(100vw - 48px));
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: #1f2c3a;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: 0 12px 26px rgba(13, 27, 42, 0.24);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
+}
+
+.permission-card[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  left: 28px;
+  top: calc(100% + 4px);
+  z-index: 21;
+  width: 12px;
+  height: 12px;
+  background: #1f2c3a;
+  transform: rotate(45deg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+}
+
+.permission-card[data-tooltip]:hover::after,
+.permission-card[data-tooltip]:hover::before,
+.permission-card[data-tooltip]:focus::after,
+.permission-card[data-tooltip]:focus::before,
+.permission-card[data-tooltip]:focus-within::after,
+.permission-card[data-tooltip]:focus-within::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.permission-card[data-tooltip]:hover::after,
+.permission-card[data-tooltip]:focus::after,
+.permission-card[data-tooltip]:focus-within::after {
+  transform: translateY(0);
 }
 
 .permission-checkbox {
-  margin-top: 2px;
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
@@ -359,13 +421,6 @@
   font-weight: 700;
   color: #243447;
   line-height: 1.2;
-}
-
-.permission-description {
-  display: block;
-  color: #5d6d7e;
-  font-size: 0.92rem;
-  line-height: 1.45;
 }
 
 @media (max-width: 768px) {
