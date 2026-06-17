@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Application.Common;
 using Application.Contract;
 using Application.DTO.Auth;
 using Application.DTO.Common;
@@ -34,6 +35,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
     {
+        var nome = PersonNameNormalizer.Normalize(dto.Nome);
         var email = dto.Email.Trim().ToLowerInvariant();
         var cpf = NormalizeCpf(dto.Cpf);
         if (cpf.Length != 11)
@@ -57,7 +59,7 @@ public class AuthService : IAuthService
 
         var usuario = new Usuario
         {
-            Nome = dto.Nome.Trim(),
+            Nome = nome,
             Email = email,
             Cpf = cpf,
             PermissoesJson = UsuarioPermissoes.Serialize(dto.Permissoes),
@@ -75,6 +77,7 @@ public class AuthService : IAuthService
 
     public async Task<UsuarioDto> PreRegisterAsync(PreRegisterDto dto, CancellationToken cancellationToken = default)
     {
+        var nome = PersonNameNormalizer.Normalize(dto.Nome);
         var email = dto.Email.Trim().ToLowerInvariant();
         var cpf = NormalizeCpf(dto.Cpf);
         if (cpf.Length != 11)
@@ -101,7 +104,7 @@ public class AuthService : IAuthService
 
         var usuario = new Usuario
         {
-            Nome = dto.Nome.Trim(),
+            Nome = nome,
             Email = email,
             Cpf = cpf,
             PermissoesJson = UsuarioPermissoes.Serialize([]),
@@ -156,7 +159,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Já existe um usuário cadastrado com este email ou CPF.");
         }
 
-        usuario.Nome = dto.Nome.Trim();
+        usuario.Nome = PersonNameNormalizer.Normalize(dto.Nome);
         usuario.Email = email;
         usuario.Cpf = cpf;
         usuario.PermissoesJson = UsuarioPermissoes.Serialize(dto.Permissoes);

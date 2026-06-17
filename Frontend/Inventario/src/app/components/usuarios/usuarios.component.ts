@@ -6,6 +6,7 @@ import { AuthService } from '../../auth/auth.service';
 import { RegisterPayload, UserSummary } from '../../auth/auth.model';
 import { getUserPermissionLabel, USER_PERMISSION_OPTIONS, UserPermission } from '../../auth/permissions';
 import { PageParams } from '../../shared/pagination.model';
+import { normalizePersonName, normalizePersonNameInput } from '../../shared/person-name-normalizer';
 
 @Component({
   selector: 'app-usuarios',
@@ -187,6 +188,13 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     this.form.cpf = this.formatCpf(value);
   }
 
+  onNomeInput(value: string): void {
+    const normalized = normalizePersonNameInput(value);
+    if (this.form.nome !== normalized) {
+      this.form.nome = normalized;
+    }
+  }
+
   formatCpf(value: string): string {
     const digits = this.onlyDigits(value).slice(0, 11);
 
@@ -209,6 +217,7 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     this.saving = true;
     const payload: RegisterPayload = {
       ...this.form,
+      nome: normalizePersonName(this.form.nome),
       cpf: this.onlyDigits(this.form.cpf),
     };
 

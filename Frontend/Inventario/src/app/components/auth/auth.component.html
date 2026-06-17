@@ -67,7 +67,8 @@
       <div class="auth-modal-body">
         <div class="mb-3">
           <label class="form-label">Nome</label>
-          <input class="form-control" name="preRegisterNome" [(ngModel)]="preRegisterForm.nome" required />
+          <input class="form-control" name="preRegisterNome" [(ngModel)]="preRegisterForm.nome"
+            (ngModelChange)="onPreRegisterNomeInput($event)" required />
         </div>
         <div class="mb-3">
           <label class="form-label">Email</label>

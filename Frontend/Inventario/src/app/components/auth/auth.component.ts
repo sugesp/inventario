@@ -4,6 +4,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../auth/auth.service';
 import { LoginPayload, PreRegisterPayload } from '../../auth/auth.model';
 import { environment } from '../../../environments/environment';
+import { normalizePersonName, normalizePersonNameInput } from '../../shared/person-name-normalizer';
 
 @Component({
   selector: 'app-auth',
@@ -51,6 +52,13 @@ export class AuthComponent {
     this.preRegisterForm.cpf = this.formatCpf(value);
   }
 
+  onPreRegisterNomeInput(value: string): void {
+    const normalized = normalizePersonNameInput(value);
+    if (this.preRegisterForm.nome !== normalized) {
+      this.preRegisterForm.nome = normalized;
+    }
+  }
+
   submitLogin(): void {
     this.loading = true;
     const payload: LoginPayload = {
@@ -83,7 +91,7 @@ export class AuthComponent {
 
     this.preRegisterLoading = true;
     const payload: PreRegisterPayload = {
-      nome: this.preRegisterForm.nome.trim(),
+      nome: normalizePersonName(this.preRegisterForm.nome),
       email: this.preRegisterForm.email.trim(),
       cpf: this.onlyDigits(this.preRegisterForm.cpf),
       senha: this.preRegisterForm.senha.trim(),
