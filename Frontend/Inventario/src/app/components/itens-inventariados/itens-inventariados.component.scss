@@ -136,7 +136,13 @@
   max-width: 300px;
 }
 
-.descricao-cell {
+.responsavel-tooltip {
+  display: block;
+  max-width: 180px;
+}
+
+.descricao-cell,
+.responsavel-cell {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;

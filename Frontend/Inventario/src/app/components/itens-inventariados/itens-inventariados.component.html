@@ -130,7 +130,11 @@
             <td>{{ item.status || '-' }}</td>
             <td>{{ item.estadoConservacao || '-' }}</td>
             <td>{{ item.localNome || '-' }}</td>
-            <td>{{ item.usuarioNome || '-' }}</td>
+            <td>
+              <span class="responsavel-tooltip table-tooltip" [attr.data-tooltip]="item.usuarioNome || '-'">
+                <span class="responsavel-cell">{{ item.usuarioNome || '-' }}</span>
+              </span>
+            </td>
             <td>{{ item.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
               <span
