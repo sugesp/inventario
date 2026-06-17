@@ -198,7 +198,7 @@
           (click)="closeChangePasswordModal()">
           Fechar
         </button>
-        <button class="btn btn-primary" type="submit" [disabled]="changingPassword || !changePasswordNgForm.form.valid">
+        <button class="btn btn-primary btn-filled" type="submit" [disabled]="changingPassword || !changePasswordNgForm.form.valid">
           {{ changingPassword ? 'Salvando...' : 'Salvar nova senha' }}
         </button>
       </div>

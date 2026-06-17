@@ -515,7 +515,7 @@
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoFrontalStep()">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="submit()" [disabled]="saving || processingPhoto || geolocationLoading">
+      <button class="btn btn-primary btn-filled" type="button" (click)="submit()" [disabled]="saving || processingPhoto || geolocationLoading">
         {{ saving ? (geolocationLoading ? 'Obtendo localização...' : 'Salvando...') : 'Cadastrar item inventariado' }}
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -563,7 +563,7 @@
     <div class="scanner-footer">
       <div class="scan-feedback scan-feedback-light" *ngIf="photoCaptureError">{{ photoCaptureError }}</div>
       <div class="photo-step-actions">
-        <button class="btn btn-primary w-100" type="button" (click)="capturePhoto()" [disabled]="processingPhoto">
+        <button class="btn btn-primary btn-filled w-100" type="button" (click)="capturePhoto()" [disabled]="processingPhoto">
           {{ processingPhoto ? 'Processando foto...' : 'Capturar foto' }}
         </button>
         <button class="btn btn-secondary w-100" type="button" (click)="closePhotoCapture()">Cancelar</button>
