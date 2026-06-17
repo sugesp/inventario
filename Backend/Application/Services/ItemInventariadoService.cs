@@ -144,10 +144,13 @@ public class ItemInventariadoService : IItemInventariadoService
                 x.DeletedAt == null
                 && x.Transferencia != null
                 && x.Transferencia.DeletedAt == null
-                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
             )
             .Include(x => x.Transferencia)
                 .ThenInclude(x => x!.UnidadeAdministrativaDestino)
+            .ToListAsync(cancellationToken);
+
+        var transferenciasEncontradas = transferencias
+            .Where(x => IsSameTombamento(x.TombamentoNovo, tombamentoNormalizado))
             .OrderByDescending(x => x.Transferencia!.CreatedAt)
             .ThenBy(x => x.Descricao)
             .Select(x => new ConsultaTombamentoTransferenciaDto
@@ -171,7 +174,7 @@ public class ItemInventariadoService : IItemInventariadoService
                 DataEntrega = x.Transferencia.DataEntrega,
                 CreatedAt = x.Transferencia.CreatedAt,
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var itensLevantamento = await _context.LevantamentosItens
             .AsNoTracking()
@@ -179,10 +182,13 @@ public class ItemInventariadoService : IItemInventariadoService
                 x.DeletedAt == null
                 && x.Levantamento != null
                 && x.Levantamento.DeletedAt == null
-                && x.Tombamento.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
             )
             .Include(x => x.Levantamento)
             .Include(x => x.ConfirmadoPorUsuario)
+            .ToListAsync(cancellationToken);
+
+        var itensLevantamentoEncontrados = itensLevantamento
+            .Where(x => IsSameTombamento(x.Tombamento, tombamentoNormalizado))
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new ConsultaTombamentoLevantamentoItemDto
             {
@@ -196,14 +202,15 @@ public class ItemInventariadoService : IItemInventariadoService
                 ConfirmadoPorUsuarioNome = x.ConfirmadoPorUsuario != null ? x.ConfirmadoPorUsuario.Nome : string.Empty,
                 CreatedAt = x.CreatedAt,
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var laudos = await _context.LaudosTecnicos
             .AsNoTracking()
-            .Where(x =>
-                x.DeletedAt == null
-                && x.Patrimonio.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
-            )
+            .Where(x => x.DeletedAt == null)
+            .ToListAsync(cancellationToken);
+
+        var laudosEncontrados = laudos
+            .Where(x => IsSameTombamento(x.Patrimonio, tombamentoNormalizado))
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new ConsultaTombamentoLaudoDto
             {
@@ -220,22 +227,20 @@ public class ItemInventariadoService : IItemInventariadoService
                 DataAvaliacao = x.DataAvaliacao,
                 CreatedAt = x.CreatedAt,
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var itensInventariadosEntities = await _context.ItensInventariados
             .AsNoTracking()
-            .Where(x =>
-                x.DeletedAt == null
-                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado
-            )
+            .Where(x => x.DeletedAt == null)
             .Include(x => x.Local)
                 .ThenInclude(x => x!.Membros)
                     .ThenInclude(x => x.Usuario)
             .Include(x => x.Usuario)
-            .OrderByDescending(x => x.DataInventario)
             .ToListAsync(cancellationToken);
 
         var itensInventariados = itensInventariadosEntities
+            .Where(x => IsSameTombamento(x.TombamentoNovo, tombamentoNormalizado))
+            .OrderByDescending(x => x.DataInventario)
             .Select(x => new ConsultaTombamentoItemInventariadoDto
             {
                 Id = x.Id,
@@ -260,9 +265,9 @@ public class ItemInventariadoService : IItemInventariadoService
             ConsultaPublica = consultaPublica,
             Ocorrencias = new ConsultaTombamentoOcorrenciasDto
             {
-                Transferencias = transferencias,
-                ItensLevantamento = itensLevantamento,
-                Laudos = laudos,
+                Transferencias = transferenciasEncontradas,
+                ItensLevantamento = itensLevantamentoEncontrados,
+                Laudos = laudosEncontrados,
                 ItensInventariados = itensInventariados,
             }
         };
@@ -865,6 +870,11 @@ public class ItemInventariadoService : IItemInventariadoService
         var normalizedSpaces = Regex.Replace(decoded, @"[ \t\f\v]+", " ");
         var normalizedLines = Regex.Replace(normalizedSpaces, @"\n\s*\n+", "\n");
         return normalizedLines.Trim();
+    }
+
+    private static bool IsSameTombamento(string value, string tombamentoNormalizado)
+    {
+        return NormalizeDigits(value) == tombamentoNormalizado;
     }
 
     private static string NormalizeDigits(string value)
