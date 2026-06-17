@@ -339,10 +339,27 @@
         <div class="detalhes-grid">
           <div class="geo-card">
             <span>Coordenadas do inventário</span>
-            <div class="geo-card-badges">
+            <div class="geo-coordinate-row">
+              <a
+                class="geo-coordinate-link"
+                *ngIf="hasGeolocalizacao(selectedItemDetalhes); else coordenadasNaoInformadas"
+                [href]="getMapaUrl(selectedItemDetalhes)"
+                target="_blank"
+                rel="noopener"
+                title="Abrir coordenadas no mapa"
+                aria-label="Abrir coordenadas do inventário no mapa"
+              >
+                <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
+                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+              </a>
+              <ng-template #coordenadasNaoInformadas>
+                <strong>Não informado</strong>
+              </ng-template>
+
               <span
                 [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)"
-                [title]="getGeolocalizacaoBadgeTitle(selectedItemDetalhes)"
+                [attr.data-tooltip]="getGeolocalizacaoBadgeTitle(selectedItemDetalhes)"
+                tabindex="0"
               >
                 {{ getGeolocalizacaoBadgeLabel(selectedItemDetalhes) }}
               </span>
@@ -350,21 +367,6 @@
                 {{ getPrecisaoBadgeLabel(selectedItemDetalhes) }}
               </span>
             </div>
-            <a
-              class="geo-coordinate-link"
-              *ngIf="hasGeolocalizacao(selectedItemDetalhes); else coordenadasNaoInformadas"
-              [href]="getMapaUrl(selectedItemDetalhes)"
-              target="_blank"
-              rel="noopener"
-              title="Abrir coordenadas no mapa"
-              aria-label="Abrir coordenadas do inventário no mapa"
-            >
-              <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
-              <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
-            </a>
-            <ng-template #coordenadasNaoInformadas>
-              <strong>Não informado</strong>
-            </ng-template>
           </div>
           <div class="geo-map-card">
             <span>Minimapa</span>

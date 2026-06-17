@@ -494,15 +494,15 @@
   gap: 8px;
 }
 
-.geo-card-badges {
+.geo-coordinate-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 2px;
 }
 
 .geo-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   padding: 6px 10px;
@@ -510,6 +510,50 @@
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.geo-badge[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 3;
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #21384f;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.geo-badge[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  z-index: 3;
+  border: 5px solid transparent;
+  border-top-color: #21384f;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.geo-badge[data-tooltip]:hover::after,
+.geo-badge[data-tooltip]:hover::before,
+.geo-badge[data-tooltip]:focus::after,
+.geo-badge[data-tooltip]:focus::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .geo-badge-ok {
