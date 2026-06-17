@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -53,6 +54,7 @@ export class ItensInventariadosComponent implements OnInit {
     readonly authService: AuthService,
     private readonly comissaoService: ComissaoService,
     private readonly itemInventariadoService: ItemInventariadoService,
+    private readonly sanitizer: DomSanitizer,
     private readonly toastr: ToastrService
   ) { }
 
@@ -249,7 +251,7 @@ export class ItensInventariadosComponent implements OnInit {
 
   getGeolocalizacaoBadgeLabel(item: ItemInventariado): string {
     if (!this.hasGeolocalizacao(item)) {
-      return 'Pendente de justificativa';
+      return 'Sem Localização';
     }
 
     if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
@@ -267,6 +269,30 @@ export class ItensInventariadosComponent implements OnInit {
     return 'Divergência';
   }
 
+  getGeolocalizacaoBadgeTitle(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item)) {
+      return 'Sem Localização';
+    }
+
+    if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
+      return 'Precisão do GPS não informada';
+    }
+
+    if (item.precisaoLocalizacao <= 50) {
+      return 'OK até 50m';
+    }
+
+    if (item.precisaoLocalizacao <= 150) {
+      return 'Atenção de 50m a 150m';
+    }
+
+    return 'Divergência acima de 150m';
+  }
+
+  getPrecisaoBadgeLabel(item: ItemInventariado): string {
+    return `GPS: ${this.getPrecisaoLabel(item)}`;
+  }
+
   getGeolocalizacaoBadgeClass(item: ItemInventariado): string {
     if (!this.hasGeolocalizacao(item) || item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
       return 'geo-badge geo-badge-pending';
@@ -281,6 +307,26 @@ export class ItensInventariadosComponent implements OnInit {
     }
 
     return 'geo-badge geo-badge-danger';
+  }
+
+  getMiniMapaUrl(item: ItemInventariado): SafeResourceUrl | string {
+    if (!this.hasGeolocalizacao(item)) {
+      return '';
+    }
+
+    const latitude = item.latitude!;
+    const longitude = item.longitude!;
+    const offset = 0.001;
+    const bbox = [
+      longitude - offset,
+      latitude - offset,
+      longitude + offset,
+      latitude + offset,
+    ].join(',');
+
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(`${latitude},${longitude}`)}`
+    );
   }
 
   openMap(): void {

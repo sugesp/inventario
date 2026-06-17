@@ -336,14 +336,20 @@
 
       <section class="detalhes-section">
         <h4>Geolocalização</h4>
-        <div class="geo-status-row">
-          <span [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)">
-            {{ getGeolocalizacaoBadgeLabel(selectedItemDetalhes) }}
-          </span>
-        </div>
         <div class="detalhes-grid">
-          <div>
+          <div class="geo-card">
             <span>Coordenadas do inventário</span>
+            <div class="geo-card-badges">
+              <span
+                [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)"
+                [title]="getGeolocalizacaoBadgeTitle(selectedItemDetalhes)"
+              >
+                {{ getGeolocalizacaoBadgeLabel(selectedItemDetalhes) }}
+              </span>
+              <span class="geo-badge geo-badge-gps" title="Precisão do GPS no momento da coleta">
+                {{ getPrecisaoBadgeLabel(selectedItemDetalhes) }}
+              </span>
+            </div>
             <a
               class="geo-coordinate-link"
               *ngIf="hasGeolocalizacao(selectedItemDetalhes); else coordenadasNaoInformadas"
@@ -360,9 +366,20 @@
               <strong>Não informado</strong>
             </ng-template>
           </div>
-          <div>
-            <span>Precisão do GPS na coleta</span>
-            <strong>{{ getPrecisaoLabel(selectedItemDetalhes) }}</strong>
+          <div class="geo-map-card">
+            <span>Minimapa</span>
+            <iframe
+              *ngIf="hasGeolocalizacao(selectedItemDetalhes); else semMiniMapa"
+              class="geo-mini-map"
+              [src]="getMiniMapaUrl(selectedItemDetalhes)"
+              title="Minimapa da localização do inventário"
+              loading="lazy"
+            ></iframe>
+            <ng-template #semMiniMapa>
+              <div class="geo-mini-map-empty">
+                Sem localização registrada.
+              </div>
+            </ng-template>
           </div>
         </div>
       </section>

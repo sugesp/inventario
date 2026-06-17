@@ -488,11 +488,18 @@
   justify-self: flex-start;
 }
 
-.geo-status-row {
+.geo-card {
+  display: grid;
+  align-content: flex-start;
+  gap: 8px;
+}
+
+.geo-card-badges {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 2px;
 }
 
 .geo-badge {
@@ -525,6 +532,11 @@
   color: #53677a;
 }
 
+.geo-badge-gps {
+  background: #e8f1fb;
+  color: #1f5f9f;
+}
+
 .geo-coordinate-link {
   display: inline-flex;
   align-items: center;
@@ -540,6 +552,29 @@
 
 .geo-coordinate-link i {
   font-size: 0.95rem;
+}
+
+.geo-map-card {
+  display: grid;
+  gap: 8px;
+}
+
+.geo-mini-map {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid #d8dde6;
+  border-radius: 10px;
+  background: #edf2f7;
+}
+
+.geo-mini-map-empty {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  border: 1px dashed #c8d3df;
+  border-radius: 10px;
+  color: #61788f;
+  background: #f8fbff;
 }
 
 .foto-principal {
