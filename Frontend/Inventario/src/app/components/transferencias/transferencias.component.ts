@@ -33,6 +33,7 @@ export class TransferenciasComponent implements OnInit {
 
   get filteredTransferencias(): Transferencia[] {
     const normalizedTerm = this.normalize(this.searchTerm);
+    const normalizedTermDigits = this.onlyDigits(this.searchTerm);
 
     return this.transferencias.filter((item) => {
       const matchesStatus = !this.selectedStatus || item.status === this.selectedStatus;
@@ -49,13 +50,19 @@ export class TransferenciasComponent implements OnInit {
         item.unidadeAdministrativaDestinoNome,
       ].filter(Boolean).join(' ');
       const dataEntrega = this.formatDateForSearch(item.dataEntrega);
+      const itensSearch = item.itens.flatMap((transferenciaItem) => [
+        transferenciaItem.descricao,
+        transferenciaItem.tombamentoNovo,
+        transferenciaItem.tombamentoAntigo,
+      ]);
 
       return [
         destino,
         item.responsavelDestino,
         item.idSeiTermo,
         dataEntrega,
-      ].some((value) => this.normalize(value).includes(normalizedTerm));
+        ...itensSearch,
+      ].some((value) => this.matchesSearch(value, normalizedTerm, normalizedTermDigits));
     });
   }
 
@@ -153,6 +160,18 @@ export class TransferenciasComponent implements OnInit {
       .replace(/[\u0300-\u036f]/g, '')
       .trim()
       .toLowerCase();
+  }
+
+  private onlyDigits(value: string | null | undefined): string {
+    return (value ?? '').replace(/\D/g, '');
+  }
+
+  private matchesSearch(value: string | null | undefined, normalizedTerm: string, normalizedTermDigits: string): boolean {
+    if (this.normalize(value).includes(normalizedTerm)) {
+      return true;
+    }
+
+    return !!normalizedTermDigits && this.onlyDigits(value).includes(normalizedTermDigits);
   }
 
   private formatDateForSearch(value: string | null | undefined): string {

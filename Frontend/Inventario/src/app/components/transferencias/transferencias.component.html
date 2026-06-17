@@ -35,7 +35,7 @@
             class="form-control"
             [(ngModel)]="searchTerm"
             (ngModelChange)="onFiltersChanged()"
-            placeholder="Destino, responsável, ID SEI ou data"
+            placeholder="Destino, responsável, ID SEI, data, descrição ou tombamento"
           />
           <button class="search-clear" type="button" *ngIf="searchTerm" (click)="clearSearch()" aria-label="Limpar busca">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
