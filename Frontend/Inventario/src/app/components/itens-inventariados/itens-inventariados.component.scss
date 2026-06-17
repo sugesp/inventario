@@ -127,6 +127,73 @@
   color: #3e5a75;
 }
 
+.actions-head {
+  width: 1%;
+}
+
+.descricao-tooltip {
+  display: block;
+  max-width: 300px;
+}
+
+.descricao-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-tooltip {
+  position: relative;
+}
+
+.table-tooltip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: max-content;
+  max-width: 360px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #21384f;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.3;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  white-space: normal;
+  transform: translateX(-50%) translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.table-tooltip[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  z-index: 20;
+  border: 5px solid transparent;
+  border-top-color: #21384f;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.table-tooltip[data-tooltip]:hover::after,
+.table-tooltip[data-tooltip]:hover::before,
+.table-tooltip[data-tooltip]:focus::after,
+.table-tooltip[data-tooltip]:focus::before,
+.table-tooltip[data-tooltip]:focus-within::after,
+.table-tooltip[data-tooltip]:focus-within::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .tombamento-cell {
   display: inline-flex;
   align-items: center;
@@ -150,13 +217,52 @@
   opacity: 0.45;
 }
 
-.btn-lancado-icon {
+.table-actions {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  padding: 0;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.action-tooltip {
+  display: inline-flex;
+}
+
+.btn-icon-action {
+  width: 36px;
+  height: 36px;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-color: #c7d3df !important;
+  color: #1f2c3a !important;
+  background: #fff !important;
+}
+
+.btn-icon-action:hover,
+.btn-icon-action:focus {
+  border-color: #9fb2c6 !important;
+  background: #f4f8fc !important;
+  color: #132233 !important;
+}
+
+.btn-icon-action:disabled {
+  border-color: #d7e0ea !important;
+  background: #f3f6f9 !important;
+  color: #8a99ad !important;
+  pointer-events: none;
+}
+
+.btn-icon-success {
+  border-color: #9bcfb1 !important;
+  color: #17663a !important;
+}
+
+.btn-icon-success:hover,
+.btn-icon-success:focus {
+  border-color: #68ad82 !important;
+  background: #f0faf4 !important;
+  color: #104e2c !important;
 }
 
 .eestado-badge {
@@ -176,13 +282,6 @@
 .eestado-badge-pending {
   background: #fff3d8;
   color: #7a5400;
-}
-
-.eestado-meta {
-  display: block;
-  margin-top: 5px;
-  color: #61788f;
-  min-width: 180px;
 }
 
 .mapa-backdrop {

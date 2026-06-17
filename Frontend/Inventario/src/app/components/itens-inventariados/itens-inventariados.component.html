@@ -99,16 +99,14 @@
           <tr>
             <th>Comissão</th>
             <th>Tombamento</th>
-            <th>Tombamento antigo</th>
             <th>Descrição</th>
             <th>Classificação</th>
+            <th>Conservação</th>
             <th>Local</th>
             <th>Responsável</th>
-            <th>Detalhes</th>
-            <th>E-Estado</th>
             <th>Data</th>
-            <th>Fotos</th>
-            <th class="text-end" *ngIf="authService.canManageInventario">Ações</th>
+            <th>E-Estado</th>
+            <th class="actions-head"></th>
           </tr>
         </thead>
         <tbody>
@@ -124,40 +122,56 @@
                 </button>
               </div>
             </td>
-            <td>{{ item.tombamentoAntigo || '-' }}</td>
-            <td>{{ item.descricao || '-' }}</td>
+            <td>
+              <span class="descricao-tooltip table-tooltip" [attr.data-tooltip]="item.descricao || '-'">
+                <span class="descricao-cell">{{ item.descricao || '-' }}</span>
+              </span>
+            </td>
             <td>{{ item.status || '-' }}</td>
+            <td>{{ item.estadoConservacao || '-' }}</td>
             <td>{{ item.localNome || '-' }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openDetalhes(item)">
-                Detalhes
-              </button>
-            </td>
-            <td>
-              <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado"
-                [class.eestado-badge-pending]="!item.lancadoEEstado">
-                {{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}
-              </span>
-              <small class="eestado-meta" *ngIf="item.lancadoEEstado">
-                {{ item.lancadoEEstadoPorUsuarioNome || 'Usuário não informado' }}
-                <span *ngIf="item.lancadoEEstadoEm">em {{ item.lancadoEEstadoEm | date:'dd/MM/yyyy HH:mm' }}</span>
-              </small>
-            </td>
             <td>{{ item.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
-              <button class="btn btn-sm btn-outline-primary" type="button" (click)="openFotos(item)"
-                [disabled]="!item.fotos.length">
-                {{ item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
-              </button>
+              <span
+                class="eestado-badge table-tooltip"
+                [class.eestado-badge-ok]="item.lancadoEEstado"
+                [class.eestado-badge-pending]="!item.lancadoEEstado"
+                [attr.data-tooltip]="item.lancadoEEstado ? getLancamentoEEstadoTooltip(item) : 'Ainda não lançado no E-Estado'"
+                tabindex="0"
+              >
+                {{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}
+              </span>
             </td>
-            <td class="text-end" *ngIf="authService.canManageInventario">
-              <button *ngIf="!item.lancadoEEstado" class="btn btn-sm btn-success btn-lancado-icon" type="button"
-                title="Marcar lançado" aria-label="Marcar lançado" (click)="marcarLancamentoEEstado(item, true)"
-                [disabled]="isUpdatingLancamento(item)">
-                <span *ngIf="isUpdatingLancamento(item)">...</span>
-                <i *ngIf="!isUpdatingLancamento(item)" class="fa fa-check" aria-hidden="true"></i>
-              </button>
+            <td class="text-end">
+              <div class="table-actions">
+                <button class="btn btn-sm btn-icon-action" type="button" (click)="openDetalhes(item)"
+                  title="Detalhes" aria-label="Detalhes">
+                  <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-sm btn-icon-action" type="button" (click)="openFotos(item)"
+                  [disabled]="!item.fotos.length"
+                  [title]="item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos'"
+                  [attr.aria-label]="item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos'">
+                  <i class="fa-solid fa-images" aria-hidden="true"></i>
+                </button>
+                <span
+                  *ngIf="authService.canManageInventario"
+                  class="action-tooltip table-tooltip"
+                  [attr.data-tooltip]="item.lancadoEEstado ? 'Já foi lançado no E-Estado' : (isUpdatingLancamento(item) ? 'Marcando...' : 'Marcar lançado')"
+                >
+                  <button
+                    class="btn btn-sm btn-icon-action btn-icon-success"
+                    type="button"
+                    [attr.aria-label]="item.lancadoEEstado ? 'Já foi lançado no E-Estado' : (isUpdatingLancamento(item) ? 'Marcando...' : 'Marcar lançado')"
+                    (click)="marcarLancamentoEEstado(item, true)"
+                    [disabled]="item.lancadoEEstado || isUpdatingLancamento(item)"
+                  >
+                    <span *ngIf="isUpdatingLancamento(item)">...</span>
+                    <i *ngIf="!isUpdatingLancamento(item)" class="fa-solid fa-check" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
             </td>
           </tr>
         </tbody>

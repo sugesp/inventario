@@ -405,6 +405,21 @@ export class ItensInventariadosComponent implements OnInit {
     return this.updatingLancamentoIds.has(item.id);
   }
 
+  getLancamentoEEstadoTooltip(item: ItemInventariado): string {
+    const usuario = item.lancadoEEstadoPorUsuarioNome || 'Usuário não informado';
+    const data = item.lancadoEEstadoEm
+      ? new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(item.lancadoEEstadoEm))
+      : '';
+
+    return data ? `${usuario} em ${data}` : usuario;
+  }
+
   copyTombamento(item: ItemInventariado): void {
     const tombamento = item.tombamentoNovo?.trim();
     if (!tombamento) {
