@@ -225,6 +225,13 @@ export class ItensInventariadosComponent implements OnInit {
       && item.longitude !== undefined;
   }
 
+  hasGeolocalizacaoLocal(item: ItemInventariado): boolean {
+    return item.localLatitude !== null
+      && item.localLatitude !== undefined
+      && item.localLongitude !== null
+      && item.localLongitude !== undefined;
+  }
+
   getMapaUrl(item: ItemInventariado): string {
     if (!this.hasGeolocalizacao(item)) {
       return '';
@@ -254,15 +261,16 @@ export class ItensInventariadosComponent implements OnInit {
       return 'Sem Localização';
     }
 
-    if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
-      return 'Precisão não informada';
+    const distancia = this.getDistanciaDoLocalMetros(item);
+    if (distancia === null) {
+      return 'Sem referência';
     }
 
-    if (item.precisaoLocalizacao <= 50) {
+    if (distancia <= 50) {
       return 'OK';
     }
 
-    if (item.precisaoLocalizacao <= 150) {
+    if (distancia <= 150) {
       return 'Atenção';
     }
 
@@ -274,19 +282,22 @@ export class ItensInventariadosComponent implements OnInit {
       return 'Sem Localização';
     }
 
-    if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
-      return 'Precisão do GPS não informada';
+    const distancia = this.getDistanciaDoLocalMetros(item);
+    if (distancia === null) {
+      return 'Local sem coordenadas de referência cadastradas';
     }
 
-    if (item.precisaoLocalizacao <= 50) {
-      return 'OK até 50m';
+    const distanciaLabel = `Distância do local: ${this.formatDistancia(distancia)}.`;
+
+    if (distancia <= 50) {
+      return `${distanciaLabel} OK até 50m`;
     }
 
-    if (item.precisaoLocalizacao <= 150) {
-      return 'Atenção de 50m a 150m';
+    if (distancia <= 150) {
+      return `${distanciaLabel} Atenção de 50m a 150m`;
     }
 
-    return 'Divergência acima de 150m';
+    return `${distanciaLabel} Divergência acima de 150m`;
   }
 
   getPrecisaoBadgeLabel(item: ItemInventariado): string {
@@ -294,19 +305,37 @@ export class ItensInventariadosComponent implements OnInit {
   }
 
   getGeolocalizacaoBadgeClass(item: ItemInventariado): string {
-    if (!this.hasGeolocalizacao(item) || item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
+    if (!this.hasGeolocalizacao(item)) {
       return 'geo-badge geo-badge-pending';
     }
 
-    if (item.precisaoLocalizacao <= 50) {
+    const distancia = this.getDistanciaDoLocalMetros(item);
+    if (distancia === null) {
+      return 'geo-badge geo-badge-pending';
+    }
+
+    if (distancia <= 50) {
       return 'geo-badge geo-badge-ok';
     }
 
-    if (item.precisaoLocalizacao <= 150) {
+    if (distancia <= 150) {
       return 'geo-badge geo-badge-warning';
     }
 
     return 'geo-badge geo-badge-danger';
+  }
+
+  getDistanciaDoLocalMetros(item: ItemInventariado): number | null {
+    if (!this.hasGeolocalizacao(item) || !this.hasGeolocalizacaoLocal(item)) {
+      return null;
+    }
+
+    return this.calcularDistanciaMetros(
+      item.latitude!,
+      item.longitude!,
+      item.localLatitude!,
+      item.localLongitude!
+    );
   }
 
   getMiniMapaUrl(item: ItemInventariado): SafeResourceUrl | string {
@@ -465,6 +494,36 @@ export class ItensInventariadosComponent implements OnInit {
     }
 
     return 4;
+  }
+
+  private calcularDistanciaMetros(
+    origemLatitude: number,
+    origemLongitude: number,
+    destinoLatitude: number,
+    destinoLongitude: number
+  ): number {
+    const earthRadiusMeters = 6371000;
+    const origemLatRad = this.toRadians(origemLatitude);
+    const destinoLatRad = this.toRadians(destinoLatitude);
+    const deltaLat = this.toRadians(destinoLatitude - origemLatitude);
+    const deltaLng = this.toRadians(destinoLongitude - origemLongitude);
+    const haversine =
+      Math.sin(deltaLat / 2) ** 2
+      + Math.cos(origemLatRad) * Math.cos(destinoLatRad) * Math.sin(deltaLng / 2) ** 2;
+
+    return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  }
+
+  private formatDistancia(value: number): string {
+    if (value < 1000) {
+      return `${Math.round(value)} m`;
+    }
+
+    return `${(value / 1000).toFixed(2)} km`;
+  }
+
+  private toRadians(value: number): number {
+    return value * Math.PI / 180;
   }
 
   private projectToTile(latitude: number, longitude: number, zoom: number): { x: number; y: number } {
