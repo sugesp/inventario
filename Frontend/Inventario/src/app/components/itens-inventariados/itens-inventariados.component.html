@@ -5,7 +5,8 @@
         <span class="list-header-eyebrow">Acompanhamento</span>
         <h2 class="list-header-title">Itens inventariados</h2>
       </div>
-      <a class="btn btn-primary" *ngIf="authService.canManageInventario" routerLink="/inventariar">Inventariar novo item</a>
+      <a class="btn btn-primary" *ngIf="authService.canManageInventario" routerLink="/inventariar">Inventariar novo
+        item</a>
     </div>
     <p class="hero-copy">
       Listagem administrativa dos bens já cadastrados no SGPA, com acompanhamento do lançamento no E-Estado.
@@ -22,15 +23,12 @@
     </div>
 
     <div class="step-actions step-actions-start">
-      <button class="btn btn-outline-secondary" type="button" (click)="loadItensInventariados()" [disabled]="loadingItens">
+      <button class="btn btn-outline-secondary" type="button" (click)="loadItensInventariados()"
+        [disabled]="loadingItens">
         {{ loadingItens ? 'Atualizando...' : 'Atualizar listagem' }}
       </button>
-      <button
-        class="btn btn-outline-primary"
-        type="button"
-        (click)="openMap()"
-        [disabled]="loadingItens || itensGeolocalizados.length === 0"
-      >
+      <button class="btn btn-outline-primary" type="button" (click)="openMap()"
+        [disabled]="loadingItens || itensGeolocalizados.length === 0">
         Ver mapa
       </button>
     </div>
@@ -72,12 +70,8 @@
       </div>
 
       <div class="filters-actions">
-        <button
-          class="btn btn-outline-secondary"
-          type="button"
-          (click)="clearFilters()"
-          [disabled]="!selectedComissaoFilter && !selectedLocalFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'"
-        >
+        <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()"
+          [disabled]="!selectedComissaoFilter && !selectedLocalFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'">
           Limpar filtros
         </button>
       </div>
@@ -94,18 +88,19 @@
       Nenhum item inventariado foi cadastrado até o momento.
     </div>
 
-    <div class="empty-state" *ngIf="!loadingItens && itensAcessiveis.length > 0 && filteredItensInventariados.length === 0">
+    <div class="empty-state"
+      *ngIf="!loadingItens && itensAcessiveis.length > 0 && filteredItensInventariados.length === 0">
       Nenhum item foi encontrado com os filtros selecionados.
     </div>
 
     <div class="table-responsive" *ngIf="!loadingItens && filteredItensInventariados.length > 0">
       <table class="table table-hover align-middle">
         <thead>
-            <tr>
-              <th>Comissão</th>
-              <th>Tombamento</th>
-              <th>Tombamento antigo</th>
-              <th>Descrição</th>
+          <tr>
+            <th>Comissão</th>
+            <th>Tombamento</th>
+            <th>Tombamento antigo</th>
+            <th>Descrição</th>
             <th>Classificação</th>
             <th>Local</th>
             <th>Responsável</th>
@@ -122,14 +117,9 @@
             <td>
               <div class="tombamento-cell">
                 <span>{{ item.tombamentoNovo || '-' }}</span>
-                <button
-                  class="btn btn-sm btn-copy"
-                  type="button"
-                  title="Copiar tombamento do E-Estado"
-                  aria-label="Copiar tombamento do E-Estado"
-                  (click)="copyTombamento(item)"
-                  [disabled]="!item.tombamentoNovo"
-                >
+                <button class="btn btn-sm btn-copy" type="button" title="Copiar tombamento do E-Estado"
+                  aria-label="Copiar tombamento do E-Estado" (click)="copyTombamento(item)"
+                  [disabled]="!item.tombamentoNovo">
                   <i class="fa fa-copy" aria-hidden="true"></i>
                 </button>
               </div>
@@ -140,16 +130,13 @@
             <td>{{ item.localNome || '-' }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
             <td>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                type="button"
-                (click)="openDetalhes(item)"
-              >
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openDetalhes(item)">
                 Detalhes
               </button>
             </td>
             <td>
-              <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado" [class.eestado-badge-pending]="!item.lancadoEEstado">
+              <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado"
+                [class.eestado-badge-pending]="!item.lancadoEEstado">
                 {{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}
               </span>
               <small class="eestado-meta" *ngIf="item.lancadoEEstado">
@@ -159,25 +146,15 @@
             </td>
             <td>{{ item.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
-              <button
-                class="btn btn-sm btn-outline-primary"
-                type="button"
-                (click)="openFotos(item)"
-                [disabled]="!item.fotos.length"
-              >
+              <button class="btn btn-sm btn-outline-primary" type="button" (click)="openFotos(item)"
+                [disabled]="!item.fotos.length">
                 {{ item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
               </button>
             </td>
             <td class="text-end" *ngIf="authService.canManageInventario">
-              <button
-                *ngIf="!item.lancadoEEstado"
-                class="btn btn-sm btn-success btn-lancado-icon"
-                type="button"
-                title="Marcar lançado"
-                aria-label="Marcar lançado"
-                (click)="marcarLancamentoEEstado(item, true)"
-                [disabled]="isUpdatingLancamento(item)"
-              >
+              <button *ngIf="!item.lancadoEEstado" class="btn btn-sm btn-success btn-lancado-icon" type="button"
+                title="Marcar lançado" aria-label="Marcar lançado" (click)="marcarLancamentoEEstado(item, true)"
+                [disabled]="isUpdatingLancamento(item)">
                 <span *ngIf="isUpdatingLancamento(item)">...</span>
                 <i *ngIf="!isUpdatingLancamento(item)" class="fa fa-check" aria-hidden="true"></i>
               </button>
@@ -202,24 +179,10 @@
 
     <div class="mapa-body">
       <div class="openstreet-map">
-        <img
-          *ngFor="let tile of mapTiles"
-          class="map-tile"
-          [src]="tile.url"
-          alt=""
-          [style.left.%]="tile.left"
-          [style.top.%]="tile.top"
-        />
-        <a
-          *ngFor="let marker of mapMarkers"
-          class="map-marker"
-          [href]="getMapaUrl(marker.item)"
-          target="_blank"
-          rel="noopener"
-          [title]="getMapMarkerTitle(marker)"
-          [style.left.%]="marker.left"
-          [style.top.%]="marker.top"
-        >
+        <img *ngFor="let tile of mapTiles" class="map-tile" [src]="tile.url" alt="" [style.left.%]="tile.left"
+          [style.top.%]="tile.top" />
+        <a *ngFor="let marker of mapMarkers" class="map-marker" [href]="getMapaUrl(marker.item)" target="_blank"
+          rel="noopener" [title]="getMapMarkerTitle(marker)" [style.left.%]="marker.left" [style.top.%]="marker.top">
           {{ marker.label }}
         </a>
         <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
@@ -228,13 +191,8 @@
       </div>
 
       <div class="mapa-lista">
-        <a
-          class="mapa-lista-item"
-          *ngFor="let marker of mapMarkers"
-          [href]="getMapaUrl(marker.item)"
-          target="_blank"
-          rel="noopener"
-        >
+        <a class="mapa-lista-item" *ngFor="let marker of mapMarkers" [href]="getMapaUrl(marker.item)" target="_blank"
+          rel="noopener">
           <span class="mapa-lista-marker">{{ marker.label }}</span>
           <span>
             <strong>{{ marker.item.tombamentoNovo || marker.item.tombamentoAntigo || 'Sem tombamento' }}</strong>
@@ -259,7 +217,6 @@
 
     <div class="detalhes-body">
       <section class="detalhes-section">
-        <h4>Resumo</h4>
         <div class="detalhes-grid">
           <div>
             <span>Comissão</span>
@@ -309,19 +266,15 @@
             <div class="foto-principal detalhes-foto-principal">
               <img [src]="getFotoUrl(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
             </div>
-            <button class="btn btn-sm btn-outline-secondary detalhes-foto-hide" type="button" (click)="hideSelectedFoto()">
+            <button class="btn btn-sm btn-outline-secondary detalhes-foto-hide" type="button"
+              (click)="hideSelectedFoto()">
               Ocultar foto
             </button>
           </div>
 
           <div class="fotos-grid">
-            <button
-              class="foto-thumb"
-              type="button"
-              *ngFor="let foto of selectedItemDetalhes.fotos"
-              [class.active]="selectedFoto?.id === foto.id"
-              (click)="selectFoto(foto)"
-            >
+            <button class="foto-thumb" type="button" *ngFor="let foto of selectedItemDetalhes.fotos"
+              [class.active]="selectedFoto?.id === foto.id" (click)="selectFoto(foto)">
               <img [src]="getFotoUrl(foto)" [alt]="foto.nomeOriginal || 'Miniatura da foto'" />
             </button>
           </div>
@@ -340,15 +293,10 @@
           <div class="geo-card">
             <span>Coordenadas do inventário</span>
             <div class="geo-coordinate-row">
-              <a
-                class="geo-coordinate-link"
+              <a class="geo-coordinate-link"
                 *ngIf="hasGeolocalizacao(selectedItemDetalhes); else coordenadasNaoInformadas"
-                [href]="getMapaUrl(selectedItemDetalhes)"
-                target="_blank"
-                rel="noopener"
-                title="Abrir coordenadas no mapa"
-                aria-label="Abrir coordenadas do inventário no mapa"
-              >
+                [href]="getMapaUrl(selectedItemDetalhes)" target="_blank" rel="noopener"
+                title="Abrir coordenadas no mapa" aria-label="Abrir coordenadas do inventário no mapa">
                 <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
                 <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
               </a>
@@ -356,11 +304,8 @@
                 <strong>Não informado</strong>
               </ng-template>
 
-              <span
-                [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)"
-                [attr.data-tooltip]="getGeolocalizacaoBadgeTitle(selectedItemDetalhes)"
-                tabindex="0"
-              >
+              <span [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)"
+                [attr.data-tooltip]="getGeolocalizacaoBadgeTitle(selectedItemDetalhes)" tabindex="0">
                 {{ getGeolocalizacaoBadgeLabel(selectedItemDetalhes) }}
               </span>
               <span class="geo-badge geo-badge-gps" title="Precisão do GPS no momento da coleta">
@@ -370,13 +315,9 @@
           </div>
           <div class="geo-map-card">
             <span>Minimapa</span>
-            <iframe
-              *ngIf="hasGeolocalizacao(selectedItemDetalhes); else semMiniMapa"
-              class="geo-mini-map"
-              [src]="getMiniMapaUrl(selectedItemDetalhes)"
-              title="Minimapa da localização do inventário"
-              loading="lazy"
-            ></iframe>
+            <iframe *ngIf="hasGeolocalizacao(selectedItemDetalhes); else semMiniMapa" class="geo-mini-map"
+              [src]="getMiniMapaUrl(selectedItemDetalhes)" title="Minimapa da localização do inventário"
+              loading="lazy"></iframe>
             <ng-template #semMiniMapa>
               <div class="geo-mini-map-empty">
                 Sem localização registrada.
@@ -408,13 +349,8 @@
       </div>
 
       <div class="fotos-grid">
-        <button
-          class="foto-thumb"
-          type="button"
-          *ngFor="let foto of selectedItemFotos.fotos"
-          [class.active]="selectedFoto?.id === foto.id"
-          (click)="selectFoto(foto)"
-        >
+        <button class="foto-thumb" type="button" *ngFor="let foto of selectedItemFotos.fotos"
+          [class.active]="selectedFoto?.id === foto.id" (click)="selectFoto(foto)">
           <img [src]="getFotoUrl(foto)" [alt]="foto.nomeOriginal || 'Miniatura da foto'" />
         </button>
       </div>
