@@ -284,7 +284,7 @@
 </div>
 
 <div class="scanner-backdrop" *ngIf="scannerOpen"></div>
-<div class="scanner-modal" *ngIf="scannerOpen">
+<div class="scanner-modal" *ngIf="scannerOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeScanner()">
   <div class="scanner-card">
     <div class="scanner-header">
       <div>
@@ -305,8 +305,8 @@
   </div>
 </div>
 
-<div class="sharing-backdrop" *ngIf="sharingModalOpen" (click)="closeSharingModal()"></div>
-<div class="sharing-modal" *ngIf="sharingModalOpen" (click)="closeSharingModal()">
+<div class="sharing-backdrop" *ngIf="sharingModalOpen"></div>
+<div class="sharing-modal" *ngIf="sharingModalOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeSharingModal()">
   <div class="sharing-card" (click)="$event.stopPropagation()">
     <div class="sharing-header">
       <div>

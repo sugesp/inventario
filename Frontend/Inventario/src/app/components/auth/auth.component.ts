@@ -12,7 +12,6 @@ import { normalizePersonName, normalizePersonNameInput } from '../../shared/pers
   styleUrl: './auth.component.scss',
 })
 export class AuthComponent {
-  private preRegisterOverlayPointerDownOutside = false;
   loading = false;
   preRegisterLoading = false;
   showPassword = false;
@@ -128,19 +127,6 @@ export class AuthComponent {
     }
 
     this.showPreRegisterModal = false;
-  }
-
-  onPreRegisterOverlayPointerDown(event: MouseEvent): void {
-    this.preRegisterOverlayPointerDownOutside = event.target === event.currentTarget;
-  }
-
-  onPreRegisterOverlayPointerUp(event: MouseEvent): void {
-    const endedOutside = event.target === event.currentTarget;
-    if (this.preRegisterOverlayPointerDownOutside && endedOutside) {
-      this.closePreRegisterModal();
-    }
-
-    this.preRegisterOverlayPointerDownOutside = false;
   }
 
   private formatCpf(value: string): string {

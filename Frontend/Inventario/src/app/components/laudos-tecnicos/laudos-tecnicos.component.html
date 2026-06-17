@@ -87,8 +87,8 @@
   </section>
 </div>
 
-<div class="laudo-modal-backdrop" *ngIf="activeLaudo || loadingModal" (click)="closeModal()"></div>
-<div class="laudo-modal" *ngIf="activeLaudo || loadingModal" (click)="closeModal()">
+<div class="laudo-modal-backdrop" *ngIf="activeLaudo || loadingModal"></div>
+<div class="laudo-modal" *ngIf="activeLaudo || loadingModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
   <div class="laudo-modal-card" (click)="$event.stopPropagation()">
     <div class="laudo-modal-header">
       <div>

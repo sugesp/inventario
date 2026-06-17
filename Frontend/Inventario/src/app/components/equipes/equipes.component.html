@@ -52,8 +52,8 @@
   <div class="empty-state" *ngIf="!loading">Nenhuma equipe cadastrada para a comissão ativa.</div>
 </ng-template>
 
-<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
-<div class="modal-custom" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop-custom" *ngIf="showModal"></div>
+<div class="modal-custom" *ngIf="showModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header-custom">
       <h4>{{ editingId ? 'Editar equipe' : 'Nova equipe' }}</h4>

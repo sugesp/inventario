@@ -29,6 +29,7 @@ import { TransferirItensComponent } from './components/transferir-itens/transfer
 import { TransferenciasComponent } from './components/transferencias/transferencias.component';
 import { UnidadesAdministrativasComponent } from './components/unidades-administrativas/unidades-administrativas.component';
 import { LoadingInterceptor } from './core/loading/loading.interceptor';
+import { CloseOnOutsideClickDirective } from './shared/close-on-outside-click.directive';
 
 registerLocaleData(localePt);
 
@@ -51,6 +52,7 @@ registerLocaleData(localePt);
     TransferirItensComponent,
     TransferenciasComponent,
     UnidadesAdministrativasComponent,
+    CloseOnOutsideClickDirective,
   ],
   imports: [
     BrowserModule,

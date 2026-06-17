@@ -52,8 +52,8 @@
 </div>
 
 <div class="auth-modal-backdrop" *ngIf="showPreRegisterModal"></div>
-<div class="auth-modal" *ngIf="showPreRegisterModal" (mousedown)="onPreRegisterOverlayPointerDown($event)"
-  (mouseup)="onPreRegisterOverlayPointerUp($event)">
+<div class="auth-modal" *ngIf="showPreRegisterModal" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closePreRegisterModal()">
   <div class="auth-modal-card" (click)="$event.stopPropagation()">
     <div class="auth-modal-header">
       <div>

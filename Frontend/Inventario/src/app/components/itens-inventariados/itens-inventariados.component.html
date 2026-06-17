@@ -166,8 +166,8 @@
   </section>
 </div>
 
-<div class="mapa-backdrop" *ngIf="mapOpen" (click)="closeMap()"></div>
-<div class="mapa-modal" *ngIf="mapOpen">
+<div class="mapa-backdrop" *ngIf="mapOpen"></div>
+<div class="mapa-modal" *ngIf="mapOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeMap()">
   <div class="mapa-card" (click)="$event.stopPropagation()">
     <div class="mapa-header">
       <div>
@@ -204,8 +204,8 @@
   </div>
 </div>
 
-<div class="detalhes-backdrop" *ngIf="selectedItemDetalhes" (click)="closeDetalhes()"></div>
-<div class="detalhes-modal" *ngIf="selectedItemDetalhes">
+<div class="detalhes-backdrop" *ngIf="selectedItemDetalhes"></div>
+<div class="detalhes-modal" *ngIf="selectedItemDetalhes" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeDetalhes()">
   <div class="detalhes-card" (click)="$event.stopPropagation()">
     <div class="detalhes-header">
       <div>
@@ -330,8 +330,8 @@
   </div>
 </div>
 
-<div class="fotos-backdrop" *ngIf="selectedItemFotos" (click)="closeFotos()"></div>
-<div class="fotos-modal" *ngIf="selectedItemFotos">
+<div class="fotos-backdrop" *ngIf="selectedItemFotos"></div>
+<div class="fotos-modal" *ngIf="selectedItemFotos" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeFotos()">
   <div class="fotos-card" (click)="$event.stopPropagation()">
     <div class="fotos-header">
       <div>

@@ -98,8 +98,8 @@
   </section>
 </div>
 
-<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()"></div>
-<div class="modal-custom" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop-custom" *ngIf="showModal"></div>
+<div class="modal-custom" *ngIf="showModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header-custom">
       <h4>{{ editingUserId ? 'Editar usuário' : 'Novo usuário' }}</h4>

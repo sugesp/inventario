@@ -524,7 +524,7 @@
 </div>
 
 <div class="scanner-backdrop" *ngIf="scannerOpen"></div>
-<div class="scanner-modal" *ngIf="scannerOpen">
+<div class="scanner-modal" *ngIf="scannerOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeScanner()">
   <div class="scanner-card">
     <div class="scanner-header">
       <div>
@@ -546,7 +546,7 @@
 </div>
 
 <div class="scanner-backdrop" *ngIf="photoCaptureOpen"></div>
-<div class="scanner-modal" *ngIf="photoCaptureOpen">
+<div class="scanner-modal" *ngIf="photoCaptureOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closePhotoCapture()">
   <div class="scanner-card">
     <div class="scanner-header">
       <div>

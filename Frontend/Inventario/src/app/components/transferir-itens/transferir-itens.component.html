@@ -269,7 +269,7 @@
 </ng-template>
 
 <div class="scanner-backdrop" *ngIf="scannerOpen"></div>
-<div class="scanner-modal" *ngIf="scannerOpen">
+<div class="scanner-modal" *ngIf="scannerOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeScanner()">
   <div class="scanner-card">
     <div class="scanner-header">
       <div>
@@ -290,8 +290,8 @@
   </div>
 </div>
 
-<div class="scanner-backdrop" *ngIf="manualModalOpen" (click)="closeManualModal()"></div>
-<div class="scanner-modal" *ngIf="manualModalOpen">
+<div class="scanner-backdrop" *ngIf="manualModalOpen"></div>
+<div class="scanner-modal" *ngIf="manualModalOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeManualModal()">
   <div class="manual-modal-card" (click)="$event.stopPropagation()">
     <div class="scanner-header manual-modal-header">
       <div>

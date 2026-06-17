@@ -113,8 +113,8 @@
   </section>
 </div>
 
-<div class="levantamento-modal-backdrop" *ngIf="activeLevantamento || loadingModal" (click)="closeModal()"></div>
-<div class="levantamento-modal" *ngIf="activeLevantamento || loadingModal" (click)="closeModal()">
+<div class="levantamento-modal-backdrop" *ngIf="activeLevantamento || loadingModal"></div>
+<div class="levantamento-modal" *ngIf="activeLevantamento || loadingModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
   <div class="levantamento-modal-card" (click)="$event.stopPropagation()">
     <div class="levantamento-modal-header">
       <div>
@@ -209,8 +209,8 @@
   </div>
 </div>
 
-<div class="sharing-backdrop" *ngIf="sharingLevantamento" (click)="closeSharing()"></div>
-<div class="sharing-modal" *ngIf="sharingLevantamento" (click)="closeSharing()">
+<div class="sharing-backdrop" *ngIf="sharingLevantamento"></div>
+<div class="sharing-modal" *ngIf="sharingLevantamento" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeSharing()">
   <div class="sharing-card" (click)="$event.stopPropagation()">
     <div class="sharing-header">
       <div>

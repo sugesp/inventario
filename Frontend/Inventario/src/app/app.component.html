@@ -139,9 +139,9 @@
   </section>
 </ng-template>
 
-<div class="shell-modal-backdrop" *ngIf="showChangePasswordModal"
-  (click)="!mustChangePassword && closeChangePasswordModal()"></div>
-<div class="shell-modal" *ngIf="showChangePasswordModal" (click)="!mustChangePassword && closeChangePasswordModal()">
+<div class="shell-modal-backdrop" *ngIf="showChangePasswordModal"></div>
+<div class="shell-modal" *ngIf="showChangePasswordModal" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="!mustChangePassword && closeChangePasswordModal()">
   <div class="shell-modal-card" (click)="$event.stopPropagation()">
     <div class="shell-modal-header">
       <div>
