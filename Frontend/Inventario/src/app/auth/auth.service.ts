@@ -107,12 +107,22 @@ export class AuthService {
   }
 
   getPagedUsers(params: PageParams): Observable<PagedResult<UserSummary>> {
+    const queryParams: Record<string, string | number> = {
+      pageNumber: params.pageNumber,
+      pageSize: params.pageSize,
+      term: params.term,
+    };
+
+    if (params.status) {
+      queryParams['status'] = params.status;
+    }
+
+    if (params.permissao) {
+      queryParams['permissao'] = params.permissao;
+    }
+
     return this.http.get<PagedResult<UserSummary>>(`${this.baseUrl}/users/paged`, {
-      params: {
-        pageNumber: params.pageNumber,
-        pageSize: params.pageSize,
-        term: params.term,
-      },
+      params: queryParams,
     });
   }
 

@@ -6,6 +6,8 @@ public class PageParams
 
     public int PageNumber { get; set; } = 1;
     public string? Term { get; set; }
+    public string? Status { get; set; }
+    public string? Permissao { get; set; }
 
     private int _pageSize = 10;
     public int PageSize

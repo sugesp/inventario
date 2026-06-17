@@ -10,13 +10,23 @@
 .list-toolbar {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
 .search-box {
-  flex: 1;
+  flex: 1 1 360px;
   position: relative;
+}
+
+.filter-field {
+  flex: 0 1 220px;
+}
+
+.search-box .form-label,
+.filter-field .form-label {
+  margin-bottom: 6px;
 }
 
 .search-box .form-control {
@@ -25,9 +35,9 @@
 
 .search-clear {
   position: absolute;
-  top: 50%;
+  top: auto;
   right: 10px;
-  transform: translateY(-50%);
+  bottom: 6px;
   width: 28px;
   height: 28px;
   border: 0;
@@ -42,6 +52,10 @@
 .search-clear:hover {
   background: #eef3f8;
   color: #27496d;
+}
+
+.filters-clear {
+  min-height: 38px;
 }
 
 .list-pagination {
@@ -232,10 +246,60 @@
   font-weight: 700;
 }
 
+.permissions-collapse {
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fbfdff;
+  overflow: hidden;
+}
+
+.permissions-collapse summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.permissions-collapse summary::-webkit-details-marker {
+  display: none;
+}
+
+.permissions-collapse summary strong,
+.permissions-collapse summary small {
+  display: block;
+}
+
+.permissions-collapse summary strong {
+  color: #21384f;
+}
+
+.permissions-collapse summary small {
+  margin-top: 2px;
+  color: #61788f;
+  overflow-wrap: anywhere;
+}
+
+.permissions-collapse summary i {
+  color: #3e5a75;
+  transition: transform 0.16s ease;
+}
+
+.permissions-collapse[open] summary {
+  border-bottom: 1px solid #e3eaf2;
+}
+
+.permissions-collapse[open] summary i {
+  transform: rotate(180deg);
+}
+
 .permissions-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  padding: 14px;
 }
 
 .permission-card {

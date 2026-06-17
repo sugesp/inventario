@@ -20,9 +20,12 @@ export class UsuariosComponent implements OnInit, OnDestroy {
   updatingStatusUserId: string | null = null;
   resettingUserId: string | null = null;
   showModal = false;
+  permissoesOpen = false;
   editingUserId: string | null = null;
   openActionsUserId: string | null = null;
   term = '';
+  selectedStatusFilter = '';
+  selectedPermissionFilter = '';
   pageNumber = 1;
   readonly pageSize = 10;
   totalCount = 0;
@@ -30,6 +33,7 @@ export class UsuariosComponent implements OnInit, OnDestroy {
   private readonly searchTermChanged$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
   readonly permissionOptions = USER_PERMISSION_OPTIONS;
+  readonly statusFilterOptions = ['Ativo', 'Pendente', 'Desativado'];
 
   form: RegisterPayload = {
     nome: '',
@@ -68,6 +72,7 @@ export class UsuariosComponent implements OnInit, OnDestroy {
   openModal(): void {
     this.editingUserId = null;
     this.openActionsUserId = null;
+    this.permissoesOpen = false;
     this.showModal = true;
   }
 
@@ -81,11 +86,13 @@ export class UsuariosComponent implements OnInit, OnDestroy {
       permissoes: [...usuario.permissoes] as UserPermission[],
       status: (usuario.status as RegisterPayload['status']) ?? 'Ativo',
     };
+    this.permissoesOpen = usuario.permissoes.length > 0;
     this.showModal = true;
   }
 
   closeModal(): void {
     this.showModal = false;
+    this.permissoesOpen = false;
     this.editingUserId = null;
     this.form = {
       nome: '',
@@ -116,12 +123,20 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     return 'status-badge status-badge-inactive';
   }
 
+  get permissoesResumo(): string {
+    return this.form.permissoes.length > 0
+      ? this.form.permissoes.map((item) => getUserPermissionLabel(item)).join(', ')
+      : 'Nenhuma permissão selecionada';
+  }
+
   loadUsers(): void {
     this.loading = true;
     const params: PageParams = {
       pageNumber: this.pageNumber,
       pageSize: this.pageSize,
       term: this.term.trim(),
+      status: this.selectedStatusFilter,
+      permissao: this.selectedPermissionFilter,
     };
 
     this.authService.getPagedUsers(params).subscribe({
@@ -152,6 +167,27 @@ export class UsuariosComponent implements OnInit, OnDestroy {
     this.term = '';
     this.pageNumber = 1;
     this.loadUsers();
+  }
+
+  onFilterChange(): void {
+    this.pageNumber = 1;
+    this.loadUsers();
+  }
+
+  clearFilters(): void {
+    if (!this.hasActiveFilters) {
+      return;
+    }
+
+    this.term = '';
+    this.selectedStatusFilter = '';
+    this.selectedPermissionFilter = '';
+    this.pageNumber = 1;
+    this.loadUsers();
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.term || !!this.selectedStatusFilter || !!this.selectedPermissionFilter;
   }
 
   goToPreviousPage(): void {

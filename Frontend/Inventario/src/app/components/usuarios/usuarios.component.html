@@ -12,13 +12,44 @@
       </div>
       <div class="list-toolbar">
         <div class="search-box">
-          <input class="form-control" type="text" name="usuarioTerm" [ngModel]="term"
+          <label class="form-label" for="usuarioTerm">Buscar</label>
+          <input class="form-control" type="text" id="usuarioTerm" name="usuarioTerm" [ngModel]="term"
             (ngModelChange)="onTermChange($event)"
             placeholder="Buscar por nome, email, CPF, permissões ou status" />
           <button *ngIf="term" class="search-clear" type="button" (click)="clearSearch()" aria-label="Limpar busca">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
+        <div class="filter-field">
+          <label class="form-label" for="usuarioStatusFiltro">Status</label>
+          <select
+            class="form-select"
+            id="usuarioStatusFiltro"
+            name="usuarioStatusFiltro"
+            [(ngModel)]="selectedStatusFilter"
+            (ngModelChange)="onFilterChange()"
+          >
+            <option value="">Todos os status</option>
+            <option *ngFor="let status of statusFilterOptions" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="form-label" for="usuarioPermissaoFiltro">Permissão</label>
+          <select
+            class="form-select"
+            id="usuarioPermissaoFiltro"
+            name="usuarioPermissaoFiltro"
+            [(ngModel)]="selectedPermissionFilter"
+            (ngModelChange)="onFilterChange()"
+          >
+            <option value="">Todas as permissões</option>
+            <option value="sem-permissao">Sem permissão</option>
+            <option *ngFor="let permissao of permissionOptions" [value]="permissao.value">{{ permissao.label }}</option>
+          </select>
+        </div>
+        <button class="btn btn-standard-action filters-clear" type="button" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+          Limpar filtros
+        </button>
       </div>
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
@@ -124,21 +155,30 @@
               inputmode="numeric" maxlength="14" placeholder="000.000.000-00" [readonly]="!!editingUserId" required />
           </div>
           <div class="col-12">
-            <label class="form-label">Permissões</label>
-            <div class="permissions-grid">
-              <label class="permission-card" *ngFor="let permissao of permissionOptions">
-                <input
-                  class="permission-checkbox"
-                  type="checkbox"
-                  [checked]="hasPermission(permissao.value)"
-                  (change)="togglePermission(permissao.value, $any($event.target).checked)"
-                />
-                <div class="permission-copy">
-                  <strong class="permission-title">{{ permissao.label }}</strong>
-                  <small class="permission-description">{{ permissao.description }}</small>
-                </div>
-              </label>
-            </div>
+            <details class="permissions-collapse" [open]="permissoesOpen" (toggle)="permissoesOpen = $any($event.target).open">
+              <summary>
+                <span>
+                  <strong>Permissões</strong>
+                  <small>{{ permissoesResumo }}</small>
+                </span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+              </summary>
+
+              <div class="permissions-grid">
+                <label class="permission-card" *ngFor="let permissao of permissionOptions">
+                  <input
+                    class="permission-checkbox"
+                    type="checkbox"
+                    [checked]="hasPermission(permissao.value)"
+                    (change)="togglePermission(permissao.value, $any($event.target).checked)"
+                  />
+                  <div class="permission-copy">
+                    <strong class="permission-title">{{ permissao.label }}</strong>
+                    <small class="permission-description">{{ permissao.description }}</small>
+                  </div>
+                </label>
+              </div>
+            </details>
           </div>
           <div class="col-md-4">
             <label class="form-label">Status</label>

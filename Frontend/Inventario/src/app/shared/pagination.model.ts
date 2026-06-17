@@ -2,6 +2,8 @@ export interface PageParams {
   pageNumber: number;
   pageSize: number;
   term: string;
+  status?: string;
+  permissao?: string;
 }
 
 export interface PagedResult<T> {

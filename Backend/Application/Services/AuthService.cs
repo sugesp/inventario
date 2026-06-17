@@ -311,6 +311,36 @@ public class AuthService : IAuthService
             );
         }
 
+        if (!string.IsNullOrWhiteSpace(pageParams.Status))
+        {
+            try
+            {
+                var status = NormalizeStatus(pageParams.Status.Trim());
+                data = data.Where(x => string.Equals(x.Status, status, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (InvalidOperationException)
+            {
+                data = Enumerable.Empty<UsuarioDto>();
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(pageParams.Permissao))
+        {
+            var permissao = pageParams.Permissao.Trim();
+
+            if (string.Equals(permissao, "sem-permissao", StringComparison.OrdinalIgnoreCase))
+            {
+                data = data.Where(x => !x.Permissoes.Any());
+            }
+            else
+            {
+                var permissaoNormalizada = UsuarioPermissoes.Normalize(permissao);
+                data = permissaoNormalizada is null
+                    ? Enumerable.Empty<UsuarioDto>()
+                    : data.Where(x => x.Permissoes.Contains(permissaoNormalizada, StringComparer.OrdinalIgnoreCase));
+            }
+        }
+
         data = data.OrderBy(x => x.Nome);
         return PagedResult<UsuarioDto>.Create(data, pageParams);
     }
