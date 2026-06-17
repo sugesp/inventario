@@ -464,8 +464,17 @@
   overflow-wrap: anywhere;
 }
 
+.detalhes-foto-expandida {
+  display: grid;
+  gap: 10px;
+}
+
 .detalhes-foto-principal img {
   max-height: 420px;
+}
+
+.detalhes-foto-hide {
+  justify-self: flex-start;
 }
 
 .detalhes-empty {
@@ -477,6 +486,60 @@
 
 .detalhes-map-link {
   justify-self: flex-start;
+}
+
+.geo-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.geo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.geo-badge-ok {
+  background: #e7f6ee;
+  color: #17663a;
+}
+
+.geo-badge-warning {
+  background: #fff3d8;
+  color: #7a5400;
+}
+
+.geo-badge-danger {
+  background: #fde9e7;
+  color: #9f2d20;
+}
+
+.geo-badge-pending {
+  background: #edf2f7;
+  color: #53677a;
+}
+
+.geo-coordinate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f5f9f;
+  text-decoration: none;
+}
+
+.geo-coordinate-link:hover {
+  color: #17466f;
+  text-decoration: underline;
+}
+
+.geo-coordinate-link i {
+  font-size: 0.95rem;
 }
 
 .foto-principal {

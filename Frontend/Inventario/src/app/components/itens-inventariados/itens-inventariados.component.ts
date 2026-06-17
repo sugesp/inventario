@@ -99,7 +99,7 @@ export class ItensInventariadosComponent implements OnInit {
 
   openDetalhes(item: ItemInventariado): void {
     this.selectedItemDetalhes = item;
-    this.loadFotos(item);
+    this.loadFotos(item, false);
   }
 
   closeDetalhes(): void {
@@ -121,9 +121,9 @@ export class ItensInventariadosComponent implements OnInit {
     this.releaseFotoObjectUrls();
   }
 
-  loadFotos(item: ItemInventariado): void {
+  loadFotos(item: ItemInventariado, selectFirst = true): void {
     this.releaseFotoObjectUrls();
-    this.selectedFoto = item.fotos[0] ?? null;
+    this.selectedFoto = selectFirst ? item.fotos[0] ?? null : null;
     this.loadingFotos = item.fotos.length > 0;
 
     if (!item.fotos.length) {
@@ -247,6 +247,42 @@ export class ItensInventariadosComponent implements OnInit {
     return `${item.precisaoLocalizacao} m`;
   }
 
+  getGeolocalizacaoBadgeLabel(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item)) {
+      return 'Pendente de justificativa';
+    }
+
+    if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
+      return 'Precisão não informada';
+    }
+
+    if (item.precisaoLocalizacao <= 50) {
+      return 'OK';
+    }
+
+    if (item.precisaoLocalizacao <= 150) {
+      return 'Atenção';
+    }
+
+    return 'Divergência';
+  }
+
+  getGeolocalizacaoBadgeClass(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item) || item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
+      return 'geo-badge geo-badge-pending';
+    }
+
+    if (item.precisaoLocalizacao <= 50) {
+      return 'geo-badge geo-badge-ok';
+    }
+
+    if (item.precisaoLocalizacao <= 150) {
+      return 'geo-badge geo-badge-warning';
+    }
+
+    return 'geo-badge geo-badge-danger';
+  }
+
   openMap(): void {
     const items = this.itensGeolocalizados;
     if (!items.length) {
@@ -308,6 +344,10 @@ export class ItensInventariadosComponent implements OnInit {
 
   selectFoto(foto: ItemInventarioFoto): void {
     this.selectedFoto = foto;
+  }
+
+  hideSelectedFoto(): void {
+    this.selectedFoto = null;
   }
 
   getFotoUrl(foto: ItemInventarioFoto | null | undefined): string {

@@ -305,8 +305,13 @@
         <div class="scan-feedback mt-0" *ngIf="loadingFotos">Carregando fotos do item...</div>
 
         <ng-container *ngIf="selectedItemDetalhes.fotos.length > 0; else semFotosDetalhes">
-          <div class="foto-principal detalhes-foto-principal" *ngIf="selectedFoto">
-            <img [src]="getFotoUrl(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
+          <div class="detalhes-foto-expandida" *ngIf="selectedFoto">
+            <div class="foto-principal detalhes-foto-principal">
+              <img [src]="getFotoUrl(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
+            </div>
+            <button class="btn btn-sm btn-outline-secondary detalhes-foto-hide" type="button" (click)="hideSelectedFoto()">
+              Ocultar foto
+            </button>
           </div>
 
           <div class="fotos-grid">
@@ -331,33 +336,35 @@
 
       <section class="detalhes-section">
         <h4>Geolocalização</h4>
+        <div class="geo-status-row">
+          <span [class]="getGeolocalizacaoBadgeClass(selectedItemDetalhes)">
+            {{ getGeolocalizacaoBadgeLabel(selectedItemDetalhes) }}
+          </span>
+        </div>
         <div class="detalhes-grid">
           <div>
             <span>Coordenadas do inventário</span>
-            <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
+            <a
+              class="geo-coordinate-link"
+              *ngIf="hasGeolocalizacao(selectedItemDetalhes); else coordenadasNaoInformadas"
+              [href]="getMapaUrl(selectedItemDetalhes)"
+              target="_blank"
+              rel="noopener"
+              title="Abrir coordenadas no mapa"
+              aria-label="Abrir coordenadas do inventário no mapa"
+            >
+              <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
+              <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+            </a>
+            <ng-template #coordenadasNaoInformadas>
+              <strong>Não informado</strong>
+            </ng-template>
           </div>
           <div>
-            <span>Precisão</span>
+            <span>Precisão do GPS na coleta</span>
             <strong>{{ getPrecisaoLabel(selectedItemDetalhes) }}</strong>
           </div>
-          <div>
-            <span>Latitude do setor</span>
-            <strong>{{ selectedItemDetalhes.localLatitude ?? 'Não informado' }}</strong>
-          </div>
-          <div>
-            <span>Longitude do setor</span>
-            <strong>{{ selectedItemDetalhes.localLongitude ?? 'Não informado' }}</strong>
-          </div>
         </div>
-        <a
-          class="btn btn-outline-primary detalhes-map-link"
-          *ngIf="hasGeolocalizacao(selectedItemDetalhes)"
-          [href]="getMapaUrl(selectedItemDetalhes)"
-          target="_blank"
-          rel="noopener"
-        >
-          Abrir no mapa
-        </a>
       </section>
     </div>
   </div>
