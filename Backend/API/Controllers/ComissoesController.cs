@@ -18,7 +18,7 @@ public class ComissoesController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ComissaoDto>>> GetAll(CancellationToken cancellationToken)
     {
@@ -32,7 +32,7 @@ public class ComissoesController : ControllerBase
         return entity is null ? NotFound() : Ok(entity);
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ComissaoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

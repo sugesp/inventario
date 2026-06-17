@@ -44,8 +44,20 @@ export class AuthService {
     return this.isAdmin || this.hasPermission('Inventario');
   }
 
+  get canAccessInventarioConsultas(): boolean {
+    return this.canManageInventario || this.hasPermission('ControleInterno');
+  }
+
   get canManageComissoes(): boolean {
     return this.isAdmin || this.hasPermission('Inventario');
+  }
+
+  get canAccessComissoesConsulta(): boolean {
+    return this.canManageComissoes || this.hasPermission('ControleInterno');
+  }
+
+  get canAccessConsultaTombamento(): boolean {
+    return this.isAdmin || this.hasPermission('ControleInterno');
   }
 
   get canManageLevantamentos(): boolean {

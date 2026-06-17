@@ -78,7 +78,7 @@ export class AppComponent {
   }
 
   get canShowInventoryGroup(): boolean {
-    return this.authService.canManageInventario || this.canShowComissoesMenu;
+    return this.authService.canAccessInventarioConsultas || this.canShowComissoesMenu;
   }
 
   get canShowDashboardMenu(): boolean {
@@ -86,7 +86,11 @@ export class AppComponent {
   }
 
   get canShowComissoesMenu(): boolean {
-    return this.authService.isAdmin || this.isActiveComissaoPresident;
+    return this.authService.canAccessComissoesConsulta || this.isActiveComissaoPresident;
+  }
+
+  get canShowAdminGroup(): boolean {
+    return this.authService.isAdmin || this.authService.canAccessConsultaTombamento;
   }
 
   private get currentUserId(): string | null {

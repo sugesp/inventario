@@ -55,7 +55,14 @@ export class DashboardComponent implements OnInit {
       description: 'Acompanhe todos os itens inventariados já registrados no sistema.',
       route: '/lista-inventariados',
       icon: 'fa-table-list',
-      visible: () => this.authService.canManageInventario,
+      visible: () => this.authService.canAccessInventarioConsultas,
+    },
+    {
+      title: 'Consulta tombamento',
+      description: 'Consulte a situação consolidada de um bem a partir do tombamento.',
+      route: '/consulta-tombamento',
+      icon: 'fa-magnifying-glass',
+      visible: () => this.authService.canAccessConsultaTombamento,
     },
     {
       title: 'Levantamentos',
@@ -151,7 +158,7 @@ export class DashboardComponent implements OnInit {
         meta: `${this.itensLancadosEEstado} lançado(s) no E-Estado`,
         icon: 'fa-clipboard-check',
         route: '/lista-inventariados',
-        visible: this.authService.canManageInventario,
+        visible: this.authService.canAccessInventarioConsultas,
       },
       {
         label: 'Comissões',
@@ -159,7 +166,7 @@ export class DashboardComponent implements OnInit {
         meta: `${activeComissoes} comissão(ões) ativa(s)`,
         icon: 'fa-people-group',
         route: '/comissoes',
-        visible: this.authService.canManageComissoes,
+        visible: this.authService.canAccessComissoesConsulta,
       },
       {
         label: 'Transferências',
@@ -272,10 +279,10 @@ export class DashboardComponent implements OnInit {
   loadDashboardStats(): void {
     this.loadingStats = true;
     forkJoin({
-      itensInventariados: this.authService.canManageInventario
+      itensInventariados: this.authService.canAccessInventarioConsultas
         ? this.itemInventariadoService.getAll().pipe(catchError(() => of([] as ItemInventariado[])))
         : of([] as ItemInventariado[]),
-      comissoes: this.authService.canManageComissoes
+      comissoes: this.authService.canAccessComissoesConsulta
         ? this.comissaoService.getAll().pipe(catchError(() => of([] as Comissao[])))
         : of([] as Comissao[]),
       levantamentos: this.authService.canManageLevantamentos
@@ -312,7 +319,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private filterAccessibleComissoes(comissoes: Comissao[]): Comissao[] {
-    if (this.authService.isAdmin) {
+    if (this.authService.isAdmin || this.authService.hasPermission('ControleInterno')) {
       return comissoes;
     }
 

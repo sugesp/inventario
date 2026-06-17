@@ -224,6 +224,14 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.router.navigate(['/comissoes', item.id]);
   }
 
+  view(item: Comissao): void {
+    if (!this.canView(item)) {
+      return;
+    }
+
+    this.router.navigate(['/comissoes', item.id]);
+  }
+
   closeModal(): void {
     this.showModal = false;
     this.showAddMemberModal = false;
@@ -731,6 +739,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   canEdit(item: Comissao): boolean {
     return this.authService.isAdmin || this.authService.session?.userId === item.presidenteId;
+  }
+
+  canView(item: Comissao): boolean {
+    return this.authService.canAccessComissoesConsulta || this.canEdit(item);
   }
 
   canDelete(): boolean {

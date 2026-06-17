@@ -2,10 +2,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminGuard } from './auth/admin.guard';
 import { AuthGuard } from './auth/auth.guard';
+import { ConsultaTombamentoGuard } from './auth/consulta-tombamento.guard';
 import { GtiGestorGuard } from './auth/gti-gestor.guard';
 import { GtiLaudosGuard } from './auth/gti-laudos.guard';
 import { GtiTecnicoGuard } from './auth/gti-tecnico.guard';
 import { InventarioGuard } from './auth/contratos.guard';
+import { InventarioConsultaGuard } from './auth/inventario-consulta.guard';
 import { LevantamentoGuard } from './auth/levantamento.guard';
 import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
@@ -28,14 +30,14 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { title: 'Dashboard' } },
   { path: 'auth', component: AuthComponent, data: { title: 'Entrar' } },
   { path: 'usuarios', component: UsuariosComponent, canActivate: [AdminGuard], data: { title: 'Usuários' } },
-  { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [AdminGuard], data: { title: 'Consulta por tombamento' } },
-  { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Comissões' } },
-  { path: 'comissoes/:id', component: ComissoesComponent, canActivate: [InventarioGuard], data: { title: 'Editar comissão' } },
+  { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [ConsultaTombamentoGuard], data: { title: 'Consulta por tombamento' } },
+  { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Comissões' } },
+  { path: 'comissoes/:id', component: ComissoesComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Comissão' } },
   { path: 'unidades-administrativas', component: UnidadesAdministrativasComponent, canActivate: [AdminGuard], data: { title: 'Unidades Administrativas' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [InventarioGuard], data: { title: 'Inventariar item' } },
   { path: 'levantamentos', component: LevantamentosComponent, canActivate: [LevantamentoGuard], data: { title: 'Levantamentos' } },
   { path: 'levantamentos-lista', component: LevantamentosListaComponent, canActivate: [LevantamentoGuard], data: { title: 'Listagem de levantamentos' } },
-  { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [InventarioGuard], data: { title: 'Itens inventariados' } },
+  { path: 'lista-inventariados', component: ItensInventariadosComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Itens inventariados' } },
   { path: 'transferir', component: TransferirItensComponent, canActivate: [GtiGestorGuard], data: { title: 'Nova transferência' } },
   { path: 'laudo-tecnico', component: LaudoTecnicoComponent, canActivate: [GtiTecnicoGuard], data: { title: 'Laudo Técnico' } },
   { path: 'laudos-tecnicos', component: LaudosTecnicosComponent, canActivate: [GtiLaudosGuard], data: { title: 'Laudos Técnicos' } },

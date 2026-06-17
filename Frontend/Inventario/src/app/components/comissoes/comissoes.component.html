@@ -53,6 +53,7 @@
               <td class="text-end">
                 <div class="row-actions">
                   <button class="btn btn-sm btn-standard-action" type="button" *ngIf="canEdit(item)" (click)="edit(item)">Editar</button>
+                  <button class="btn btn-sm btn-standard-action" type="button" *ngIf="!canEdit(item) && canView(item)" (click)="view(item)">Visualizar</button>
                   <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canDelete()" (click)="remove(item)">Excluir</button>
                 </div>
               </td>
@@ -68,9 +69,9 @@
   <div class="card-body" *ngIf="comissaoEmEdicao; else loadingComissaoTemplate">
     <div class="list-header">
       <div class="list-header-copy">
-        <span class="list-header-eyebrow">Comissão em edição</span>
+        <span class="list-header-eyebrow">{{ canManageCurrentComissao ? 'Comissão em edição' : 'Consulta de comissão' }}</span>
         <h2 class="list-header-title">Comissão {{ comissaoEmEdicao.ano }}</h2>
-        <p class="list-header-subtitle">Gerencie os dados básicos, membros e locais desta comissão.</p>
+        <p class="list-header-subtitle">{{ canManageCurrentComissao ? 'Gerencie os dados básicos, membros e locais desta comissão.' : 'Consulte os dados básicos, membros e locais desta comissão.' }}</p>
       </div>
       <button class="btn btn-outline-secondary" type="button" (click)="goBackToList()">Voltar</button>
     </div>
@@ -127,7 +128,7 @@
                 <label class="form-label mb-1">Membros</label>
                 <p class="section-card-hint mb-0">Adicione ou remova integrantes da comissão.</p>
               </div>
-              <button class="btn btn-primary" type="button" (click)="openAddMemberModal()">Adicionar usuário</button>
+              <button class="btn btn-primary" type="button" *ngIf="canManageCurrentComissao" (click)="openAddMemberModal()">Adicionar usuário</button>
             </div>
 
             <div class="inline-hint" *ngIf="selectedMembers.length === 0">
@@ -140,7 +141,7 @@
                   <strong>{{ usuario.nome }}</strong>
                   <small>{{ usuario.cpf }}</small>
                 </div>
-                <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeMember(usuario.id)">Remover</button>
+                <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canManageCurrentComissao" (click)="removeMember(usuario.id)">Remover</button>
               </div>
             </div>
           </div>
@@ -153,12 +154,12 @@
                 <label class="form-label mb-1">Locais</label>
                 <p class="section-card-hint mb-0">Cadastre os locais inventariados da comissão e, se necessário, informe quais membros respondem por cada um.</p>
               </div>
-              <button class="btn btn-primary" type="button" (click)="startLocalCreate()" [disabled]="!canManageCurrentComissao">
+              <button class="btn btn-primary" type="button" *ngIf="canManageCurrentComissao" (click)="startLocalCreate()">
                 Novo local
               </button>
             </div>
 
-            <div class="inline-hint" *ngIf="selectedMembers.length === 0">
+            <div class="inline-hint" *ngIf="canManageCurrentComissao && selectedMembers.length === 0">
               Nenhum membro vinculado nesta comissão. Você ainda pode criar locais sem responsáveis.
             </div>
 
@@ -186,7 +187,7 @@
 
       <div class="modal-footer-custom editor-footer">
         <button class="btn btn-secondary" type="button" (click)="goBackToList()">Voltar</button>
-        <button class="btn btn-primary" type="submit" [disabled]="saving || !comissaoPaginaFormNg.form.valid">
+        <button class="btn btn-primary" type="submit" *ngIf="canManageCurrentComissao" [disabled]="saving || !comissaoPaginaFormNg.form.valid">
           {{ saving ? 'Salvando...' : 'Salvar alterações' }}
         </button>
       </div>

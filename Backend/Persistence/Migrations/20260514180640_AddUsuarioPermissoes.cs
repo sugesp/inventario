@@ -25,7 +25,7 @@ namespace Persistence.Migrations
                     WHEN Perfil = 'Administrador' THEN '[""Administrador""]'
                     WHEN Perfil = 'Inventario' THEN '[""Inventario""]'
                     WHEN Perfil = 'Financeiro' THEN '[""GTI.Gestor""]'
-                    WHEN Perfil = 'Controle Interno' THEN '[""GTI.Gestor""]'
+                    WHEN Perfil = 'Controle Interno' THEN '[""ControleInterno""]'
                     ELSE '[]'
                 END;
                 """
@@ -54,6 +54,7 @@ namespace Persistence.Migrations
                 SET Perfil = CASE
                     WHEN PermissoesJson LIKE '%Administrador%' THEN 'Administrador'
                     WHEN PermissoesJson LIKE '%Inventario%' THEN 'Inventario'
+                    WHEN PermissoesJson LIKE '%ControleInterno%' THEN 'Controle Interno'
                     WHEN PermissoesJson LIKE '%GTI.Gestor%' THEN 'Financeiro'
                     ELSE 'Operador'
                 END;

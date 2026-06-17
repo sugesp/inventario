@@ -28,7 +28,7 @@
     </a>
   </section>
 
-  <section class="stats-section" *ngIf="authService.canManageInventario">
+  <section class="stats-section" *ngIf="authService.canAccessInventarioConsultas">
     <div class="section-heading">
       <span class="eyebrow">Inventário por comissão</span>
       <h3>Itens inventariados</h3>
@@ -54,7 +54,7 @@
       <p class="info-text">tombamento(s) confirmado(s) em {{ levantamentos.length }} levantamento(s).</p>
     </article>
 
-    <article class="info-card" *ngIf="authService.canManageInventario">
+    <article class="info-card" *ngIf="authService.canAccessInventarioConsultas">
       <span class="info-label">E-Estado</span>
       <strong class="info-value">{{ itensLancadosEEstado }} / {{ totalInventariados }}</strong>
       <p class="info-text">item(ns) inventariado(s) marcado(s) como lançado(s).</p>

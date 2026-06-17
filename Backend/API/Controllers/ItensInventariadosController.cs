@@ -18,14 +18,14 @@ public class ItensInventariadosController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ItemInventariadoDto>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAllAsync(GetUsuarioId(), User.IsInRole("Administrador"), cancellationToken));
+        return Ok(await _service.GetAllAsync(GetUsuarioId(), User.IsInRole("Administrador") || User.IsInRole("ControleInterno"), cancellationToken));
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemInventariadoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ public class ItensInventariadosController : ControllerBase
         return entity is null ? NotFound() : Ok(entity);
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("consulta-publica/{tombamento}")]
     public async Task<ActionResult<ConsultaPublicaBemDto>> ConsultarResumoPublico(string tombamento, CancellationToken cancellationToken)
     {
@@ -52,7 +52,7 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,ControleInterno")]
     [HttpGet("consulta-tombamento/{tombamento}")]
     public async Task<ActionResult<ConsultaTombamentoDto>> ConsultarTombamento(string tombamento, CancellationToken cancellationToken)
     {
@@ -78,7 +78,7 @@ public class ItensInventariadosController : ControllerBase
         return Ok(new { existe });
     }
 
-    [Authorize(Roles = "Administrador,Inventario")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
     public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)
     {

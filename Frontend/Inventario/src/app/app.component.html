@@ -31,7 +31,7 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
           <span>Comissões</span>
         </a>
-        <a class="menu-item" *ngIf="authService.canManageInventario" routerLink="/lista-inventariados"
+        <a class="menu-item" *ngIf="authService.canAccessInventarioConsultas" routerLink="/lista-inventariados"
           routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
           <span>Itens Inventariados</span>
@@ -50,17 +50,17 @@
         </a>
       </div>
 
-      <div class="menu-group" *ngIf="authService.isAdmin">
+      <div class="menu-group" *ngIf="canShowAdminGroup">
         <span class="menu-section-label">Administrador</span>
-        <a class="menu-item" routerLink="/consulta-tombamento" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.canAccessConsultaTombamento" routerLink="/consulta-tombamento" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
           <span>Consulta Tombamento</span>
         </a>
-        <a class="menu-item" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
           <span>Usuários</span>
         </a>
-        <a class="menu-item" routerLink="/unidades-administrativas" routerLinkActive="active"
+        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/unidades-administrativas" routerLinkActive="active"
           (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-sitemap"></i></span>
           <span>Unidades Administrativas</span>

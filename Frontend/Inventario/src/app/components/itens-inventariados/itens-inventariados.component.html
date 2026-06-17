@@ -5,7 +5,7 @@
         <span class="list-header-eyebrow">Acompanhamento</span>
         <h2 class="list-header-title">Itens inventariados</h2>
       </div>
-      <a class="btn btn-primary" routerLink="/inventariar">Inventariar novo item</a>
+      <a class="btn btn-primary" *ngIf="authService.canManageInventario" routerLink="/inventariar">Inventariar novo item</a>
     </div>
     <p class="hero-copy">
       Listagem administrativa dos bens já cadastrados no SGPA, com acompanhamento do lançamento no E-Estado.
@@ -109,10 +109,11 @@
             <th>Classificação</th>
             <th>Local</th>
             <th>Responsável</th>
+            <th>Detalhes</th>
             <th>E-Estado</th>
             <th>Data</th>
             <th>Fotos</th>
-            <th class="text-end">Ações</th>
+            <th class="text-end" *ngIf="authService.canManageInventario">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -139,6 +140,15 @@
             <td>{{ item.localNome || '-' }}</td>
             <td>{{ item.usuarioNome || '-' }}</td>
             <td>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                (click)="openDetalhes(item)"
+              >
+                Detalhes
+              </button>
+            </td>
+            <td>
               <span class="eestado-badge" [class.eestado-badge-ok]="item.lancadoEEstado" [class.eestado-badge-pending]="!item.lancadoEEstado">
                 {{ item.lancadoEEstado ? 'Lançado' : 'Pendente' }}
               </span>
@@ -158,7 +168,7 @@
                 {{ item.fotos.length ? ('Fotos (' + item.fotos.length + ')') : 'Sem fotos' }}
               </button>
             </td>
-            <td class="text-end">
+            <td class="text-end" *ngIf="authService.canManageInventario">
               <button
                 *ngIf="!item.lancadoEEstado"
                 class="btn btn-sm btn-success btn-lancado-icon"
@@ -232,6 +242,123 @@
           </span>
         </a>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="detalhes-backdrop" *ngIf="selectedItemDetalhes" (click)="closeDetalhes()"></div>
+<div class="detalhes-modal" *ngIf="selectedItemDetalhes">
+  <div class="detalhes-card" (click)="$event.stopPropagation()">
+    <div class="detalhes-header">
+      <div>
+        <h3>Detalhes do item</h3>
+        <p>{{ selectedItemDetalhes.descricao || selectedItemDetalhes.tombamentoNovo || 'Item inventariado' }}</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Close" (click)="closeDetalhes()"></button>
+    </div>
+
+    <div class="detalhes-body">
+      <section class="detalhes-section">
+        <h4>Resumo</h4>
+        <div class="detalhes-grid">
+          <div>
+            <span>Comissão</span>
+            <strong>{{ selectedItemDetalhes.comissaoAno || '-' }}</strong>
+          </div>
+          <div>
+            <span>Tombamento E-Estado</span>
+            <strong>{{ selectedItemDetalhes.tombamentoNovo || '-' }}</strong>
+          </div>
+          <div>
+            <span>Tombamento antigo</span>
+            <strong>{{ selectedItemDetalhes.tombamentoAntigo || '-' }}</strong>
+          </div>
+          <div>
+            <span>Classificação</span>
+            <strong>{{ selectedItemDetalhes.status || '-' }}</strong>
+          </div>
+          <div>
+            <span>Estado de conservação</span>
+            <strong>{{ selectedItemDetalhes.estadoConservacao || '-' }}</strong>
+          </div>
+          <div>
+            <span>Inventariado em</span>
+            <strong>{{ selectedItemDetalhes.dataInventario | date:'dd/MM/yyyy HH:mm' }}</strong>
+          </div>
+          <div>
+            <span>Setor</span>
+            <strong>{{ selectedItemDetalhes.localNome || '-' }}</strong>
+          </div>
+          <div>
+            <span>Responsável</span>
+            <strong>{{ selectedItemDetalhes.usuarioNome || '-' }}</strong>
+          </div>
+        </div>
+        <div class="detalhes-observacao">
+          <span>Observação</span>
+          <p>{{ selectedItemDetalhes.observacao || 'Sem observações registradas.' }}</p>
+        </div>
+      </section>
+
+      <section class="detalhes-section">
+        <h4>Fotos</h4>
+        <div class="scan-feedback mt-0" *ngIf="loadingFotos">Carregando fotos do item...</div>
+
+        <ng-container *ngIf="selectedItemDetalhes.fotos.length > 0; else semFotosDetalhes">
+          <div class="foto-principal detalhes-foto-principal" *ngIf="selectedFoto">
+            <img [src]="getFotoUrl(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
+          </div>
+
+          <div class="fotos-grid">
+            <button
+              class="foto-thumb"
+              type="button"
+              *ngFor="let foto of selectedItemDetalhes.fotos"
+              [class.active]="selectedFoto?.id === foto.id"
+              (click)="selectFoto(foto)"
+            >
+              <img [src]="getFotoUrl(foto)" [alt]="foto.nomeOriginal || 'Miniatura da foto'" />
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #semFotosDetalhes>
+          <div class="empty-state detalhes-empty">
+            Nenhuma foto foi encontrada para este item.
+          </div>
+        </ng-template>
+      </section>
+
+      <section class="detalhes-section">
+        <h4>Geolocalização</h4>
+        <div class="detalhes-grid">
+          <div>
+            <span>Coordenadas do inventário</span>
+            <strong>{{ getCoordenadasLabel(selectedItemDetalhes) }}</strong>
+          </div>
+          <div>
+            <span>Precisão</span>
+            <strong>{{ getPrecisaoLabel(selectedItemDetalhes) }}</strong>
+          </div>
+          <div>
+            <span>Latitude do setor</span>
+            <strong>{{ selectedItemDetalhes.localLatitude ?? 'Não informado' }}</strong>
+          </div>
+          <div>
+            <span>Longitude do setor</span>
+            <strong>{{ selectedItemDetalhes.localLongitude ?? 'Não informado' }}</strong>
+          </div>
+        </div>
+        <a
+          class="btn btn-outline-primary detalhes-map-link"
+          *ngIf="hasGeolocalizacao(selectedItemDetalhes)"
+          [href]="getMapaUrl(selectedItemDetalhes)"
+          target="_blank"
+          rel="noopener"
+        >
+          Abrir no mapa
+        </a>
+      </section>
     </div>
   </div>
 </div>

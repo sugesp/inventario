@@ -1,4 +1,4 @@
-export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'Levantamento', 'GTI.Tecnico', 'GTI.Gestor', 'Acesso.Sigiloso'] as const;
+export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'Levantamento', 'ControleInterno', 'GTI.Tecnico', 'GTI.Gestor', 'Acesso.Sigiloso'] as const;
 
 export type UserPermission = typeof USER_PERMISSIONS[number];
 
@@ -25,6 +25,11 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
     description: 'Cria levantamentos, confirma tombamentos e consulta a listagem de levantamentos.',
   },
   {
+    value: 'ControleInterno',
+    label: 'Controle Interno',
+    description: 'Consulta comissões, itens inventariados e consulta por tombamento sem ações de edição.',
+  },
+  {
     value: 'GTI.Tecnico',
     label: 'GTI - Técnico',
     description: 'Cria laudos técnicos.',
@@ -44,6 +49,7 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
 export const PERMISSION_GROUPS = {
   administracao: ['Administrador'],
   cadastroGestao: ['Administrador', 'Inventario'],
+  consultaInventario: ['Administrador', 'Inventario', 'ControleInterno'],
   gestorUnidade: ['Administrador', 'GTI.Gestor'],
   solicitante: ['Administrador', 'Inventario', 'Levantamento'],
   operador: ['Administrador', 'Inventario', 'Levantamento', 'GTI.Tecnico'],

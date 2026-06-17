@@ -36,6 +36,7 @@ export class ItensInventariadosComponent implements OnInit {
   selectedLocalFilter = '';
   selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
   selectedTombamentoFilter: 'todos' | 'sem-tombamento-eestado' | 'sem-tombamento-antigo' | 'sem-ambos-tombamentos' = 'todos';
+  selectedItemDetalhes: ItemInventariado | null = null;
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
   loadingFotos = false;
@@ -82,6 +83,7 @@ export class ItensInventariadosComponent implements OnInit {
         this.comissoes = data
           .filter((item) =>
             this.authService.isAdmin
+            || this.authService.hasPermission('ControleInterno')
             || item.presidenteId === usuarioId
             || item.membros.some((membro) => membro.usuarioId === usuarioId)
           )
@@ -95,9 +97,32 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
-  openFotos(item: ItemInventariado): void {
+  openDetalhes(item: ItemInventariado): void {
+    this.selectedItemDetalhes = item;
+    this.loadFotos(item);
+  }
+
+  closeDetalhes(): void {
+    this.selectedItemDetalhes = null;
+    this.selectedFoto = null;
+    this.loadingFotos = false;
     this.releaseFotoObjectUrls();
+  }
+
+  openFotos(item: ItemInventariado): void {
     this.selectedItemFotos = item;
+    this.loadFotos(item);
+  }
+
+  closeFotos(): void {
+    this.selectedItemFotos = null;
+    this.selectedFoto = null;
+    this.loadingFotos = false;
+    this.releaseFotoObjectUrls();
+  }
+
+  loadFotos(item: ItemInventariado): void {
+    this.releaseFotoObjectUrls();
     this.selectedFoto = item.fotos[0] ?? null;
     this.loadingFotos = item.fotos.length > 0;
 
@@ -134,13 +159,6 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
-  closeFotos(): void {
-    this.selectedItemFotos = null;
-    this.selectedFoto = null;
-    this.loadingFotos = false;
-    this.releaseFotoObjectUrls();
-  }
-
   get localOptions(): string[] {
     return [...new Set(this.itensAcessiveis
       .filter((item) => !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter)
@@ -154,6 +172,7 @@ export class ItensInventariadosComponent implements OnInit {
 
     return this.itensInventariados.filter((item) =>
       this.authService.isAdmin
+      || this.authService.hasPermission('ControleInterno')
       || (!!item.comissaoId && comissaoIdsAcessiveis.has(item.comissaoId))
     );
   }
@@ -210,6 +229,22 @@ export class ItensInventariadosComponent implements OnInit {
     }
 
     return `https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}#map=18/${item.latitude}/${item.longitude}`;
+  }
+
+  getCoordenadasLabel(item: ItemInventariado): string {
+    if (!this.hasGeolocalizacao(item)) {
+      return 'Não informado';
+    }
+
+    return `${item.latitude}, ${item.longitude}`;
+  }
+
+  getPrecisaoLabel(item: ItemInventariado): string {
+    if (item.precisaoLocalizacao === null || item.precisaoLocalizacao === undefined) {
+      return 'Não informado';
+    }
+
+    return `${item.precisaoLocalizacao} m`;
   }
 
   openMap(): void {
