@@ -10,7 +10,6 @@ public static class UsuarioPermissoes
     public const string ControleInterno = "ControleInterno";
     public const string GtiTecnico = "GTI.Tecnico";
     public const string GtiGestor = "GTI.Gestor";
-    public const string AcessoSigiloso = "Acesso.Sigiloso";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
@@ -19,8 +18,7 @@ public static class UsuarioPermissoes
         Levantamento,
         ControleInterno,
         GtiTecnico,
-        GtiGestor,
-        AcessoSigiloso
+        GtiGestor
     };
 
     public static readonly IReadOnlyList<string> Administracao = new[] { Administrador };
@@ -29,7 +27,6 @@ public static class UsuarioPermissoes
     public static readonly IReadOnlyList<string> GestorUnidade = new[] { Administrador, GtiGestor };
     public static readonly IReadOnlyList<string> Operador = new[] { Administrador, Inventario, Levantamento, GtiTecnico };
     public static readonly IReadOnlyList<string> RevisorAprovador = new[] { Administrador, GtiGestor };
-    public static readonly IReadOnlyList<string> AcessoDadosSigilosos = new[] { Administrador, AcessoSigiloso };
 
     public static IReadOnlyCollection<string> Deserialize(string? permissoesJson)
     {
@@ -95,7 +92,6 @@ public static class UsuarioPermissoes
             _ when string.Equals(normalized, "Controle Interno", StringComparison.OrdinalIgnoreCase) => ControleInterno,
             _ when string.Equals(normalized, GtiTecnico, StringComparison.OrdinalIgnoreCase) => GtiTecnico,
             _ when string.Equals(normalized, GtiGestor, StringComparison.OrdinalIgnoreCase) => GtiGestor,
-            _ when string.Equals(normalized, AcessoSigiloso, StringComparison.OrdinalIgnoreCase) => AcessoSigiloso,
             _ => null
         };
     }
