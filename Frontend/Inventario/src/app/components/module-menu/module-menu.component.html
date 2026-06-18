@@ -1,0 +1,32 @@
+<section class="module-menu">
+  <header class="module-menu-header">
+    <span>{{ config.eyebrow }}</span>
+    <h2>{{ config.title }}</h2>
+    <p>{{ config.subtitle }}</p>
+  </header>
+
+  <div class="module-action-grid" *ngIf="visibleActions.length; else noActions">
+    <a
+      class="module-action"
+      *ngFor="let action of visibleActions"
+      [routerLink]="action.route"
+    >
+      <span class="module-action-icon" aria-hidden="true">
+        <i [class]="action.icon"></i>
+      </span>
+      <span class="module-action-copy">
+        <strong>{{ action.title }}</strong>
+        <small>{{ action.description }}</small>
+      </span>
+      <span class="module-action-arrow" aria-hidden="true">
+        <i class="fa-solid fa-arrow-right"></i>
+      </span>
+    </a>
+  </div>
+
+  <ng-template #noActions>
+    <div class="module-empty">
+      Nenhuma opção disponível para o seu perfil.
+    </div>
+  </ng-template>
+</section>

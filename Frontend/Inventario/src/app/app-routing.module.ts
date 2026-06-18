@@ -19,6 +19,7 @@ import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.
 import { LaudosTecnicosComponent } from './components/laudos-tecnicos/laudos-tecnicos.component';
 import { LevantamentosComponent } from './components/levantamentos/levantamentos.component';
 import { LevantamentosListaComponent } from './components/levantamentos-lista/levantamentos-lista.component';
+import { ModuleMenuComponent } from './components/module-menu/module-menu.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { TransferirItensComponent } from './components/transferir-itens/transferir-itens.component';
 import { TransferenciasComponent } from './components/transferencias/transferencias.component';
@@ -29,6 +30,9 @@ const routes: Routes = [
   { path: '', component: DashboardComponent, canActivate: [AuthGuard], data: { title: 'Dashboard' } },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { title: 'Dashboard' } },
   { path: 'auth', component: AuthComponent, data: { title: 'Entrar' } },
+  { path: 'levantamento', component: ModuleMenuComponent, canActivate: [LevantamentoGuard], data: { title: 'Levantamento', module: 'levantamento' } },
+  { path: 'administrador', component: ModuleMenuComponent, canActivate: [AdminGuard], data: { title: 'Administrador', module: 'administrador' } },
+  { path: 'gti', component: ModuleMenuComponent, canActivate: [GtiLaudosGuard], data: { title: 'GTI', module: 'gti' } },
   { path: 'usuarios', component: UsuariosComponent, canActivate: [AdminGuard], data: { title: 'Usuários' } },
   { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [ConsultaTombamentoGuard], data: { title: 'Consulta por tombamento' } },
   { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Comissões' } },

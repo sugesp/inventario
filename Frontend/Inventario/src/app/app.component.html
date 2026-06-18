@@ -17,6 +17,10 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
           <span>Inicio</span>
         </a>
+        <a class="menu-item" *ngIf="authService.canAccessConsultaTombamento" routerLink="/consulta-tombamento" routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <span>Consulta Tombamento</span>
+        </a>
       </div>
 
       <div class="menu-group" *ngIf="canShowInventoryGroup">
@@ -40,54 +44,25 @@
 
       <div class="menu-group" *ngIf="authService.canManageLevantamentos">
         <span class="menu-section-label">Levantamento</span>
-        <a class="menu-item" routerLink="/levantamentos" routerLinkActive="active" (click)="onMenuNavigate()">
+        <a class="menu-item" routerLink="/levantamento" [class.active]="isLevantamentoRoute" (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>
-          <span>Novo Levantamento</span>
-        </a>
-        <a class="menu-item" routerLink="/levantamentos-lista" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-table-list"></i></span>
-          <span>Listagem de Levantamentos</span>
-        </a>
-      </div>
-
-      <div class="menu-group" *ngIf="canShowAdminGroup">
-        <span class="menu-section-label">Administrador</span>
-        <a class="menu-item" *ngIf="authService.canAccessConsultaTombamento" routerLink="/consulta-tombamento" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-          <span>Consulta Tombamento</span>
-        </a>
-        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/usuarios" routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
-          <span>Usuários</span>
-        </a>
-        <a class="menu-item" *ngIf="authService.isAdmin" routerLink="/unidades-administrativas" routerLinkActive="active"
-          (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-sitemap"></i></span>
-          <span>Unidades Administrativas</span>
+          <span>Levantamento</span>
         </a>
       </div>
 
       <div class="menu-group" *ngIf="authService.canAccessLaudos || authService.canAccessGtiGestor">
         <span class="menu-section-label">GTI</span>
-        <a class="menu-item" *ngIf="authService.canAccessGtiGestor" routerLink="/transferir" routerLinkActive="active"
-          (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-right-left"></i></span>
-          <span>Nova Transferencia</span>
+        <a class="menu-item" routerLink="/gti" [class.active]="isGtiRoute" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-network-wired"></i></span>
+          <span>GTI</span>
         </a>
-        <a class="menu-item" *ngIf="authService.canAccessGtiGestor" routerLink="/transferencias"
-          routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-truck-ramp-box"></i></span>
-          <span>Transferências</span>
-        </a>
-        <a class="menu-item" *ngIf="authService.canAccessGtiTecnico" routerLink="/laudo-tecnico"
-          routerLinkActive="active" (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
-          <span>Laudo Técnico</span>
-        </a>
-        <a class="menu-item" *ngIf="authService.canAccessLaudos" routerLink="/laudos-tecnicos" routerLinkActive="active"
-          (click)="onMenuNavigate()">
-          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></span>
-          <span>Laudos Técnicos</span>
+      </div>
+
+      <div class="menu-group" *ngIf="authService.isAdmin">
+        <span class="menu-section-label">Administrador</span>
+        <a class="menu-item" routerLink="/administrador" [class.active]="isAdministradorRoute" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
+          <span>Administrador</span>
         </a>
       </div>
     </nav>

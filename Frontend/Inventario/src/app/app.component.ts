@@ -89,8 +89,16 @@ export class AppComponent {
     return this.authService.canAccessComissoesConsulta || this.isActiveComissaoPresident;
   }
 
-  get canShowAdminGroup(): boolean {
-    return this.authService.isAdmin || this.authService.canAccessConsultaTombamento;
+  get isLevantamentoRoute(): boolean {
+    return this.isCurrentRoute(['/levantamento', '/levantamentos', '/levantamentos-lista']);
+  }
+
+  get isAdministradorRoute(): boolean {
+    return this.isCurrentRoute(['/administrador', '/usuarios', '/unidades-administrativas']);
+  }
+
+  get isGtiRoute(): boolean {
+    return this.isCurrentRoute(['/gti', '/transferir', '/transferencias', '/laudo-tecnico', '/laudos-tecnicos']);
   }
 
   private get currentUserId(): string | null {
@@ -346,6 +354,11 @@ export class AppComponent {
   private shouldRequestBrowserAccesses(url: string): boolean {
     const path = url.split('?')[0].split('#')[0];
     return path === '/inventariar' || path === '/levantamentos';
+  }
+
+  private isCurrentRoute(paths: string[]): boolean {
+    const path = this.router.url.split('?')[0].split('#')[0];
+    return paths.some((item) => path === item || path.startsWith(`${item}/`));
   }
 
   private async requestCameraAndGeolocation(): Promise<void> {

@@ -1,0 +1,124 @@
+.module-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.module-menu-header {
+  padding: 24px;
+  border: 1px solid #d6e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.module-menu-header span {
+  display: block;
+  margin-bottom: 12px;
+  color: #3c8dbc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.module-menu-header h2 {
+  margin: 0 0 8px;
+  color: #18314d;
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.module-menu-header p {
+  margin: 0;
+  max-width: 760px;
+  color: #55708f;
+}
+
+.module-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.module-action {
+  min-height: 118px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #d6e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1d344d;
+  text-decoration: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.module-action:hover {
+  border-color: #8ab8df;
+  box-shadow: 0 12px 26px rgba(46, 91, 130, 0.12);
+  transform: translateY(-1px);
+}
+
+.module-action-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #eaf4fb;
+  color: #2d7fb2;
+  font-size: 1rem;
+}
+
+.module-action-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.module-action-copy strong {
+  color: #142a41;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.module-action-copy small {
+  color: #5c728a;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.module-action-arrow {
+  color: #8aa4ba;
+  font-size: 0.9rem;
+}
+
+.module-empty {
+  padding: 28px;
+  border: 1px dashed #c6d6e6;
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #55708f;
+  text-align: center;
+}
+
+@media (max-width: 576px) {
+  .module-menu-header {
+    padding: 20px;
+  }
+
+  .module-menu-header h2 {
+    font-size: 1.45rem;
+  }
+
+  .module-action {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .module-action-arrow {
+    display: none;
+  }
+}

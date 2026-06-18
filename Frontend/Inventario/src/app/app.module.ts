@@ -22,6 +22,7 @@ import { LaudoTecnicoComponent } from './components/laudo-tecnico/laudo-tecnico.
 import { LaudosTecnicosComponent } from './components/laudos-tecnicos/laudos-tecnicos.component';
 import { LevantamentosComponent } from './components/levantamentos/levantamentos.component';
 import { LevantamentosListaComponent } from './components/levantamentos-lista/levantamentos-lista.component';
+import { ModuleMenuComponent } from './components/module-menu/module-menu.component';
 import { UsuariosComponent } from './components/usuarios/usuarios.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { SearchableSelectComponent } from './components/shared/searchable-select/searchable-select.component';
@@ -46,6 +47,7 @@ registerLocaleData(localePt);
     InventariarItemComponent,
     LevantamentosComponent,
     LevantamentosListaComponent,
+    ModuleMenuComponent,
     ItensInventariadosComponent,
     LaudoTecnicoComponent,
     LaudosTecnicosComponent,
