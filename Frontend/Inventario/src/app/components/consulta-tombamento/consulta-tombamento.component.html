@@ -35,7 +35,7 @@
   <section class="consulta-summary" *ngIf="resultado">
     <div class="summary-card">
       <span class="summary-label">Tombamento pesquisado</span>
-      <strong>{{ resultado.tombamentoPesquisado }}</strong>
+      <strong>{{ formatTombamentoDisplay(resultado.tombamentoPesquisado) }}</strong>
     </div>
     <div class="summary-card">
       <span class="summary-label">Ocorrências locais</span>
@@ -62,7 +62,7 @@
     <div class="public-data-grid">
       <div>
         <span>Patrimônio</span>
-        <strong>{{ resultado?.consultaPublica?.tombamento || 'Não informado' }}</strong>
+        <strong>{{ formatTombamentoDisplay(resultado?.consultaPublica?.tombamento) }}</strong>
       </div>
       <div>
         <span>Tombamento antigo</span>

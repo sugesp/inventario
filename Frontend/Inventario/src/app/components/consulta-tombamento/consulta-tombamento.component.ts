@@ -38,6 +38,7 @@ export class ConsultaTombamentoComponent {
       return;
     }
 
+    this.patrimonio = this.formatTombamento(tombamento);
     this.loading = true;
     this.searched = true;
     this.resultado = null;
@@ -68,7 +69,17 @@ export class ConsultaTombamentoComponent {
     return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
   }
 
+  formatTombamentoDisplay(value?: string | null): string {
+    const tombamento = this.normalizeTombamento(value ?? '');
+    return tombamento ? this.formatTombamento(tombamento) : 'Não informado';
+  }
+
   private normalizeTombamento(value: string): string {
-    return value.replace(/\D/g, '');
+    const digits = value.replace(/\D/g, '').slice(0, 9);
+    return digits ? digits.padStart(9, '0') : '';
+  }
+
+  private formatTombamento(value: string): string {
+    return `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6)}`;
   }
 }

@@ -879,7 +879,18 @@ public class ItemInventariadoService : IItemInventariadoService
 
     private static string NormalizeDigits(string value)
     {
-        return string.Concat(value.Where(char.IsDigit));
+        var digits = string.Concat(value.Where(char.IsDigit));
+        if (string.IsNullOrWhiteSpace(digits))
+        {
+            return string.Empty;
+        }
+
+        if (digits.Length > 9)
+        {
+            digits = digits[..9];
+        }
+
+        return digits.PadLeft(9, '0');
     }
 
     private static string FormatTombamento(string value)
