@@ -68,8 +68,15 @@ public class TransferenciasController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await _service.DeleteAsync(id, cancellationToken);
-        return deleted ? NoContent() : NotFound();
+        try
+        {
+            var deleted = await _service.DeleteAsync(id, cancellationToken);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     private Guid GetUsuarioId()

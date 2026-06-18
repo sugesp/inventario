@@ -10,7 +10,7 @@ namespace Application.Services;
 
 public class TransferenciaService : ITransferenciaService
 {
-    private static readonly string[] StatusValidos = ["RASCUNHO", "EM SEPARACAO", "AGUARDANDO CONCLUSAO", "CONCLUIDA", "CANCELADA"];
+    private const string StatusConcluida = "CONCLUÍDA";
     private static readonly string[] CondicoesValidas = ["SERVIVEL", "INSERVIVEL", "OBSOLETO", "DEFEITO"];
 
     private readonly AppDbContext _context;
@@ -54,7 +54,7 @@ public class TransferenciaService : ITransferenciaService
             Itens = dto.Itens.Select(MapToEntity).ToList()
         };
 
-        if (entity.Status == "CONCLUÍDA")
+        if (entity.Status == StatusConcluida)
         {
             entity.FinalizadoPorUsuarioId = usuarioAutenticadoId;
         }
@@ -78,6 +78,11 @@ public class TransferenciaService : ITransferenciaService
             return null;
         }
 
+        if (IsConcluida(entity.Status))
+        {
+            throw new InvalidOperationException("Transferências concluídas não podem ser alteradas.");
+        }
+
         entity.UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId;
         entity.ResponsavelDestino = dto.ResponsavelDestino.Trim();
         entity.IdSeiTermo = dto.IdSeiTermo.Trim();
@@ -92,7 +97,7 @@ public class TransferenciaService : ITransferenciaService
 
         entity.Itens = dto.Itens.Select(MapToEntity).ToList();
 
-        if (entity.Status == "CONCLUÍDA")
+        if (entity.Status == StatusConcluida)
         {
             entity.FinalizadoPorUsuarioId = usuarioAutenticadoId;
         }
@@ -114,6 +119,11 @@ public class TransferenciaService : ITransferenciaService
         if (entity is null)
         {
             return false;
+        }
+
+        if (IsConcluida(entity.Status))
+        {
+            throw new InvalidOperationException("Transferências concluídas não podem ser excluídas.");
         }
 
         entity.DeletedAt = DateTime.UtcNow;
@@ -217,7 +227,7 @@ public class TransferenciaService : ITransferenciaService
             ResponsavelDestino = entity.ResponsavelDestino,
             IdSeiTermo = entity.IdSeiTermo,
             DataEntrega = entity.DataEntrega,
-            Status = entity.Status,
+            Status = NormalizeStatus(entity.Status) ?? entity.Status,
             Observacao = entity.Observacao,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
@@ -249,12 +259,18 @@ public class TransferenciaService : ITransferenciaService
         return normalized switch
         {
             "RASCUNHO" => "RASCUNHO",
-            "EM SEPARACAO" => "EM SEPARAÇÃO",
-            "AGUARDANDO CONCLUSAO" => "AGUARDANDO CONCLUSÃO",
-            "CONCLUIDA" => "CONCLUÍDA",
+            "EM SEPARACAO" => "AGUARDANDO ASSINATURA",
+            "AGUARDANDO CONCLUSAO" => "AGUARDANDO ASSINATURA",
+            "AGUARDANDO ASSINATURA" => "AGUARDANDO ASSINATURA",
+            "CONCLUIDA" => StatusConcluida,
             "CANCELADA" => "CANCELADA",
             _ => null
         };
+    }
+
+    private static bool IsConcluida(string? status)
+    {
+        return string.Equals(NormalizeStatus(status), StatusConcluida, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? NormalizeCondicao(string? condicao)

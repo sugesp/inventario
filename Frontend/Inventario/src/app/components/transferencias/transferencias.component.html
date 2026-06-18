@@ -85,9 +85,11 @@
             <td>{{ transferencia.criadoPorUsuarioNome || '-' }}</td>
             <td>{{ transferencia.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="actions-cell">
-              <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">Abrir</a>
+              <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">
+                {{ isConcluida(transferencia.status) ? 'Detalhes' : 'Abrir' }}
+              </a>
               <button
-                *ngIf="authService.isAdmin"
+                *ngIf="canDeleteTransferencia(transferencia)"
                 class="btn btn-sm btn-standard-danger"
                 type="button"
                 (click)="deleteTransferencia(transferencia.id)"

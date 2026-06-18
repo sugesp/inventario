@@ -18,7 +18,7 @@ export class ConsultaTombamentoComponent {
   constructor(
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
-  ) {}
+  ) { }
 
   get totalOcorrencias(): number {
     if (!this.resultado) {

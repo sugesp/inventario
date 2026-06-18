@@ -74,6 +74,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   form: TransferenciaForm = this.createEmptyForm();
   itens: TransferenciaItem[] = [];
   itemPendente: TransferenciaItem | null = null;
+  transferenciaAtual: Transferencia | null = null;
   manualModalOpen = false;
 
   private scannerStream: MediaStream | null = null;
@@ -118,7 +119,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   get statusOptions(): string[] {
-    return ['RASCUNHO', 'EM SEPARAÇÃO', 'AGUARDANDO CONCLUSÃO', 'CONCLUÍDA', 'CANCELADA'];
+    return ['RASCUNHO', 'AGUARDANDO ASSINATURA', 'CONCLUÍDA', 'CANCELADA'];
   }
 
   get condicaoOptions(): string[] {
@@ -126,11 +127,19 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   get canSave(): boolean {
-    return !!this.form.unidadeAdministrativaDestinoId && !!this.form.responsavelDestino.trim() && this.itens.length > 0;
+    return !this.isReadOnly && !!this.form.unidadeAdministrativaDestinoId && !!this.form.responsavelDestino.trim() && this.itens.length > 0;
   }
 
   get canAdvanceToItens(): boolean {
     return !!this.form.unidadeAdministrativaDestinoId;
+  }
+
+  get isConcluida(): boolean {
+    return this.normalizeStatus(this.form.status) === 'concluida';
+  }
+
+  get isReadOnly(): boolean {
+    return this.isConcluida;
   }
 
   loadUnidadesAdministrativas(): void {
@@ -159,6 +168,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   startQrFlow(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     if (this.scannerStarting || this.readingCode) {
       return;
     }
@@ -172,6 +185,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   async onIdentificationPhotoSelected(event: Event): Promise<void> {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
@@ -259,6 +276,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   addManualItem(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     if (!this.manualItem.descricao.trim()) {
       this.toastr.warning('Informe a descrição do item para adicionar manualmente.');
       return;
@@ -277,13 +298,22 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   removeItem(index: number): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.itens.splice(index, 1);
   }
 
   resetTransferencia(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.form = this.createEmptyForm();
     this.manualItem = this.createEmptyDraftItem();
     this.itemPendente = null;
+    this.transferenciaAtual = null;
     this.itens = [];
     this.codeReadMessage = '';
     this.scannerMessage = '';
@@ -296,6 +326,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   goToItensStep(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     if (!this.canAdvanceToItens) {
       this.toastr.warning('Selecione a unidade administrativa de destino para continuar.');
       return;
@@ -314,6 +348,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   openManualModal(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.manualItem = this.createEmptyDraftItem();
     this.itemPendente = null;
     this.manualModalOpen = true;
@@ -326,6 +364,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   confirmarAdicionarItemPendente(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     if (!this.itemPendente) {
       return;
     }
@@ -347,10 +389,18 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   onTombamentoAntigoChange(item: TransferenciaItem, value: string): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     item.tombamentoAntigo = this.normalizeTombamentoAntigoValue(value);
   }
 
   onManualTombamentoBlur(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const tombamento = this.formatTombamentoValue(this.manualItem.tombamento);
     const digits = tombamento.replace(/\D/g, '');
     this.manualItem.tombamento = tombamento;
@@ -391,6 +441,11 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   save(status?: string): void {
+    if (this.isReadOnly) {
+      this.toastr.info('Transferências concluídas ficam disponíveis apenas para consulta.');
+      return;
+    }
+
     if (!this.canSave) {
       this.toastr.warning('Selecione a unidade administrativa, o responsável e adicione ao menos um item.');
       return;
@@ -421,6 +476,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   private handleDetectedCode(rawValue: string): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const tombamento = this.formatTombamentoValue(rawValue);
     if (!tombamento) {
       this.toastr.warning('Não foi possível identificar um tombamento válido.');
@@ -471,6 +530,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   private applyTransferencia(transferencia: Transferencia): void {
+    this.transferenciaAtual = transferencia;
     this.form = {
       unidadeAdministrativaDestinoId: transferencia.unidadeAdministrativaDestinoId,
       responsavelDestino: transferencia.responsavelDestino,
@@ -480,7 +540,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       observacao: transferencia.observacao,
     };
     this.itens = transferencia.itens.map((item) => ({ ...item }));
-    this.currentStep = this.itens.length > 0 ? 'resumo' : 'dados';
+    this.currentStep = this.isReadOnly || this.itens.length > 0 ? 'resumo' : 'dados';
   }
 
   private toPayload(nextStatus?: string): TransferenciaPayload {
@@ -523,6 +583,14 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       status: 'RASCUNHO',
       observacao: '',
     };
+  }
+
+  private normalizeStatus(status: string | null | undefined): string {
+    return (status ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   private createEmptyDraftItem(): DraftItem {

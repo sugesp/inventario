@@ -47,13 +47,13 @@ export class SearchableSelectComponent implements ControlValueAccessor, Validato
   @Input() searchPlaceholder = 'Digite para pesquisar';
   @Input() emptyOptionLabel: string | null = null;
   @Input() required = false;
+  @Input() disabled = false;
 
   @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
   value: SearchableSelectValue = null;
   searchTerm = '';
   isOpen = false;
-  disabled = false;
 
   private onChange: (value: SearchableSelectValue) => void = () => undefined;
   private onTouched: () => void = () => undefined;

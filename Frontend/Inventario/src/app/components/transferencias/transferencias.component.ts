@@ -28,7 +28,7 @@ export class TransferenciasComponent implements OnInit {
   }
 
   get statusOptions(): string[] {
-    return [...new Set(this.transferencias.map((item) => item.status).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    return ['RASCUNHO', 'AGUARDANDO ASSINATURA', 'CONCLUÍDA', 'CANCELADA'];
   }
 
   get filteredTransferencias(): Transferencia[] {
@@ -137,10 +137,18 @@ export class TransferenciasComponent implements OnInit {
         this.toastr.success('Transferência excluída com sucesso.');
         this.loadTransferencias();
       },
-      error: () => {
-        this.toastr.error('Não foi possível excluir a transferência.');
+      error: (error) => {
+        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir a transferência.');
       },
     });
+  }
+
+  canDeleteTransferencia(transferencia: Transferencia): boolean {
+    return this.authService.isAdmin && !this.isConcluida(transferencia.status);
+  }
+
+  isConcluida(status: string | null | undefined): boolean {
+    return this.normalize(status) === 'concluida';
   }
 
   private ensureValidPage(): void {

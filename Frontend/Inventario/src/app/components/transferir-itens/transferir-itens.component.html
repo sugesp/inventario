@@ -1,9 +1,9 @@
 <div class="inventario-grid">
   <section class="hero-card">
     <span class="list-header-eyebrow">Transferências</span>
-    <h2 class="list-header-title">{{ transferenciaId ? 'Editar transferência' : 'Nova transferência' }}</h2>
+    <h2 class="list-header-title">{{ isReadOnly ? 'Detalhes da transferência' : (transferenciaId ? 'Editar transferência' : 'Nova transferência') }}</h2>
     <p class="hero-copy">
-      Monte a transferência em etapas: defina o destino, adicione os itens e finalize pelo resumo.
+      {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e finalize pelo resumo.' }}
     </p>
   </section>
 
@@ -13,7 +13,7 @@
         <span>1</span>
         <strong>Dados</strong>
       </button>
-      <button type="button" class="transfer-step-tab" [class.is-active]="currentStep === 'itens'" (click)="goToItensStep()">
+      <button type="button" class="transfer-step-tab" [class.is-active]="currentStep === 'itens'" [disabled]="isReadOnly" (click)="goToItensStep()">
         <span>2</span>
         <strong>Itens</strong>
       </button>
@@ -43,15 +43,16 @@
           placeholder="Selecione"
           searchPlaceholder="Pesquisar unidade de destino"
           emptyOptionLabel="Selecione"
+          [disabled]="isReadOnly"
         ></app-searchable-select>
       </div>
       <div class="col-md-6">
         <label class="form-label">Responsável</label>
-        <input class="form-control" [(ngModel)]="form.responsavelDestino" placeholder="Opcional" />
+        <input class="form-control" [(ngModel)]="form.responsavelDestino" placeholder="Opcional" [readonly]="isReadOnly" />
       </div>
     </div>
 
-    <div class="step-actions">
+    <div class="step-actions" *ngIf="!isReadOnly">
       <button class="btn btn-primary" type="button" (click)="goToItensStep()" [disabled]="!canAdvanceToItens">
         Continuar para os itens
       </button>
@@ -65,7 +66,7 @@
         <strong>{{ unidadeSelecionada.sigla }} - {{ unidadeSelecionada.nome }}</strong>
         <small>{{ form.responsavelDestino || 'Responsável não informado' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm transfer-destination-button" type="button" (click)="goToDadosStep()">
+      <button class="btn btn-outline-secondary btn-sm transfer-destination-button" type="button" *ngIf="!isReadOnly" (click)="goToDadosStep()">
         <i class="fa-solid fa-right-left" aria-hidden="true"></i>
         <span>Alterar</span>
       </button>
@@ -88,7 +89,7 @@
       (change)="onIdentificationPhotoSelected($event)"
     />
 
-    <div class="capture-choice-grid">
+    <div class="capture-choice-grid" *ngIf="!isReadOnly">
       <button class="btn btn-primary capture-choice-button" type="button" (click)="startQrFlow()" [disabled]="readingCode || scannerStarting || consultaEmAndamento">
         {{ scannerStarting ? 'Abrindo câmera...' : 'Ler QR code' }}
       </button>
@@ -140,7 +141,7 @@
       {{ itens.length }} item(ns) adicionado(s) à transferência.
     </div>
 
-    <div class="step-footer-actions">
+    <div class="step-footer-actions" *ngIf="!isReadOnly">
       <button class="btn btn-standard-danger" type="button" (click)="resetTransferencia()">Limpar transferência</button>
       <button class="btn btn-outline-secondary" type="button" (click)="goToDadosStep()">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToResumoStep()" [disabled]="itens.length === 0">
@@ -168,26 +169,42 @@
           <span class="summary-overview-label">Responsável</span>
           <strong>{{ form.responsavelDestino || '-' }}</strong>
         </div>
+        <div class="summary-overview-card" *ngIf="transferenciaAtual">
+          <span class="summary-overview-label">Criado por</span>
+          <strong>{{ transferenciaAtual.criadoPorUsuarioNome || '-' }}</strong>
+        </div>
+        <div class="summary-overview-card" *ngIf="transferenciaAtual?.finalizadoPorUsuarioNome">
+          <span class="summary-overview-label">Finalizado por</span>
+          <strong>{{ transferenciaAtual?.finalizadoPorUsuarioNome }}</strong>
+        </div>
+        <div class="summary-overview-card" *ngIf="transferenciaAtual">
+          <span class="summary-overview-label">Criado em</span>
+          <strong>{{ transferenciaAtual.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+        <div class="summary-overview-card" *ngIf="transferenciaAtual?.updatedAt">
+          <span class="summary-overview-label">Atualizado em</span>
+          <strong>{{ transferenciaAtual?.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
       </div>
 
       <div class="summary-card transfer-summary-card summary-form-card">
         <div>
           <label class="form-label">Status</label>
-          <select class="form-select" [(ngModel)]="form.status">
+          <select class="form-select" [(ngModel)]="form.status" [disabled]="isReadOnly">
             <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
           </select>
         </div>
         <div>
           <label class="form-label">ID SEI Termo</label>
-          <input class="form-control" [(ngModel)]="form.idSeiTermo" placeholder="Opcional" />
+          <input class="form-control" [(ngModel)]="form.idSeiTermo" placeholder="Opcional" [readonly]="isReadOnly" />
         </div>
         <div>
           <label class="form-label">Data da entrega</label>
-          <input class="form-control" type="date" [(ngModel)]="form.dataEntrega" />
+          <input class="form-control" type="date" [(ngModel)]="form.dataEntrega" [readonly]="isReadOnly" />
         </div>
         <div class="summary-card-full">
           <label class="form-label">Observação geral</label>
-          <textarea class="form-control summary-observacao" rows="2" [(ngModel)]="form.observacao"></textarea>
+          <textarea class="form-control summary-observacao" rows="2" [(ngModel)]="form.observacao" [readonly]="isReadOnly"></textarea>
         </div>
       </div>
     </div>
@@ -207,25 +224,25 @@
               <span class="transfer-item-tag transfer-item-tag-muted">{{ item.statusItem || 'Sem status' }}</span>
             </div>
           </div>
-          <button class="btn btn-standard-danger transfer-item-remove" type="button" (click)="removeItem(i)">Remover</button>
+          <button class="btn btn-standard-danger transfer-item-remove" type="button" *ngIf="!isReadOnly" (click)="removeItem(i)">Remover</button>
         </div>
 
         <div class="transfer-item-row transfer-item-row-compact">
           <div class="transfer-item-field transfer-item-field-sm">
             <label class="form-label">Tombamento novo</label>
-            <input class="form-control" [(ngModel)]="item.tombamentoNovo" />
+            <input class="form-control" [(ngModel)]="item.tombamentoNovo" [readonly]="isReadOnly" />
           </div>
           <div class="transfer-item-field transfer-item-field-lg">
             <label class="form-label">Descrição</label>
-            <input class="form-control" [(ngModel)]="item.descricao" />
+            <input class="form-control" [(ngModel)]="item.descricao" [readonly]="isReadOnly" />
           </div>
           <div class="transfer-item-field transfer-item-field-sm">
             <label class="form-label">Status do item</label>
-            <input class="form-control" [(ngModel)]="item.statusItem" />
+            <input class="form-control" [(ngModel)]="item.statusItem" [readonly]="isReadOnly" />
           </div>
           <div class="transfer-item-field transfer-item-field-sm">
             <label class="form-label">Condição</label>
-            <select class="form-select" [(ngModel)]="item.condicao">
+            <select class="form-select" [(ngModel)]="item.condicao" [disabled]="isReadOnly">
               <option *ngFor="let condicao of condicaoOptions" [value]="condicao">{{ condicao }}</option>
             </select>
           </div>
@@ -236,24 +253,24 @@
           <div class="transfer-item-details-grid">
             <div>
               <label class="form-label">Tombamento antigo</label>
-              <input class="form-control" [(ngModel)]="item.tombamentoAntigo" (ngModelChange)="onTombamentoAntigoChange(item, $event)" />
+              <input class="form-control" [(ngModel)]="item.tombamentoAntigo" [readonly]="isReadOnly" (ngModelChange)="onTombamentoAntigoChange(item, $event)" />
             </div>
             <div>
               <label class="form-label">Observação</label>
-              <input class="form-control" [(ngModel)]="item.observacao" />
+              <input class="form-control" [(ngModel)]="item.observacao" [readonly]="isReadOnly" />
             </div>
           </div>
         </details>
       </div>
     </div>
 
-    <div class="step-actions">
+    <div class="step-actions" *ngIf="!isReadOnly">
       <button class="btn btn-outline-secondary" type="button" (click)="goToItensStep()">Etapa anterior</button>
       <button class="btn btn-secondary" type="button" (click)="save('RASCUNHO')" [disabled]="saving || !canSave">
         Salvar rascunho
       </button>
-      <button class="btn btn-primary btn-filled" type="button" (click)="save('AGUARDANDO CONCLUSÃO')" [disabled]="saving || !canSave">
-        Salvar para concluir depois
+      <button class="btn btn-primary btn-filled" type="button" (click)="save('AGUARDANDO ASSINATURA')" [disabled]="saving || !canSave">
+        Enviar para assinatura
       </button>
       <button class="btn btn-success btn-filled" type="button" (click)="save('CONCLUÍDA')" [disabled]="saving || !canSave">
         Concluir transferência
