@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
@@ -22,12 +22,22 @@ interface MapMarker {
   label: string;
 }
 
+interface MapDragState {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
+  centerX: number;
+  centerY: number;
+}
+
 @Component({
   selector: 'app-itens-inventariados',
   templateUrl: './itens-inventariados.component.html',
   styleUrl: './itens-inventariados.component.scss',
 })
 export class ItensInventariadosComponent implements OnInit {
+  @ViewChild('mapViewport') mapViewport?: ElementRef<HTMLElement>;
+
   itensInventariados: ItemInventariado[] = [];
   comissoes: Comissao[] = [];
 
@@ -49,6 +59,10 @@ export class ItensInventariadosComponent implements OnInit {
   mapZoom = 16;
   mapCenterLatitude = 0;
   mapCenterLongitude = 0;
+  mapDragging = false;
+  private mapViewportWidth = 640;
+  private mapViewportHeight = 640;
+  private mapDragState: MapDragState | null = null;
 
   constructor(
     readonly authService: AuthService,
@@ -368,15 +382,82 @@ export class ItensInventariadosComponent implements OnInit {
     this.mapCenterLatitude = items.reduce((total, item) => total + item.latitude!, 0) / items.length;
     this.mapCenterLongitude = items.reduce((total, item) => total + item.longitude!, 0) / items.length;
     this.mapZoom = this.getBestMapZoom(items);
-    this.mapTiles = this.buildMapTiles();
-    this.mapMarkers = this.buildMapMarkers(items);
     this.mapOpen = true;
+    setTimeout(() => this.refreshMap());
   }
 
   closeMap(): void {
     this.mapOpen = false;
     this.mapTiles = [];
     this.mapMarkers = [];
+    this.mapDragging = false;
+    this.mapDragState = null;
+  }
+
+  zoomMapIn(): void {
+    this.setMapZoom(this.mapZoom + 1);
+  }
+
+  zoomMapOut(): void {
+    this.setMapZoom(this.mapZoom - 1);
+  }
+
+  onMapWheel(event: WheelEvent): void {
+    event.preventDefault();
+    this.setMapZoom(this.mapZoom + (event.deltaY < 0 ? 1 : -1));
+  }
+
+  beginMapDrag(event: PointerEvent): void {
+    if (event.button !== 0 || (event.target as HTMLElement).closest('a, button')) {
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    this.updateMapViewportSize(target);
+    const centerPixel = this.projectToPixel(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
+    this.mapDragState = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      centerX: centerPixel.x,
+      centerY: centerPixel.y,
+    };
+    this.mapDragging = true;
+    target.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  dragMap(event: PointerEvent): void {
+    if (!this.mapDragState || this.mapDragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - this.mapDragState.clientX;
+    const deltaY = event.clientY - this.mapDragState.clientY;
+    const coordinates = this.unprojectPixel(
+      this.mapDragState.centerX - deltaX,
+      this.mapDragState.centerY - deltaY,
+      this.mapZoom
+    );
+
+    this.mapCenterLatitude = coordinates.latitude;
+    this.mapCenterLongitude = coordinates.longitude;
+    this.refreshMap();
+    event.preventDefault();
+  }
+
+  endMapDrag(event: PointerEvent): void {
+    if (!this.mapDragState || this.mapDragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    if (target.hasPointerCapture(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+
+    this.mapDragState = null;
+    this.mapDragging = false;
   }
 
   getMapMarkerTitle(marker: MapMarker): string {
@@ -453,20 +534,54 @@ export class ItensInventariadosComponent implements OnInit {
     this.fotoObjectUrls = {};
   }
 
+  private refreshMap(): void {
+    this.updateMapViewportSize();
+    this.mapTiles = this.buildMapTiles();
+    this.mapMarkers = this.buildMapMarkers(this.itensGeolocalizados);
+  }
+
+  private setMapZoom(zoom: number): void {
+    const nextZoom = Math.min(19, Math.max(3, zoom));
+    if (nextZoom === this.mapZoom) {
+      return;
+    }
+
+    this.mapZoom = nextZoom;
+    this.refreshMap();
+  }
+
+  private updateMapViewportSize(element = this.mapViewport?.nativeElement): void {
+    if (!element) {
+      return;
+    }
+
+    const rect = element.getBoundingClientRect();
+    this.mapViewportWidth = Math.max(1, rect.width);
+    this.mapViewportHeight = Math.max(1, rect.height);
+  }
+
   private buildMapTiles(): MapTile[] {
-    const centerTile = this.projectToTile(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
-    const startX = Math.floor(centerTile.x) - 1;
-    const startY = Math.floor(centerTile.y) - 1;
+    const centerPixel = this.projectToPixel(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
+    const topLeftX = centerPixel.x - this.mapViewportWidth / 2;
+    const topLeftY = centerPixel.y - this.mapViewportHeight / 2;
+    const startX = Math.floor(topLeftX / 256) - 1;
+    const endX = Math.floor((topLeftX + this.mapViewportWidth) / 256) + 1;
+    const startY = Math.floor(topLeftY / 256) - 1;
+    const endY = Math.floor((topLeftY + this.mapViewportHeight) / 256) + 1;
+    const maxTile = 2 ** this.mapZoom;
     const tiles: MapTile[] = [];
 
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const tileX = startX + col;
-        const tileY = startY + row;
+    for (let tileY = startY; tileY <= endY; tileY += 1) {
+      if (tileY < 0 || tileY >= maxTile) {
+        continue;
+      }
+
+      for (let tileX = startX; tileX <= endX; tileX += 1) {
+        const wrappedTileX = ((tileX % maxTile) + maxTile) % maxTile;
         tiles.push({
-          url: `https://tile.openstreetmap.org/${this.mapZoom}/${tileX}/${tileY}.png`,
-          left: (col / 3) * 100,
-          top: (row / 3) * 100,
+          url: `https://tile.openstreetmap.org/${this.mapZoom}/${wrappedTileX}/${tileY}.png`,
+          left: tileX * 256 - topLeftX,
+          top: tileY * 256 - topLeftY,
         });
       }
     }
@@ -475,17 +590,17 @@ export class ItensInventariadosComponent implements OnInit {
   }
 
   private buildMapMarkers(items: ItemInventariado[]): MapMarker[] {
-    const centerTile = this.projectToTile(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
-    const startX = Math.floor(centerTile.x) - 1;
-    const startY = Math.floor(centerTile.y) - 1;
+    const centerPixel = this.projectToPixel(this.mapCenterLatitude, this.mapCenterLongitude, this.mapZoom);
+    const topLeftX = centerPixel.x - this.mapViewportWidth / 2;
+    const topLeftY = centerPixel.y - this.mapViewportHeight / 2;
 
     return items.map((item, index) => {
-      const point = this.projectToTile(item.latitude!, item.longitude!, this.mapZoom);
+      const point = this.projectToPixel(item.latitude!, item.longitude!, this.mapZoom);
 
       return {
         item,
-        left: ((point.x - startX) / 3) * 100,
-        top: ((point.y - startY) / 3) * 100,
+        left: point.x - topLeftX,
+        top: point.y - topLeftY,
         label: String(index + 1),
       };
     });
@@ -557,6 +672,18 @@ export class ItensInventariadosComponent implements OnInit {
     return {
       x: tile.x * 256,
       y: tile.y * 256,
+    };
+  }
+
+  private unprojectPixel(x: number, y: number, zoom: number): { latitude: number; longitude: number } {
+    const scale = 256 * 2 ** zoom;
+    const longitude = x / scale * 360 - 180;
+    const n = Math.PI - 2 * Math.PI * y / scale;
+    const latitude = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+
+    return {
+      latitude: Math.max(-85.05112878, Math.min(85.05112878, latitude)),
+      longitude: ((longitude + 540) % 360) - 180,
     };
   }
 

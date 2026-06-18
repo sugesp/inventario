@@ -196,13 +196,23 @@
     </div>
 
     <div class="mapa-body">
-      <div class="openstreet-map">
-        <img *ngFor="let tile of mapTiles" class="map-tile" [src]="tile.url" alt="" [style.left.%]="tile.left"
-          [style.top.%]="tile.top" />
+      <div #mapViewport class="openstreet-map" [class.is-dragging]="mapDragging" (wheel)="onMapWheel($event)"
+        (pointerdown)="beginMapDrag($event)" (pointermove)="dragMap($event)" (pointerup)="endMapDrag($event)"
+        (pointercancel)="endMapDrag($event)" (pointerleave)="endMapDrag($event)">
+        <img *ngFor="let tile of mapTiles" class="map-tile" [src]="tile.url" alt="" [style.left.px]="tile.left"
+          [style.top.px]="tile.top" />
         <a *ngFor="let marker of mapMarkers" class="map-marker" [href]="getMapaUrl(marker.item)" target="_blank"
-          rel="noopener" [title]="getMapMarkerTitle(marker)" [style.left.%]="marker.left" [style.top.%]="marker.top">
+          rel="noopener" [title]="getMapMarkerTitle(marker)" [style.left.px]="marker.left" [style.top.px]="marker.top">
           {{ marker.label }}
         </a>
+        <div class="map-controls">
+          <button class="map-control-button" type="button" aria-label="Aproximar mapa" (click)="zoomMapIn()">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          </button>
+          <button class="map-control-button" type="button" aria-label="Afastar mapa" (click)="zoomMapOut()">
+            <i class="fa-solid fa-minus" aria-hidden="true"></i>
+          </button>
+        </div>
         <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
           © OpenStreetMap contributors
         </a>

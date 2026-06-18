@@ -349,13 +349,20 @@
   border: 1px solid #d8dde6;
   border-radius: 16px;
   background: #dbe7ef;
+  cursor: grab;
+  touch-action: none;
+}
+
+.openstreet-map.is-dragging {
+  cursor: grabbing;
 }
 
 .map-tile {
   position: absolute;
-  width: 33.3334%;
-  height: 33.3334%;
+  width: 256px;
+  height: 256px;
   object-fit: cover;
+  pointer-events: none;
   user-select: none;
 }
 
@@ -375,6 +382,7 @@
   text-decoration: none;
   transform: translate(-50%, -100%);
   box-shadow: 0 8px 18px rgba(24, 36, 48, 0.28);
+  z-index: 2;
 }
 
 .map-marker::after {
@@ -393,17 +401,46 @@
 .map-marker:hover {
   color: #fff;
   background: #b92e21;
-  z-index: 2;
+  z-index: 3;
 }
 
 .map-marker:hover::after {
   background: #b92e21;
 }
 
+.map-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 4;
+  display: grid;
+  gap: 8px;
+}
+
+.map-control-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #c7d4e3;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #21384f;
+  box-shadow: 0 8px 18px rgba(24, 36, 48, 0.16);
+}
+
+.map-control-button:hover,
+.map-control-button:focus {
+  border-color: #8db1d4;
+  color: #0c5aa6;
+}
+
 .map-attribution {
   position: absolute;
   right: 10px;
   bottom: 8px;
+  z-index: 4;
   padding: 3px 7px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.86);
