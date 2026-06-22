@@ -63,6 +63,9 @@ interface InventoryGeolocation {
 export class InventariarItemComponent implements OnInit, OnDestroy {
   private static readonly CLASSIFICACOES = ['SERVIVEL', 'INSERVIVEL', 'OBSOLETO'] as const;
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
+  private static readonly QR_SCAN_MAX_DIMENSION = 800;
+  private static readonly QR_SCAN_CROP_WIDTH_RATIO = 0.9;
+  private static readonly QR_SCAN_CROP_HEIGHT_RATIO = 0.65;
   private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 3840;
   private static readonly UPLOAD_IMAGE_QUALITY = 0.92;
   private static readonly PHOTO_CAPTURE_MAX_DIMENSION = 3200;
@@ -413,8 +416,9 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'environment' },
-          width: { ideal: InventariarItemComponent.UPLOAD_IMAGE_MAX_DIMENSION },
-          height: { ideal: 2160 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 24, max: 30 },
         },
         audio: false,
       });
@@ -885,7 +889,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const formats = ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e'];
+    const formats = ['qr_code'];
     if (typeof window.BarcodeDetector.getSupportedFormats !== 'function') {
       return new window.BarcodeDetector({ formats });
     }
@@ -970,8 +974,9 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   private async detectCodeFromVideoFrame(video: HTMLVideoElement): Promise<string | null> {
+    const crop = this.getScannerCrop(video);
     if (this.scannerDetector) {
-      const bitmap = await createImageBitmap(video);
+      const bitmap = await createImageBitmap(video, crop.x, crop.y, crop.width, crop.height);
       try {
         const results = await this.scannerDetector.detect(bitmap);
         const rawValue = results.find((item) => !!item.rawValue)?.rawValue?.trim();
@@ -985,21 +990,34 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     const canvas = this.scannerCanvas ?? document.createElement('canvas');
     this.scannerCanvas = canvas;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, InventariarItemComponent.QR_SCAN_MAX_DIMENSION / Math.max(crop.width, crop.height));
+    canvas.width = Math.round(crop.width * scale);
+    canvas.height = Math.round(crop.height * scale);
 
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) {
       return null;
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const result = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'attemptBoth',
+      inversionAttempts: 'dontInvert',
     });
 
     return result?.data?.trim() ?? null;
+  }
+
+  private getScannerCrop(video: HTMLVideoElement): { x: number; y: number; width: number; height: number } {
+    const width = Math.round(video.videoWidth * InventariarItemComponent.QR_SCAN_CROP_WIDTH_RATIO);
+    const height = Math.round(video.videoHeight * InventariarItemComponent.QR_SCAN_CROP_HEIGHT_RATIO);
+
+    return {
+      x: Math.max(0, Math.round((video.videoWidth - width) / 2)),
+      y: Math.max(0, Math.round((video.videoHeight - height) / 2)),
+      width,
+      height,
+    };
   }
 
   private async detectCodeFromImageFile(file: File): Promise<string | null> {

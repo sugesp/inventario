@@ -54,6 +54,9 @@ type TransferenciaStep = 'dados' | 'itens' | 'resumo';
 })
 export class TransferirItensComponent implements OnInit, OnDestroy {
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
+  private static readonly QR_SCAN_MAX_DIMENSION = 800;
+  private static readonly QR_SCAN_CROP_WIDTH_RATIO = 0.9;
+  private static readonly QR_SCAN_CROP_HEIGHT_RATIO = 0.65;
 
   @ViewChild('scannerVideo') scannerVideo?: ElementRef<HTMLVideoElement>;
   @ViewChild('identificationInput') identificationInput?: ElementRef<HTMLInputElement>;
@@ -227,7 +230,12 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       this.scannerDetector = await this.createDetector();
       this.scannerCanvas = document.createElement('canvas');
       this.scannerStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 24, max: 30 },
+        },
         audio: false,
       });
       this.scannerOpen = true;
@@ -678,7 +686,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const formats = ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e'];
+    const formats = ['qr_code'];
     if (typeof window.BarcodeDetector.getSupportedFormats !== 'function') {
       return new window.BarcodeDetector({ formats });
     }
@@ -719,8 +727,9 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   private async detectCodeFromVideoFrame(video: HTMLVideoElement): Promise<string | null> {
+    const crop = this.getScannerCrop(video);
     if (this.scannerDetector) {
-      const bitmap = await createImageBitmap(video);
+      const bitmap = await createImageBitmap(video, crop.x, crop.y, crop.width, crop.height);
       try {
         const results = await this.scannerDetector.detect(bitmap);
         const rawValue = results.find((item) => !!item.rawValue)?.rawValue?.trim();
@@ -734,21 +743,34 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
 
     const canvas = this.scannerCanvas ?? document.createElement('canvas');
     this.scannerCanvas = canvas;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, TransferirItensComponent.QR_SCAN_MAX_DIMENSION / Math.max(crop.width, crop.height));
+    canvas.width = Math.round(crop.width * scale);
+    canvas.height = Math.round(crop.height * scale);
 
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) {
       return null;
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const result = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'attemptBoth',
+      inversionAttempts: 'dontInvert',
     });
 
     return result?.data?.trim() ?? null;
+  }
+
+  private getScannerCrop(video: HTMLVideoElement): { x: number; y: number; width: number; height: number } {
+    const width = Math.round(video.videoWidth * TransferirItensComponent.QR_SCAN_CROP_WIDTH_RATIO);
+    const height = Math.round(video.videoHeight * TransferirItensComponent.QR_SCAN_CROP_HEIGHT_RATIO);
+
+    return {
+      x: Math.max(0, Math.round((video.videoWidth - width) / 2)),
+      y: Math.max(0, Math.round((video.videoHeight - height) / 2)),
+      width,
+      height,
+    };
   }
 
   private async detectCodeFromImageFile(file: File): Promise<string | null> {
