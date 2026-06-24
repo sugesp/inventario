@@ -149,16 +149,27 @@
               Nenhum membro vinculado até o momento.
             </div>
 
-            <div class="member-grid" *ngIf="selectedMembers.length > 0">
-              <div class="member-card member-card-static" *ngFor="let usuario of selectedMembers">
-                <div class="member-copy">
-                  <strong>{{ usuario.nome }}</strong>
-                  <small>{{ usuario.cpf }}</small>
-                </div>
-                <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canManageCurrentComissao" (click)="removeMember(usuario.id)" [disabled]="savingMembers">
-                  {{ savingMembers ? 'Salvando...' : 'Remover' }}
-                </button>
-              </div>
+            <div class="table-responsive" *ngIf="selectedMembers.length > 0">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th class="text-end" *ngIf="canManageCurrentComissao">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let usuario of selectedMembers">
+                    <td>{{ usuario.nome }}</td>
+                    <td>{{ usuario.cpf }}</td>
+                    <td class="text-end" *ngIf="canManageCurrentComissao">
+                      <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeMember(usuario.id)" [disabled]="savingMembers">
+                        {{ savingMembers ? 'Salvando...' : 'Remover' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
