@@ -535,10 +535,6 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return locais.length ? locais.join(', ') : '-';
   }
 
-  getInconsistenciaResponsaveisLabel(nomes: string[]): string {
-    return nomes.length ? nomes.join(', ') : '-';
-  }
-
   get filteredLocalMembers(): UserSummary[] {
     const term = this.localMemberTerm.trim().toLowerCase();
     if (!term) {

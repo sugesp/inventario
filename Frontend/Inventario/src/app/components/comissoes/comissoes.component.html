@@ -225,7 +225,6 @@
                     <thead>
                       <tr>
                         <th>Local</th>
-                        <th>Responsáveis</th>
                         <th>Inventariado por</th>
                         <th>Data</th>
                         <th>Classificação</th>
@@ -235,7 +234,6 @@
                     <tbody>
                       <tr *ngFor="let ocorrencia of inconsistencia.ocorrencias">
                         <td>{{ ocorrencia.localNome || '-' }}</td>
-                        <td>{{ getInconsistenciaResponsaveisLabel(ocorrencia.localMembrosNomes) }}</td>
                         <td>{{ ocorrencia.usuarioNome || '-' }}</td>
                         <td>{{ ocorrencia.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
                         <td>{{ ocorrencia.status || '-' }}</td>
