@@ -34,6 +34,32 @@ export interface ItemInventariado {
   fotos: ItemInventarioFoto[];
 }
 
+export interface InconsistenciaInventario {
+  tombamento: string;
+  descricao: string;
+  comissaoId?: string | null;
+  comissaoAno?: number | null;
+  quantidadeOcorrencias: number;
+  quantidadeLocais: number;
+  ocorrencias: InconsistenciaInventarioOcorrencia[];
+}
+
+export interface InconsistenciaInventarioOcorrencia {
+  itemInventariadoId: string;
+  tombamentoNovo: string;
+  tombamentoAntigo: string;
+  descricao: string;
+  localId: string;
+  localNome: string;
+  localMembrosNomes: string[];
+  usuarioId: string;
+  usuarioNome: string;
+  status: string;
+  estadoConservacao: string;
+  dataInventario: string;
+  observacao: string;
+}
+
 export interface ConsultaPublicaBem {
   tombamento: string;
   tombamentoAntigo: string;

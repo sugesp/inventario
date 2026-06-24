@@ -34,6 +34,17 @@ public class ItensInventariadosController : ControllerBase
     }
 
     [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
+    [HttpGet("inconsistencias")]
+    public async Task<ActionResult<IEnumerable<InconsistenciaInventarioDto>>> GetInconsistencias(CancellationToken cancellationToken)
+    {
+        return Ok(await _service.GetInconsistenciasAsync(
+            GetUsuarioId(),
+            User.IsInRole("Administrador") || User.IsInRole("ControleInterno"),
+            cancellationToken
+        ));
+    }
+
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("consulta-publica/{tombamento}")]
     public async Task<ActionResult<ConsultaPublicaBemDto>> ConsultarResumoPublico(string tombamento, CancellationToken cancellationToken)
     {

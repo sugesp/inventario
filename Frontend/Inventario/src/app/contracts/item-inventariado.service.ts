@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ConsultaPublicaBem, ConsultaTombamento, ItemInventariado } from './item-inventariado.model';
+import { ConsultaPublicaBem, ConsultaTombamento, InconsistenciaInventario, ItemInventariado } from './item-inventariado.model';
 
 @Injectable({ providedIn: 'root' })
 export class ItemInventariadoService {
@@ -12,6 +12,10 @@ export class ItemInventariadoService {
 
   getAll(): Observable<ItemInventariado[]> {
     return this.http.get<ItemInventariado[]>(this.baseUrl);
+  }
+
+  getInconsistencias(): Observable<InconsistenciaInventario[]> {
+    return this.http.get<InconsistenciaInventario[]>(`${this.baseUrl}/inconsistencias`);
   }
 
   consultarResumoPublico(tombamento: string): Observable<ConsultaPublicaBem> {

@@ -7,9 +7,13 @@ import { AuthService } from '../../auth/auth.service';
 import { UserSummary } from '../../auth/auth.model';
 import { Comissao, ComissaoPayload } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
+import { InconsistenciaInventario } from '../../contracts/item-inventariado.model';
+import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
+
+type ComissaoTab = 'dados' | 'membros' | 'locais' | 'inconsistencias';
 
 interface LocalMapTile {
   url: string;
@@ -39,6 +43,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   loadingUsuarios = false;
   loadingLocais = false;
   loadingComissao = false;
+  loadingInconsistencias = false;
   saving = false;
   savingLocal = false;
   showModal = false;
@@ -46,7 +51,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   showLocalModal = false;
   editingId: string | null = null;
   editingLocalId: string | null = null;
-  activeTab: 'dados' | 'membros' | 'locais' = 'dados';
+  activeTab: ComissaoTab = 'dados';
+  inconsistenciasInventario: InconsistenciaInventario[] = [];
   memberTerm = '';
   memberPageNumber = 1;
   readonly memberPageSize = 10;
@@ -86,6 +92,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   constructor(
     private readonly comissaoService: ComissaoService,
     readonly authService: AuthService,
+    private readonly itemInventariadoService: ItemInventariadoService,
     private readonly localService: LocalService,
     private readonly toastr: ToastrService,
     private readonly route: ActivatedRoute,
@@ -488,8 +495,48 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.usuariosInventario.find((item) => item.id === presidenteId)?.nome ?? '-';
   }
 
-  setActiveTab(tab: 'dados' | 'membros' | 'locais'): void {
+  setActiveTab(tab: ComissaoTab): void {
     this.activeTab = tab;
+    if (tab === 'inconsistencias') {
+      this.loadInconsistenciasInventario();
+    }
+  }
+
+  loadInconsistenciasInventario(): void {
+    if (!this.editingId) {
+      return;
+    }
+
+    this.loadingInconsistencias = true;
+    this.itemInventariadoService.getInconsistencias().subscribe({
+      next: (data) => {
+        this.inconsistenciasInventario = data;
+        this.loadingInconsistencias = false;
+      },
+      error: () => {
+        this.loadingInconsistencias = false;
+        this.toastr.error('Não foi possível carregar as inconsistências desta comissão.');
+      },
+    });
+  }
+
+  get inconsistenciasDaComissao(): InconsistenciaInventario[] {
+    return this.inconsistenciasInventario.filter((item) => item.comissaoId === this.editingId);
+  }
+
+  get totalOcorrenciasInconsistencias(): number {
+    return this.inconsistenciasDaComissao.reduce((total, item) => total + item.quantidadeOcorrencias, 0);
+  }
+
+  getInconsistenciaLocaisLabel(inconsistencia: InconsistenciaInventario): string {
+    const locais = [...new Set(inconsistencia.ocorrencias.map((item) => item.localNome).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+
+    return locais.length ? locais.join(', ') : '-';
+  }
+
+  getInconsistenciaResponsaveisLabel(nomes: string[]): string {
+    return nomes.length ? nomes.join(', ') : '-';
   }
 
   get filteredLocalMembers(): UserSummary[] {

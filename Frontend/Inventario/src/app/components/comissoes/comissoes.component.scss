@@ -168,12 +168,15 @@
 }
 
 .comissao-tab {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid #d7e0ec;
   background: #f5f8fc;
   color: #40566f;
   border-radius: 999px;
   padding: 10px 16px;
   font-weight: 600;
+  text-decoration: none;
   transition: all 0.18s ease;
 }
 
@@ -273,6 +276,49 @@
   color: #36536f;
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+.inconsistencia-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inconsistencia-summary span,
+.inconsistencia-head span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #8a5200;
+  font-weight: 700;
+}
+
+.inconsistencia-list {
+  display: grid;
+  gap: 12px;
+}
+
+.inconsistencia-item {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.inconsistencia-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inconsistencia-head small {
+  display: block;
+  margin-top: 4px;
+  color: #6c7a89;
 }
 
 .vinculo-list {
@@ -402,6 +448,10 @@
 
   .team-item {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inconsistencia-head {
     flex-direction: column;
   }
 

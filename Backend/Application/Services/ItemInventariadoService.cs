@@ -71,6 +71,85 @@ public class ItemInventariadoService : IItemInventariadoService
         return entity is null ? null : MapToDto(entity);
     }
 
+    public async Task<IEnumerable<InconsistenciaInventarioDto>> GetInconsistenciasAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = QueryBase()
+            .Where(x => x.ComissaoId != null && !string.IsNullOrWhiteSpace(x.TombamentoNovo));
+
+        if (!usuarioAdministradorOuControleInterno)
+        {
+            query = query.Where(x =>
+                x.Comissao != null
+                && x.Comissao.DeletedAt == null
+                && x.Comissao.Status == "Ativa"
+                && x.Comissao.PresidenteId == usuarioAutenticadoId
+            );
+        }
+
+        var items = await query.ToListAsync(cancellationToken);
+
+        return items
+            .Select(x => new
+            {
+                Item = x,
+                TombamentoNormalizado = NormalizeDigits(x.TombamentoNovo)
+            })
+            .Where(x => !string.IsNullOrWhiteSpace(x.TombamentoNormalizado))
+            .GroupBy(x => new { x.Item.ComissaoId, x.Item.Comissao?.Ano, x.TombamentoNormalizado })
+            .Select(group => new
+            {
+                group.Key.ComissaoId,
+                group.Key.Ano,
+                group.Key.TombamentoNormalizado,
+                Items = group.Select(x => x.Item).ToList(),
+                LocalCount = group.Select(x => x.Item.LocalId).Distinct().Count()
+            })
+            .Where(group => group.LocalCount > 1)
+            .OrderByDescending(group => group.Ano)
+            .ThenBy(group => group.TombamentoNormalizado)
+            .Select(group => new InconsistenciaInventarioDto
+            {
+                Tombamento = group.TombamentoNormalizado,
+                Descricao = group.Items
+                    .OrderByDescending(x => x.DataInventario)
+                    .Select(x => x.Descricao)
+                    .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                ComissaoId = group.ComissaoId,
+                ComissaoAno = group.Ano,
+                QuantidadeOcorrencias = group.Items.Count,
+                QuantidadeLocais = group.LocalCount,
+                Ocorrencias = group.Items
+                    .OrderByDescending(x => x.DataInventario)
+                    .ThenBy(x => x.Local?.Nome)
+                    .Select(x => new InconsistenciaInventarioOcorrenciaDto
+                    {
+                        ItemInventariadoId = x.Id,
+                        TombamentoNovo = x.TombamentoNovo,
+                        TombamentoAntigo = x.TombamentoAntigo,
+                        Descricao = x.Descricao,
+                        LocalId = x.LocalId,
+                        LocalNome = x.Local?.Nome ?? string.Empty,
+                        LocalMembrosNomes = x.Local?.Membros
+                            .Where(m => m.DeletedAt == null && m.Usuario != null)
+                            .OrderBy(m => m.Usuario!.Nome)
+                            .Select(m => m.Usuario!.Nome)
+                            .ToArray() ?? Array.Empty<string>(),
+                        UsuarioId = x.UsuarioId,
+                        UsuarioNome = x.Usuario?.Nome ?? string.Empty,
+                        Status = x.Status,
+                        EstadoConservacao = x.EstadoConservacao,
+                        DataInventario = x.DataInventario,
+                        Observacao = x.Observacao
+                    })
+                    .ToArray()
+            })
+            .ToList();
+    }
+
     public async Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default)
     {
         var tombamentoNormalizado = NormalizeDigits(tombamento);

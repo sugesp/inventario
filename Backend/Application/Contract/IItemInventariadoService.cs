@@ -11,6 +11,11 @@ public interface IItemInventariadoService
         CancellationToken cancellationToken = default
     );
     Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<InconsistenciaInventarioDto>> GetInconsistenciasAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    );
     Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default);
     Task<ConsultaTombamentoDto> ConsultarTombamentoAsync(string tombamento, CancellationToken cancellationToken = default);
     Task<bool> ExisteTombamentoNoLocalAsync(

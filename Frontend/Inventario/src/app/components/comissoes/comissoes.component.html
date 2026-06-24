@@ -104,6 +104,7 @@
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
           </div>
         </div>
 
@@ -177,6 +178,71 @@
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
                   <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeLocal(local)">Excluir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="activeTab === 'inconsistencias'">
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <label class="form-label mb-1">Inconsistências</label>
+                <p class="section-card-hint mb-0">Itens encontrados em mais de um local nesta comissão.</p>
+              </div>
+              <button class="btn btn-primary" type="button" (click)="loadInconsistenciasInventario()" [disabled]="loadingInconsistencias">
+                {{ loadingInconsistencias ? 'Atualizando...' : 'Atualizar' }}
+              </button>
+            </div>
+
+            <div class="inline-hint" *ngIf="loadingInconsistencias">
+              Carregando inconsistências da comissão...
+            </div>
+
+            <div class="inline-hint" *ngIf="!loadingInconsistencias && inconsistenciasDaComissao.length === 0">
+              Nenhuma inconsistência encontrada nesta comissão.
+            </div>
+
+            <div class="inconsistencia-summary" *ngIf="!loadingInconsistencias && inconsistenciasDaComissao.length > 0">
+              <span>{{ inconsistenciasDaComissao.length }} tombamento(s) inconsistente(s)</span>
+              <span>{{ totalOcorrenciasInconsistencias }} ocorrência(s) para revisar</span>
+            </div>
+
+            <div class="inconsistencia-list" *ngIf="!loadingInconsistencias && inconsistenciasDaComissao.length > 0">
+              <div class="inconsistencia-item" *ngFor="let inconsistencia of inconsistenciasDaComissao">
+                <div class="inconsistencia-head">
+                  <div>
+                    <strong>{{ inconsistencia.tombamento || 'Sem tombamento' }}</strong>
+                    <small>{{ inconsistencia.descricao || 'Descrição não informada' }}</small>
+                    <small>Locais envolvidos: {{ getInconsistenciaLocaisLabel(inconsistencia) }}</small>
+                  </div>
+                  <span>{{ inconsistencia.quantidadeLocais }} locais</span>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Local</th>
+                        <th>Responsáveis</th>
+                        <th>Inventariado por</th>
+                        <th>Data</th>
+                        <th>Classificação</th>
+                        <th>Conservação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let ocorrencia of inconsistencia.ocorrencias">
+                        <td>{{ ocorrencia.localNome || '-' }}</td>
+                        <td>{{ getInconsistenciaResponsaveisLabel(ocorrencia.localMembrosNomes) }}</td>
+                        <td>{{ ocorrencia.usuarioNome || '-' }}</td>
+                        <td>{{ ocorrencia.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td>{{ ocorrencia.status || '-' }}</td>
+                        <td>{{ ocorrencia.estadoConservacao || '-' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
