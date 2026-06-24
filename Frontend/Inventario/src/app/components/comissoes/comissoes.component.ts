@@ -7,13 +7,13 @@ import { AuthService } from '../../auth/auth.service';
 import { UserSummary } from '../../auth/auth.model';
 import { Comissao, ComissaoPayload } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
-import { InconsistenciaInventario } from '../../contracts/item-inventariado.model';
+import { InconsistenciaInventario, ItemInventariado } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
 
-type ComissaoTab = 'dados' | 'membros' | 'locais' | 'inconsistencias';
+type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias';
 
 interface LocalMapTile {
   url: string;
@@ -44,14 +44,17 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   loadingLocais = false;
   loadingComissao = false;
   loadingInconsistencias = false;
+  loadingItensInventariados = false;
   saving = false;
+  savingMembers = false;
   savingLocal = false;
   showModal = false;
   showAddMemberModal = false;
   showLocalModal = false;
   editingId: string | null = null;
   editingLocalId: string | null = null;
-  activeTab: ComissaoTab = 'dados';
+  activeTab: ComissaoTab = 'resumo';
+  itensInventariados: ItemInventariado[] = [];
   inconsistenciasInventario: InconsistenciaInventario[] = [];
   memberTerm = '';
   memberPageNumber = 1;
@@ -126,7 +129,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
         this.editingId = null;
         this.selectedMembers = [];
         this.syncComissaoCollections();
-        this.activeTab = 'dados';
+        this.activeTab = 'resumo';
         this.loadComissoes();
       });
   }
@@ -215,7 +218,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   openCreateModal(): void {
     this.editingId = null;
-    this.activeTab = 'dados';
+    this.activeTab = 'resumo';
     this.selectedMembers = [];
     this.syncComissaoCollections();
     this.form = this.createEmptyForm();
@@ -245,7 +248,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.showLocalModal = false;
     this.editingId = null;
     this.editingLocalId = null;
-    this.activeTab = 'dados';
+    this.activeTab = 'resumo';
     this.saving = false;
     this.savingLocal = false;
     this.localForm = this.createEmptyLocalForm();
@@ -305,27 +308,6 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     });
   }
 
-  remove(item: Comissao): void {
-    if (!this.authService.isAdmin) {
-      this.toastr.error('Somente administradores podem excluir comissões.');
-      return;
-    }
-
-    if (!confirm(`Deseja excluir a comissão ${item.ano}?`)) {
-      return;
-    }
-
-    this.comissaoService.delete(item.id).subscribe({
-      next: () => {
-        this.toastr.success('Comissão excluída com sucesso.');
-        this.loadComissoes();
-      },
-      error: (error) => {
-        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir a comissão.');
-      },
-    });
-  }
-
   toggleMember(usuarioId: string, checked: boolean): void {
     if (checked) {
       if (!this.form.membros.some((item) => item.usuarioId === usuarioId)) {
@@ -350,22 +332,32 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   addMemberFromModal(usuario: { id: string; nome: string; cpf: string }): void {
-    if (!this.isMemberSelected(usuario.id)) {
-      this.form.membros = [...this.form.membros, { usuarioId: usuario.id }];
+    if (this.isMemberSelected(usuario.id)) {
+      return;
     }
 
-    if (this.comissaoEmEdicao && !this.comissaoEmEdicao.membros.some((item) => item.usuarioId === usuario.id)) {
-      this.comissaoEmEdicao = {
-        ...this.comissaoEmEdicao,
-        membros: [...this.comissaoEmEdicao.membros, {
-          usuarioId: usuario.id,
-          nome: usuario.nome,
-          cpf: usuario.cpf,
-        }],
-      };
+    const nextMembers = [...this.form.membros, { usuarioId: usuario.id }];
+    if (!this.editingId) {
+      this.form.membros = nextMembers;
+      this.syncSelectedMembers();
+      return;
     }
 
-    this.syncSelectedMembers();
+    this.updateComissaoMembers(nextMembers, () => {
+      if (this.comissaoEmEdicao && !this.comissaoEmEdicao.membros.some((item) => item.usuarioId === usuario.id)) {
+        this.comissaoEmEdicao = {
+          ...this.comissaoEmEdicao,
+          membros: [...this.comissaoEmEdicao.membros, {
+            usuarioId: usuario.id,
+            nome: usuario.nome,
+            cpf: usuario.cpf,
+          }],
+        };
+      }
+
+      this.toastr.success('Membro adicionado com sucesso.');
+      this.syncSelectedMembers();
+    });
   }
 
   isMemberSelected(usuarioId: string): boolean {
@@ -373,15 +365,26 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   removeMember(usuarioId: string): void {
-    this.form.membros = this.form.membros.filter((item) => item.usuarioId !== usuarioId);
-    this.localForm.membroUsuarioIds = this.localForm.membroUsuarioIds.filter((id) => id !== usuarioId);
-    if (this.comissaoEmEdicao) {
-      this.comissaoEmEdicao = {
-        ...this.comissaoEmEdicao,
-        membros: this.comissaoEmEdicao.membros.filter((item) => item.usuarioId !== usuarioId),
-      };
+    const nextMembers = this.form.membros.filter((item) => item.usuarioId !== usuarioId);
+    if (!this.editingId) {
+      this.form.membros = nextMembers;
+      this.localForm.membroUsuarioIds = this.localForm.membroUsuarioIds.filter((id) => id !== usuarioId);
+      this.syncSelectedMembers();
+      return;
     }
-    this.syncSelectedMembers();
+
+    this.updateComissaoMembers(nextMembers, () => {
+      this.localForm.membroUsuarioIds = this.localForm.membroUsuarioIds.filter((id) => id !== usuarioId);
+      if (this.comissaoEmEdicao) {
+        this.comissaoEmEdicao = {
+          ...this.comissaoEmEdicao,
+          membros: this.comissaoEmEdicao.membros.filter((item) => item.usuarioId !== usuarioId),
+        };
+      }
+
+      this.toastr.success('Membro removido com sucesso.');
+      this.syncSelectedMembers();
+    });
   }
 
   startLocalCreate(): void {
@@ -497,9 +500,30 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: ComissaoTab): void {
     this.activeTab = tab;
-    if (tab === 'inconsistencias') {
+    if (tab === 'resumo') {
+      this.loadItensInventariadosComissao();
+      this.loadInconsistenciasInventario();
+    } else if (tab === 'inconsistencias') {
       this.loadInconsistenciasInventario();
     }
+  }
+
+  loadItensInventariadosComissao(): void {
+    if (!this.editingId) {
+      return;
+    }
+
+    this.loadingItensInventariados = true;
+    this.itemInventariadoService.getAll().subscribe({
+      next: (data) => {
+        this.itensInventariados = data;
+        this.loadingItensInventariados = false;
+      },
+      error: () => {
+        this.loadingItensInventariados = false;
+        this.toastr.error('Não foi possível carregar os itens inventariados desta comissão.');
+      },
+    });
   }
 
   loadInconsistenciasInventario(): void {
@@ -522,6 +546,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   get inconsistenciasDaComissao(): InconsistenciaInventario[] {
     return this.inconsistenciasInventario.filter((item) => item.comissaoId === this.editingId);
+  }
+
+  get itensInventariadosDaComissao(): ItemInventariado[] {
+    return this.itensInventariados.filter((item) => item.comissaoId === this.editingId);
   }
 
   get totalOcorrenciasInconsistencias(): number {
@@ -788,12 +816,41 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.authService.canAccessComissoesConsulta || this.canEdit(item);
   }
 
-  canDelete(): boolean {
-    return this.authService.isAdmin;
-  }
-
   goBackToList(): void {
     this.router.navigate(['/comissoes']);
+  }
+
+  private updateComissaoMembers(nextMembers: Array<{ usuarioId: string }>, onSuccess: () => void): void {
+    if (!this.editingId) {
+      return;
+    }
+
+    const payload: ComissaoPayload = {
+      ano: this.comissaoEmEdicao?.ano ?? Number(this.form.ano),
+      status: this.comissaoEmEdicao?.status ?? this.form.status,
+      presidenteId: this.comissaoEmEdicao?.presidenteId ?? this.form.presidenteId,
+      membros: nextMembers.reduce<Array<{ usuarioId: string }>>((acc, item) => {
+        if (!item.usuarioId || acc.some((current) => current.usuarioId === item.usuarioId)) {
+          return acc;
+        }
+
+        acc.push({ usuarioId: item.usuarioId });
+        return acc;
+      }, []),
+    };
+
+    this.savingMembers = true;
+    this.comissaoService.update(this.editingId, payload).subscribe({
+      next: () => {
+        this.form.membros = payload.membros;
+        this.savingMembers = false;
+        onSuccess();
+      },
+      error: (error) => {
+        this.savingMembers = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível salvar os membros da comissão.');
+      },
+    });
   }
 
   private loadComissao(id: string, showErrors = true): void {
@@ -814,6 +871,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
         };
         this.syncSelectedMembers();
         this.loadingComissao = false;
+        this.loadItensInventariadosComissao();
+        this.loadInconsistenciasInventario();
       },
       error: () => {
         this.loadingComissao = false;

@@ -52,9 +52,8 @@
               <td>{{ item.membros.length }}</td>
               <td class="text-end">
                 <div class="row-actions">
-                  <button class="btn btn-sm btn-standard-action" type="button" *ngIf="canEdit(item)" (click)="edit(item)">Editar</button>
+                  <button class="btn btn-sm btn-standard-action" type="button" *ngIf="canEdit(item)" (click)="edit(item)">Detalhes</button>
                   <button class="btn btn-sm btn-standard-action" type="button" *ngIf="!canEdit(item) && canView(item)" (click)="view(item)">Visualizar</button>
-                  <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canDelete()" (click)="remove(item)">Excluir</button>
                 </div>
               </td>
             </tr>
@@ -71,21 +70,20 @@
       <div class="list-header-copy">
         <span class="list-header-eyebrow">{{ canManageCurrentComissao ? 'Comissão em edição' : 'Consulta de comissão' }}</span>
         <h2 class="list-header-title">Comissão {{ comissaoEmEdicao.ano }}</h2>
-        <p class="list-header-subtitle">{{ canManageCurrentComissao ? 'Gerencie os dados básicos, membros e locais desta comissão.' : 'Consulte os dados básicos, membros e locais desta comissão.' }}</p>
+        <p class="list-header-subtitle">{{ canManageCurrentComissao ? 'Gerencie membros, locais e inconsistências desta comissão.' : 'Consulte os dados desta comissão.' }}</p>
       </div>
       <button class="btn btn-outline-secondary" type="button" (click)="goBackToList()">Voltar</button>
     </div>
 
-    <form (ngSubmit)="submit()" #comissaoPaginaFormNg="ngForm">
-      <div class="row g-3">
+    <div class="row g-3">
         <div class="col-md-4">
           <label class="form-label">Ano do inventário</label>
-          <input class="form-control" name="paginaAno" [(ngModel)]="form.ano" type="number" min="2000" max="9999" [readonly]="!canEditCurrentComissaoBasics" required />
+          <input class="form-control" name="paginaAno" [(ngModel)]="form.ano" type="number" min="2000" max="9999" readonly />
         </div>
 
         <div class="col-md-4">
           <label class="form-label">Status</label>
-          <select class="form-select" name="paginaStatus" [(ngModel)]="form.status" [disabled]="!canEditCurrentComissaoBasics" required>
+          <select class="form-select" name="paginaStatus" [(ngModel)]="form.status" disabled>
             <option value="Inativa">Inativa</option>
             <option value="Ativa">Ativa</option>
           </select>
@@ -93,7 +91,7 @@
 
         <div class="col-md-4">
           <label class="form-label">Presidente</label>
-          <select class="form-select" name="paginaPresidente" [(ngModel)]="form.presidenteId" [disabled]="!canEditCurrentComissaoBasics" required>
+          <select class="form-select" name="paginaPresidente" [(ngModel)]="form.presidenteId" disabled>
             <option value="" disabled>Selecione</option>
             <option *ngFor="let usuario of usuariosInventario" [value]="usuario.id">{{ usuario.nome }}</option>
           </select>
@@ -101,23 +99,38 @@
 
         <div class="col-12">
           <div class="comissao-tabs">
-            <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'resumo'" (click)="setActiveTab('resumo')">Resumo</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
           </div>
         </div>
 
-        <div class="col-12" *ngIf="activeTab === 'dados'">
+        <div class="col-12" *ngIf="activeTab === 'resumo'">
             <div class="section-card">
               <div class="section-card-header">
                 <div>
-                  <label class="form-label mb-1">Dados básicos</label>
-                  <p class="section-card-hint mb-0">Ajuste ano, presidente e status da comissão.</p>
+                  <label class="form-label mb-1">Resumo</label>
+                  <p class="section-card-hint mb-0">Acompanhe os principais números desta comissão.</p>
                 </div>
               </div>
-              <div class="inline-hint" *ngIf="!canEditCurrentComissaoBasics">
-                Como presidente, você pode gerenciar membros e locais. Ano, status e presidente ficam restritos ao administrador.
+              <div class="summary-dashboard">
+                <div class="summary-tile">
+                  <span>Número de membros</span>
+                  <strong>{{ selectedMembers.length }}</strong>
+                </div>
+                <div class="summary-tile">
+                  <span>Locais cadastrados</span>
+                  <strong>{{ locaisDaComissaoEmEdicao.length }}</strong>
+                </div>
+                <div class="summary-tile">
+                  <span>Itens inventariados</span>
+                  <strong>{{ itensInventariadosDaComissao.length }}</strong>
+                </div>
+                <div class="summary-tile">
+                  <span>Inconsistências</span>
+                  <strong>{{ inconsistenciasDaComissao.length }}</strong>
+                </div>
               </div>
             </div>
         </div>
@@ -142,7 +155,9 @@
                   <strong>{{ usuario.nome }}</strong>
                   <small>{{ usuario.cpf }}</small>
                 </div>
-                <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canManageCurrentComissao" (click)="removeMember(usuario.id)">Remover</button>
+                <button class="btn btn-sm btn-standard-danger" type="button" *ngIf="canManageCurrentComissao" (click)="removeMember(usuario.id)" [disabled]="savingMembers">
+                  {{ savingMembers ? 'Salvando...' : 'Remover' }}
+                </button>
               </div>
             </div>
           </div>
@@ -251,11 +266,7 @@
 
       <div class="modal-footer-custom editor-footer">
         <button class="btn btn-secondary" type="button" (click)="goBackToList()">Voltar</button>
-        <button class="btn btn-primary" type="submit" *ngIf="canManageCurrentComissao" [disabled]="saving || !comissaoPaginaFormNg.form.valid">
-          {{ saving ? 'Salvando...' : 'Salvar alterações' }}
-        </button>
       </div>
-    </form>
   </div>
 </section>
 
@@ -294,17 +305,17 @@
           <ng-container *ngIf="editingId; else createFlowHint">
             <div class="col-12">
               <div class="comissao-tabs">
-	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'dados'" (click)="setActiveTab('dados')">Dados básicos</button>
+	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'resumo'" (click)="setActiveTab('resumo')">Resumo</button>
 	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
 	                <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
 	              </div>
 	            </div>
 
-            <div class="col-12" *ngIf="activeTab === 'dados'">
+            <div class="col-12" *ngIf="activeTab === 'resumo'">
               <div class="section-card">
                 <div class="section-card-header">
                   <div>
-                    <label class="form-label mb-1">Dados básicos</label>
+                    <label class="form-label mb-1">Resumo</label>
                     <p class="section-card-hint mb-0">A comissão será criada inicialmente com ano e presidente.</p>
                   </div>
                 </div>
@@ -326,7 +337,7 @@
       <div class="modal-footer-custom">
         <button class="btn btn-secondary" type="button" (click)="closeModal()">Fechar</button>
         <button class="btn btn-primary" type="submit" [disabled]="saving || !comissaoFormNg.form.valid">
-          {{ saving ? 'Salvando...' : (editingId ? 'Salvar alterações' : 'Criar comissão') }}
+          {{ saving ? 'Salvando...' : 'Criar comissão' }}
         </button>
       </div>
     </form>
@@ -374,8 +385,8 @@
               </td>
               <td>{{ usuario.cpf }}</td>
               <td class="text-end">
-                <button class="btn btn-sm btn-primary" type="button" (click)="addMemberFromModal(usuario)" [disabled]="isMemberSelected(usuario.id)">
-                  {{ isMemberSelected(usuario.id) ? 'Adicionado' : 'Adicionar' }}
+                <button class="btn btn-sm btn-primary" type="button" (click)="addMemberFromModal(usuario)" [disabled]="isMemberSelected(usuario.id) || savingMembers">
+                  {{ isMemberSelected(usuario.id) ? 'Adicionado' : (savingMembers ? 'Salvando...' : 'Adicionar') }}
                 </button>
               </td>
             </tr>

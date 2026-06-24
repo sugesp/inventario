@@ -278,6 +278,33 @@
   font-weight: 600;
 }
 
+.summary-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-tile {
+  padding: 16px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.summary-tile span {
+  display: block;
+  color: #5f7084;
+  font-size: 0.9rem;
+}
+
+.summary-tile strong {
+  display: block;
+  margin-top: 6px;
+  color: #17324f;
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .inconsistencia-summary {
   display: flex;
   flex-wrap: wrap;
@@ -420,7 +447,8 @@
 
 @media (max-width: 767.98px) {
   .address-search-row,
-  .local-map-panel {
+  .local-map-panel,
+  .summary-dashboard {
     grid-template-columns: 1fr;
   }
 
