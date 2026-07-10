@@ -301,6 +301,7 @@
       type="file"
       accept="image/*"
       capture="environment"
+      multiple
       (change)="onPhotoSelected($event)"
     />
 
@@ -334,6 +335,10 @@
           <button class="btn btn-sm btn-outline-danger" type="button" (click)="removePhoto(index)">Remover</button>
         </div>
       </article>
+    </div>
+
+    <div class="photo-count" *ngIf="photos.length > 0">
+      {{ photos.length }} {{ photos.length === 1 ? 'foto adicionada' : 'fotos adicionadas' }}
     </div>
 
     <div class="scan-feedback" *ngIf="photos.length === 0">Nenhuma foto adicionada.</div>

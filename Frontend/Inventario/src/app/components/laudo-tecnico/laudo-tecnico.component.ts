@@ -280,7 +280,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
         return;
       }
 
-      this.form.patrimonio = this.formatTombamento(rawValue);
+      this.form.patrimonio = this.formatScannedTombamento(rawValue);
       this.consultPatrimonio();
     } catch {
       this.patrimonioMessage = 'Não foi possível processar a imagem do QR Code.';
@@ -411,12 +411,12 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
 
   onPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file || !this.selectedPhotoCategory) {
+    const files = Array.from(input.files ?? []);
+    if (files.length === 0 || !this.selectedPhotoCategory) {
       return;
     }
 
-    this.addPhoto(file);
+    files.forEach((file) => this.addPhoto(file));
     input.value = '';
   }
 
@@ -789,7 +789,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     this.detectQrFromVideo(video)
       .then((rawValue) => {
         if (rawValue) {
-          this.form.patrimonio = this.formatTombamento(rawValue);
+          this.form.patrimonio = this.formatScannedTombamento(rawValue);
           this.patrimonioMessage = 'QR Code identificado automaticamente pela câmera.';
           this.closeQrScanner();
           this.consultPatrimonio();
@@ -893,6 +893,11 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  }
+
+  private formatScannedTombamento(value: string): string {
+    const digits = this.normalizeTombamento(value).slice(0, 9);
+    return this.formatTombamento(digits ? digits.padStart(9, '0') : '');
   }
 
   private applyPublicDescription(description: string): void {

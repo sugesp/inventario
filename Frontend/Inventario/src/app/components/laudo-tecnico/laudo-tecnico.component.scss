@@ -378,6 +378,13 @@
   white-space: nowrap;
 }
 
+.photo-count {
+  margin-top: 12px;
+  color: #496a88;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .step-card,
   .hero-card {
