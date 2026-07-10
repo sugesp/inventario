@@ -67,6 +67,9 @@ interface PersistedLaudoState {
 })
 export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
+  private static readonly QR_SCAN_MAX_DIMENSION = 800;
+  private static readonly QR_SCAN_CROP_WIDTH_RATIO = 0.9;
+  private static readonly QR_SCAN_CROP_HEIGHT_RATIO = 0.65;
   private static readonly STORAGE_KEY = 'inventario.laudo-tecnico.state';
 
   @ViewChild('qrInput') qrInput?: ElementRef<HTMLInputElement>;
@@ -226,7 +229,12 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
       this.qrScannerDetector = await this.createQrDetector();
       this.qrScannerCanvas = document.createElement('canvas');
       this.qrScannerStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 24, max: 30 },
+        },
         audio: false,
       });
       this.qrScannerOpen = true;
@@ -799,8 +807,9 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   private async detectQrFromVideo(video: HTMLVideoElement): Promise<string | null> {
+    const crop = this.getQrScannerCrop(video);
     if (this.qrScannerDetector) {
-      const bitmap = await createImageBitmap(video);
+      const bitmap = await createImageBitmap(video, crop.x, crop.y, crop.width, crop.height);
       try {
         const results = await this.qrScannerDetector.detect(bitmap);
         const rawValue = results.find((item) => !!item.rawValue)?.rawValue?.trim();
@@ -814,16 +823,27 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
 
     const canvas = this.qrScannerCanvas ?? document.createElement('canvas');
     this.qrScannerCanvas = canvas;
-    const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
-    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const scale = Math.min(1, LaudoTecnicoComponent.QR_SCAN_MAX_DIMENSION / Math.max(crop.width, crop.height));
+    canvas.width = Math.max(1, Math.round(crop.width * scale));
+    canvas.height = Math.max(1, Math.round(crop.height * scale));
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) {
       return null;
     }
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     return jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' })?.data?.trim() ?? null;
+  }
+
+  private getQrScannerCrop(video: HTMLVideoElement): { x: number; y: number; width: number; height: number } {
+    const width = Math.round(video.videoWidth * LaudoTecnicoComponent.QR_SCAN_CROP_WIDTH_RATIO);
+    const height = Math.round(video.videoHeight * LaudoTecnicoComponent.QR_SCAN_CROP_HEIGHT_RATIO);
+    return {
+      x: Math.max(0, Math.round((video.videoWidth - width) / 2)),
+      y: Math.max(0, Math.round((video.videoHeight - height) / 2)),
+      width,
+      height,
+    };
   }
 
   private stopQrScanner(): void {

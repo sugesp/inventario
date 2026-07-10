@@ -53,14 +53,6 @@
           </button>
         </div>
         <input #qrInput class="d-none" type="file" accept="image/*" capture="environment" (change)="onQrImageSelected($event)" />
-        <div class="qr-inline-scanner mt-3" *ngIf="qrScannerOpen">
-          <div class="qr-video-shell">
-            <video #qrVideo autoplay muted playsinline></video>
-            <div class="qr-scan-frame" aria-hidden="true"></div>
-          </div>
-          <p>Aponte a câmera para o QR Code da etiqueta patrimonial.</p>
-          <button class="btn btn-outline-light" type="button" (click)="closeQrScanner()">Fechar leitor</button>
-        </div>
         <div class="scan-feedback" *ngIf="qrScannerError">{{ qrScannerError }}</div>
         <div class="scan-feedback" *ngIf="consultingPatrimonio">Consultando dados do patrimônio...</div>
         <div class="scan-feedback" *ngIf="!consultingPatrimonio && patrimonioMessage">{{ patrimonioMessage }}</div>
@@ -425,4 +417,22 @@
       </div>
     </div>
   </section>
+</div>
+
+<div class="qr-fullscreen-scanner" *ngIf="qrScannerOpen">
+  <div class="qr-fullscreen-header">
+    <div>
+      <h3>Leitor de QR Code</h3>
+      <p>Aponte a câmera para o código do patrimônio.</p>
+    </div>
+    <button class="btn-close btn-close-white" type="button" aria-label="Fechar" (click)="closeQrScanner()"></button>
+  </div>
+  <div class="qr-fullscreen-body">
+    <video #qrVideo autoplay muted playsinline></video>
+    <div class="qr-scan-frame" aria-hidden="true"></div>
+  </div>
+  <div class="qr-fullscreen-footer">
+    <span>Posicione o QR Code dentro da moldura</span>
+    <button class="btn btn-outline-light" type="button" (click)="closeQrScanner()">Fechar câmera</button>
+  </div>
 </div>
