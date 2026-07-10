@@ -3,6 +3,7 @@ using Application.Contract;
 using Application.DTO.LaudoTecnico;
 using Domain.Model;
 using Domain.Security;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 
@@ -13,16 +14,19 @@ public class LaudoTecnicoService : ILaudoTecnicoService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly AppDbContext _context;
+    private readonly IFileStorageService _fileStorageService;
 
-    public LaudoTecnicoService(AppDbContext context)
+    public LaudoTecnicoService(AppDbContext context, IFileStorageService fileStorageService)
     {
         _context = context;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<IEnumerable<LaudoTecnicoDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var entities = await _context.LaudosTecnicos
             .AsNoTracking()
+            .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
             .Where(x => x.DeletedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -34,6 +38,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
     {
         var entity = await _context.LaudosTecnicos
             .AsNoTracking()
+            .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
@@ -62,6 +67,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             TipoEquipamento = dto.TipoEquipamento.Trim(),
             OutroTipoEquipamento = dto.OutroTipoEquipamento.Trim(),
             Patrimonio = dto.Patrimonio.Trim(),
+            TombamentoAntigo = dto.TombamentoAntigo.Trim(),
             NumeroSerie = dto.NumeroSerie.Trim(),
             Marca = dto.Marca.Trim(),
             Modelo = dto.Modelo.Trim(),
@@ -101,14 +107,107 @@ public class LaudoTecnicoService : ILaudoTecnicoService
         return MapToDto(entity);
     }
 
+    public async Task<LaudoTecnicoDto?> AddFotosAsync(
+        Guid id,
+        IReadOnlyList<IFormFile> fotos,
+        IReadOnlyList<string> categorias,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.LaudosTecnicos
+            .Include(x => x.Fotos)
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (entity is null)
+        {
+            return null;
+        }
+
+        if (fotos.Count != categorias.Count)
+        {
+            throw new InvalidOperationException("Cada foto deve possuir uma categoria.");
+        }
+
+        var categoriasPermitidas = new[] { "Equipamento completo", "Etiqueta patrimonial", "Defeitos identificados" };
+        for (var index = 0; index < fotos.Count; index++)
+        {
+            var categoria = categorias[index].Trim();
+            if (!categoriasPermitidas.Contains(categoria))
+            {
+                throw new InvalidOperationException("Categoria de foto inválida.");
+            }
+
+            var foto = fotos[index];
+            if (foto.Length <= 0)
+            {
+                continue;
+            }
+
+            if (foto.Length > 10_000_000 || !foto.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Envie somente imagens de até 10 MB por foto.");
+            }
+
+            var saved = await _fileStorageService.SaveAsync(foto, "laudos", cancellationToken);
+            entity.Fotos.Add(new LaudoTecnicoFoto
+            {
+                Categoria = categoria,
+                NomeArquivo = saved.NomeArquivo,
+                NomeOriginal = foto.FileName,
+                CaminhoRelativo = saved.CaminhoRelativo,
+                Url = saved.Url
+            });
+        }
+
+        entity.RegistroFotograficoJson = SerializeList(entity.Fotos.Select(x => x.Categoria).Distinct());
+        entity.QuantidadeFotos = entity.Fotos.Count;
+        await _context.SaveChangesAsync(cancellationToken);
+        return MapToDto(entity);
+    }
+
+    public async Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
+        Guid id,
+        Guid fotoId,
+        CancellationToken cancellationToken = default)
+    {
+        var foto = await _context.LaudosTecnicosFotos
+            .AsNoTracking()
+            .Where(x => x.Id == fotoId && x.LaudoTecnicoId == id && x.DeletedAt == null)
+            .Select(x => new { x.CaminhoRelativo, x.NomeOriginal, LaudoDeletedAt = x.LaudoTecnico!.DeletedAt })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return foto is null || foto.LaudoDeletedAt is not null
+            ? null
+            : await _fileStorageService.OpenReadAsync(foto.CaminhoRelativo, foto.NomeOriginal, cancellationToken);
+    }
+
+    public async Task<LaudoTecnicoDto?> UpdateIdentificacaoAsync(
+        Guid id,
+        LaudoTecnicoIdentificacaoDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.LaudosTecnicos
+            .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (entity is null)
+        {
+            return null;
+        }
+
+        entity.ProcessoSei = dto.ProcessoSei.Trim();
+        entity.IdDevolucaoSei = dto.IdDevolucaoSei.Trim();
+        entity.UnidadeGestora = dto.UnidadeGestora.Trim();
+        entity.Setor = dto.Setor.Trim();
+        entity.DataAvaliacao = dto.DataAvaliacao;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return MapToDto(entity);
+    }
+
     private Task ValidateAsync(LaudoTecnicoSaveDto dto, CancellationToken cancellationToken)
     {
         _ = cancellationToken;
-
-        if (dto.DataAvaliacao is null)
-        {
-            throw new InvalidOperationException("Informe a data da avaliação.");
-        }
 
         if (string.IsNullOrWhiteSpace(dto.TipoEquipamento))
         {
@@ -179,6 +278,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             TipoEquipamento = entity.TipoEquipamento,
             OutroTipoEquipamento = entity.OutroTipoEquipamento,
             Patrimonio = entity.Patrimonio,
+            TombamentoAntigo = entity.TombamentoAntigo,
             NumeroSerie = entity.NumeroSerie,
             Marca = entity.Marca,
             Modelo = entity.Modelo,
@@ -211,7 +311,18 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             ResponsavelTecnicoNome = entity.ResponsavelTecnicoNome,
             ResponsavelTecnicoCargo = entity.ResponsavelTecnicoCargo,
             CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt
+            UpdatedAt = entity.UpdatedAt,
+            Fotos = entity.Fotos
+                .Where(x => x.DeletedAt == null)
+                .OrderBy(x => x.CreatedAt)
+                .Select(x => new LaudoTecnicoFotoDto
+                {
+                    Id = x.Id,
+                    Categoria = x.Categoria,
+                    NomeOriginal = x.NomeOriginal,
+                    Url = x.Url
+                })
+                .ToArray()
         };
     }
 

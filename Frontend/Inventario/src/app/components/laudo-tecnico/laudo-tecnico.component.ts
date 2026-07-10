@@ -1,10 +1,19 @@
-import { Component, DoCheck, OnInit } from '@angular/core';
+import { Component, DoCheck, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import jsQR from 'jsqr';
+import { finalize, switchMap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../auth/auth.service';
 import { LaudoTecnico, LaudoTecnicoPayload } from '../../contracts/laudo-tecnico.model';
 import { LaudoTecnicoService } from '../../contracts/laudo-tecnico.service';
+import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 
-type LaudoStep = 'identificacao' | 'equipamento' | 'avaliacao' | 'viabilidade' | 'recomendacao' | 'conclusao';
+type LaudoStep = 'equipamento' | 'avaliacao' | 'viabilidade' | 'recomendacao' | 'fotos' | 'conclusao';
+
+interface LaudoPhoto {
+  categoria: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface LaudoForm {
   processoSei: string;
@@ -15,6 +24,7 @@ interface LaudoForm {
   tipoEquipamento: string;
   outroTipoEquipamento: string;
   patrimonio: string;
+  tombamentoAntigo: string;
   numeroSerie: string;
   marca: string;
   modelo: string;
@@ -55,15 +65,20 @@ interface PersistedLaudoState {
   templateUrl: './laudo-tecnico.component.html',
   styleUrl: './laudo-tecnico.component.scss',
 })
-export class LaudoTecnicoComponent implements OnInit, DoCheck {
+export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
+  private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
   private static readonly STORAGE_KEY = 'inventario.laudo-tecnico.state';
 
+  @ViewChild('qrInput') qrInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('photoInput') photoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('photoVideo') photoVideo?: ElementRef<HTMLVideoElement>;
+
   readonly steps: Array<{ key: LaudoStep; label: string; hint: string }> = [
-    { key: 'identificacao', label: 'Identificação', hint: 'Processo e origem' },
     { key: 'equipamento', label: 'Equipamento', hint: 'Bem avaliado' },
     { key: 'avaliacao', label: 'Avaliação', hint: 'Estado técnico' },
     { key: 'viabilidade', label: 'Viabilidade', hint: 'Reparo e estimativa' },
     { key: 'recomendacao', label: 'Recomendação', hint: 'Encaminhamento' },
+    { key: 'fotos', label: 'Fotos', hint: 'Registro fotográfico' },
     { key: 'conclusao', label: 'Conclusão', hint: 'Fechamento' },
   ];
 
@@ -85,9 +100,20 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
   readonly registroFotograficoOptions = ['Equipamento completo', 'Etiqueta patrimonial', 'Defeitos identificados'];
   readonly conclusaoOptions = ['Servivel', 'Inservivel'];
 
-  currentStep: LaudoStep = 'identificacao';
+  currentStep: LaudoStep = 'equipamento';
   saving = false;
   savedLaudo: LaudoTecnico | null = null;
+  readingQrCode = false;
+  consultingPatrimonio = false;
+  patrimonioMessage = '';
+  selectedPhotoCategory = '';
+  photos: LaudoPhoto[] = [];
+  cameraOpen = false;
+  cameraStarting = false;
+  cameraCapturing = false;
+  cameraError = '';
+  private lastConsultedPatrimonio = '';
+  private cameraStream: MediaStream | null = null;
   private lastPersistedSnapshot = '';
 
   form: LaudoForm = this.createEmptyForm();
@@ -95,6 +121,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
   constructor(
     readonly authService: AuthService,
     private readonly laudoTecnicoService: LaudoTecnicoService,
+    private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
   ) {}
 
@@ -114,6 +141,11 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
 
     this.lastPersistedSnapshot = snapshot;
     this.persistState();
+  }
+
+  ngOnDestroy(): void {
+    this.stopCamera();
+    this.clearPhotoPreviews();
   }
 
   get currentStepIndex(): number {
@@ -142,16 +174,196 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
   }
 
   get canSubmit(): boolean {
-    return this.isStepValid('identificacao')
-      && this.isStepValid('equipamento')
+    return this.isStepValid('equipamento')
       && this.isStepValid('avaliacao')
       && this.isStepValid('viabilidade')
       && this.isStepValid('recomendacao')
+      && this.isStepValid('fotos')
       && this.isStepValid('conclusao');
   }
 
   get canShowOutroTipo(): boolean {
     return this.form.tipoEquipamento === 'Outro';
+  }
+
+  get canShowComputerConfiguration(): boolean {
+    return this.form.tipoEquipamento === 'Computador' || this.form.tipoEquipamento === 'Notebook';
+  }
+
+  onEquipmentTypeChange(): void {
+    if (!this.canShowComputerConfiguration) {
+      this.form.processador = '';
+      this.form.memoria = '';
+      this.form.armazenamento = '';
+      this.form.sistemaOperacional = '';
+    }
+  }
+
+  openQrReader(): void {
+    this.qrInput?.nativeElement.click();
+  }
+
+  async onQrImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    this.readingQrCode = true;
+    this.patrimonioMessage = '';
+    try {
+      const rawValue = await this.detectQrCode(file);
+      if (!rawValue) {
+        this.patrimonioMessage = 'Não foi possível ler o QR Code. Informe o tombamento manualmente.';
+        return;
+      }
+
+      this.form.patrimonio = this.formatTombamento(rawValue);
+      this.consultPatrimonio();
+    } catch {
+      this.patrimonioMessage = 'Não foi possível processar a imagem do QR Code.';
+    } finally {
+      this.readingQrCode = false;
+      input.value = '';
+    }
+  }
+
+  onPatrimonioChange(value: string): void {
+    this.form.patrimonio = this.formatTombamento(value);
+    this.patrimonioMessage = '';
+
+    const tombamento = this.normalizeTombamento(this.form.patrimonio);
+    if (tombamento.length < 9) {
+      this.lastConsultedPatrimonio = '';
+    }
+
+    if (tombamento.length === 9 && tombamento !== this.lastConsultedPatrimonio) {
+      this.consultPatrimonio();
+    }
+  }
+
+  consultPatrimonio(): void {
+    const tombamento = this.normalizeTombamento(this.form.patrimonio);
+    if (tombamento.length !== 9) {
+      return;
+    }
+
+    if (this.consultingPatrimonio || tombamento === this.lastConsultedPatrimonio) {
+      return;
+    }
+
+    this.lastConsultedPatrimonio = tombamento;
+    this.consultingPatrimonio = true;
+    this.itemInventariadoService.consultarResumoPublico(tombamento)
+      .pipe(finalize(() => this.consultingPatrimonio = false))
+      .subscribe({
+        next: (resumo) => {
+          this.form.patrimonio = this.formatTombamento(resumo.tombamento || tombamento);
+          this.form.tombamentoAntigo = resumo.tombamentoAntigo || this.form.tombamentoAntigo;
+          this.applyPublicDescription(resumo.descricao);
+          this.patrimonioMessage = 'Dados do patrimônio localizados e preenchidos automaticamente.';
+        },
+        error: () => {
+          this.lastConsultedPatrimonio = '';
+          this.patrimonioMessage = 'Patrimônio lido, mas não foi possível localizar seus dados. Continue o preenchimento manualmente.';
+        },
+      });
+  }
+
+  async openPhotoCamera(): Promise<void> {
+    if (!this.selectedPhotoCategory) {
+      this.toastr.warning('Escolha o tipo de registro antes de tirar a foto.');
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || !window.isSecureContext) {
+      this.photoInput?.nativeElement.click();
+      return;
+    }
+
+    this.cameraStarting = true;
+    this.cameraError = '';
+    try {
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      this.cameraOpen = true;
+      setTimeout(() => {
+        const video = this.photoVideo?.nativeElement;
+        if (!video || !this.cameraStream) {
+          return;
+        }
+        video.srcObject = this.cameraStream;
+        video.setAttribute('playsinline', 'true');
+        video.play().catch(() => {
+          this.cameraError = 'Não foi possível iniciar a câmera.';
+          this.closePhotoCamera();
+        });
+      });
+    } catch {
+      this.cameraError = 'Não foi possível acessar a câmera. Verifique a permissão do navegador.';
+      this.photoInput?.nativeElement.click();
+    } finally {
+      this.cameraStarting = false;
+    }
+  }
+
+  closePhotoCamera(): void {
+    this.stopCamera();
+    this.cameraOpen = false;
+  }
+
+  captureCameraPhoto(): void {
+    const video = this.photoVideo?.nativeElement;
+    if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !this.selectedPhotoCategory) {
+      return;
+    }
+
+    this.cameraCapturing = true;
+    try {
+      const maxDimension = 1920;
+      const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+      canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Falha ao preparar a foto.');
+      }
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        this.cameraCapturing = false;
+        if (!blob) {
+          this.toastr.warning('Não foi possível capturar a foto.');
+          return;
+        }
+        const file = new File([blob], `laudo-${Date.now()}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+        this.addPhoto(file);
+      }, 'image/jpeg', 0.9);
+    } catch {
+      this.cameraCapturing = false;
+      this.toastr.warning('Não foi possível capturar a foto.');
+    }
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.selectedPhotoCategory) {
+      return;
+    }
+
+    this.addPhoto(file);
+    input.value = '';
+  }
+
+  removePhoto(index: number): void {
+    const [removed] = this.photos.splice(index, 1);
+    if (removed) {
+      URL.revokeObjectURL(removed.previewUrl);
+    }
   }
 
   get canShowOutroProblema(): boolean {
@@ -222,13 +434,22 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
     }
 
     this.saving = true;
-    this.laudoTecnicoService.create(this.buildPayload()).subscribe({
+    this.laudoTecnicoService.create(this.buildPayload()).pipe(
+      switchMap((laudo) => this.laudoTecnicoService.addFotos(
+        laudo.id,
+        this.photos.map((foto) => ({ categoria: foto.categoria, file: foto.file }))
+      ))
+    ).subscribe({
       next: (laudo) => {
         this.saving = false;
         this.savedLaudo = laudo;
         this.toastr.success('Laudo tecnico salvo com sucesso.');
+        this.closePhotoCamera();
         this.form = this.createEmptyForm();
-        this.currentStep = 'identificacao';
+        this.clearPhotoPreviews();
+        this.photos = [];
+        this.selectedPhotoCategory = '';
+        this.currentStep = 'equipamento';
         this.syncSnapshotWithoutPersist();
         this.clearStateStorage();
       },
@@ -241,8 +462,12 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
 
   resetDraft(): void {
     this.savedLaudo = null;
+    this.closePhotoCamera();
     this.form = this.createEmptyForm();
-    this.currentStep = 'identificacao';
+    this.clearPhotoPreviews();
+    this.photos = [];
+    this.selectedPhotoCategory = '';
+    this.currentStep = 'equipamento';
     this.syncSnapshotWithoutPersist();
     this.clearStateStorage();
   }
@@ -257,6 +482,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
       tipoEquipamento: this.form.tipoEquipamento,
       outroTipoEquipamento: this.form.outroTipoEquipamento.trim(),
       patrimonio: this.form.patrimonio.trim(),
+      tombamentoAntigo: this.form.tombamentoAntigo.trim(),
       numeroSerie: this.form.numeroSerie.trim(),
       marca: this.form.marca.trim(),
       modelo: this.form.modelo.trim(),
@@ -281,8 +507,8 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
       justificativaTecnica: this.form.justificativaTecnica.trim(),
       recomendacoes: this.form.recomendacoes,
       sugestoesDestinacao: this.form.sugestoesDestinacao,
-      registroFotografico: this.form.registroFotografico,
-      quantidadeFotos: this.parseOptionalInteger(this.form.quantidadeFotos),
+      registroFotografico: [...new Set(this.photos.map((foto) => foto.categoria))],
+      quantidadeFotos: this.photos.length,
       conclusaoCondicao: this.form.conclusaoCondicao,
       classificacaoFinal: this.form.classificacaoFinal.trim(),
     };
@@ -308,8 +534,6 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
 
   private isStepValid(step: LaudoStep): boolean {
     switch (step) {
-      case 'identificacao':
-        return !!this.form.dataAvaliacao;
       case 'equipamento':
         return !!this.form.tipoEquipamento
           && (!this.canShowOutroTipo || !!this.form.outroTipoEquipamento.trim())
@@ -327,6 +551,8 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
         return this.form.possuiReparo !== '';
       case 'recomendacao':
         return !!this.form.classificacaoTecnica && !!this.form.justificativaTecnica.trim();
+      case 'fotos':
+        return this.photos.length > 0;
       case 'conclusao':
         return !!this.form.conclusaoCondicao;
       default:
@@ -336,8 +562,6 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
 
   private getStepValidationMessage(step: LaudoStep): string {
     switch (step) {
-      case 'identificacao':
-        return 'Informe ao menos a data da avaliacao para continuar.';
       case 'equipamento':
         return 'Selecione o tipo do equipamento e preencha algum identificador do bem.';
       case 'avaliacao':
@@ -346,6 +570,8 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
         return 'Indique se existe possibilidade de reparo.';
       case 'recomendacao':
         return 'Defina a classificacao tecnica e a justificativa do laudo.';
+      case 'fotos':
+        return 'Registre pelo menos uma foto para continuar.';
       case 'conclusao':
         return 'Selecione a conclusao do laudo.';
       default:
@@ -359,10 +585,11 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
       idDevolucaoSei: '',
       unidadeGestora: '',
       setor: '',
-      dataAvaliacao: this.getTodayDate(),
+      dataAvaliacao: '',
       tipoEquipamento: '',
       outroTipoEquipamento: '',
       patrimonio: '',
+      tombamentoAntigo: '',
       numeroSerie: '',
       marca: '',
       modelo: '',
@@ -394,14 +621,6 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
     };
   }
 
-  private getTodayDate(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = `${now.getMonth() + 1}`.padStart(2, '0');
-    const day = `${now.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   private persistState(): void {
     if (typeof window === 'undefined') {
       return;
@@ -429,7 +648,9 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
 
     try {
       const state = JSON.parse(raw) as PersistedLaudoState;
-      this.currentStep = state.currentStep ?? 'identificacao';
+      this.currentStep = this.steps.some((step) => step.key === state.currentStep)
+        ? state.currentStep
+        : 'equipamento';
       this.form = {
         ...this.createEmptyForm(),
         ...state.form,
@@ -458,5 +679,84 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck {
       currentStep: this.currentStep,
       form: this.form,
     });
+  }
+
+  private async detectQrCode(file: File): Promise<string | null> {
+    const image = await this.loadImage(file);
+    const scale = Math.min(1, LaudoTecnicoComponent.QR_IMAGE_MAX_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    return jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })?.data?.trim() ?? null;
+  }
+
+  private loadImage(file: File): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(image);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Falha ao carregar imagem.'));
+      };
+      image.src = objectUrl;
+    });
+  }
+
+  private normalizeTombamento(value: string): string {
+    const trimmed = value.trim();
+    try {
+      const url = new URL(trimmed);
+      return (url.pathname.split('/').filter(Boolean).at(-1) ?? '').replace(/\D/g, '');
+    } catch {
+      return trimmed.replace(/\D/g, '');
+    }
+  }
+
+  private formatTombamento(value: string): string {
+    const digits = this.normalizeTombamento(value).slice(0, 9);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  }
+
+  private applyPublicDescription(description: string): void {
+    if (!description) {
+      return;
+    }
+
+    const marca = description.match(/marca\s*[:\-]?\s*([^,;\-]+?)(?=\s+modelo\b|[,;\-]|$)/i)?.[1]?.trim();
+    const modelo = description.match(/modelo\s*[:\-]?\s*([^,;\-]+)/i)?.[1]?.trim();
+    this.form.marca = marca || this.form.marca;
+    this.form.modelo = modelo || this.form.modelo;
+    this.form.outros = this.form.outros || description;
+  }
+
+  private clearPhotoPreviews(): void {
+    this.photos.forEach((foto) => URL.revokeObjectURL(foto.previewUrl));
+  }
+
+  private addPhoto(file: File): void {
+    this.photos.push({ categoria: this.selectedPhotoCategory, file, previewUrl: URL.createObjectURL(file) });
+  }
+
+  private stopCamera(): void {
+    const video = this.photoVideo?.nativeElement;
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+    this.cameraStream?.getTracks().forEach((track) => track.stop());
+    this.cameraStream = null;
   }
 }

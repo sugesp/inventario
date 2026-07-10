@@ -8,6 +8,7 @@ export interface LaudoTecnico {
   tipoEquipamento: string;
   outroTipoEquipamento: string;
   patrimonio: string;
+  tombamentoAntigo: string;
   numeroSerie: string;
   marca: string;
   modelo: string;
@@ -41,6 +42,14 @@ export interface LaudoTecnico {
   responsavelTecnicoCargo: string;
   createdAt: string;
   updatedAt?: string | null;
+  fotos: LaudoTecnicoFoto[];
+}
+
+export interface LaudoTecnicoFoto {
+  id: string;
+  categoria: string;
+  nomeOriginal: string;
+  url: string;
 }
 
 export interface LaudoTecnicoPayload {
@@ -52,6 +61,7 @@ export interface LaudoTecnicoPayload {
   tipoEquipamento: string;
   outroTipoEquipamento: string;
   patrimonio: string;
+  tombamentoAntigo: string;
   numeroSerie: string;
   marca: string;
   modelo: string;
@@ -80,4 +90,12 @@ export interface LaudoTecnicoPayload {
   quantidadeFotos?: number | null;
   conclusaoCondicao: string;
   classificacaoFinal: string;
+}
+
+export interface LaudoTecnicoIdentificacaoPayload {
+  processoSei: string;
+  idDevolucaoSei: string;
+  unidadeGestora: string;
+  setor: string;
+  dataAvaliacao?: string | null;
 }

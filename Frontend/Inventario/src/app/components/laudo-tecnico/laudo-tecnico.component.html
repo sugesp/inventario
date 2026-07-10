@@ -17,46 +17,9 @@
     </div>
   </section>
 
-  <section class="step-card" *ngIf="isStepActive('identificacao')">
-    <div class="step-head">
-      <span class="step-number">1</span>
-      <div>
-        <h3>Identificação</h3>
-        <p>Informações iniciais do processo e da unidade responsável pelo equipamento avaliado.</p>
-      </div>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Processo SEI nº</label>
-        <input class="form-control" [(ngModel)]="form.processoSei" />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">ID devolução SEI</label>
-        <input class="form-control" [(ngModel)]="form.idDevolucaoSei" />
-      </div>
-      <div class="col-md-8">
-        <label class="form-label">Unidade gestora</label>
-        <input class="form-control" [(ngModel)]="form.unidadeGestora" />
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Setor</label>
-        <input class="form-control" [(ngModel)]="form.setor" />
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Data da avaliação</label>
-        <input class="form-control" type="date" [(ngModel)]="form.dataAvaliacao" />
-      </div>
-    </div>
-
-    <div class="step-actions">
-      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
-    </div>
-  </section>
-
   <section class="step-card" *ngIf="isStepActive('equipamento')">
     <div class="step-head">
-      <span class="step-number">2</span>
+      <span class="step-number">1</span>
       <div>
         <h3>Identificação do equipamento</h3>
         <p>Defina o tipo do bem e registre os dados que ajudam a individualizar o equipamento.</p>
@@ -65,7 +28,7 @@
 
     <div class="selection-grid">
       <label class="choice-card" *ngFor="let option of equipmentTypes" [class.is-selected]="form.tipoEquipamento === option">
-        <input type="radio" name="tipoEquipamento" [value]="option" [(ngModel)]="form.tipoEquipamento" />
+        <input type="radio" name="tipoEquipamento" [value]="option" [(ngModel)]="form.tipoEquipamento" (ngModelChange)="onEquipmentTypeChange()" />
         <span>{{ option }}</span>
       </label>
     </div>
@@ -75,9 +38,27 @@
         <label class="form-label">Outro tipo</label>
         <input class="form-control" [(ngModel)]="form.outroTipoEquipamento" placeholder="Descreva o equipamento" />
       </div>
-      <div class="col-md-6">
-        <label class="form-label">Patrimônio</label>
-        <input class="form-control" [(ngModel)]="form.patrimonio" />
+      <div class="col-md-8">
+        <label class="form-label">Tombamento/Patrimônio E-Estado</label>
+        <div class="input-group patrimonio-input-group">
+          <input
+            class="form-control"
+            [ngModel]="form.patrimonio"
+            (ngModelChange)="onPatrimonioChange($event)"
+            placeholder="000.000.000"
+            inputmode="numeric"
+          />
+          <button class="btn btn-primary" type="button" (click)="openQrReader()" [disabled]="readingQrCode || consultingPatrimonio">
+            {{ readingQrCode ? 'Lendo...' : (consultingPatrimonio ? 'Consultando...' : 'Ler QR Code') }}
+          </button>
+        </div>
+        <input #qrInput class="d-none" type="file" accept="image/*" capture="environment" (change)="onQrImageSelected($event)" />
+        <div class="scan-feedback" *ngIf="consultingPatrimonio">Consultando dados do patrimônio...</div>
+        <div class="scan-feedback" *ngIf="!consultingPatrimonio && patrimonioMessage">{{ patrimonioMessage }}</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Tombamento antigo</label>
+        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" />
       </div>
       <div class="col-md-6">
         <label class="form-label">Nº de série</label>
@@ -95,6 +76,7 @@
         <label class="form-label">Ano de aquisição</label>
         <input class="form-control" [(ngModel)]="form.anoAquisicao" />
       </div>
+      <ng-container *ngIf="canShowComputerConfiguration">
       <div class="col-md-3">
         <label class="form-label">Processador</label>
         <input class="form-control" [(ngModel)]="form.processador" />
@@ -111,6 +93,7 @@
         <label class="form-label">Sistema operacional</label>
         <input class="form-control" [(ngModel)]="form.sistemaOperacional" />
       </div>
+      </ng-container>
       <div class="col-12">
         <label class="form-label">Outros detalhes</label>
         <textarea class="form-control compact-textarea" rows="2" [(ngModel)]="form.outros"></textarea>
@@ -118,14 +101,13 @@
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
     </div>
   </section>
 
   <section class="step-card" *ngIf="isStepActive('avaliacao')">
     <div class="step-head">
-      <span class="step-number">3</span>
+      <span class="step-number">2</span>
       <div>
         <h3>Avaliação técnica</h3>
         <p>Registre funcionamento, conservação e os problemas encontrados durante a análise.</p>
@@ -193,7 +175,7 @@
 
   <section class="step-card" *ngIf="isStepActive('viabilidade')">
     <div class="step-head">
-      <span class="step-number">4</span>
+      <span class="step-number">3</span>
       <div>
         <h3>Viabilidade técnica</h3>
         <p>Informe a possibilidade de reparo e, quando couber, a estimativa econômica do bem.</p>
@@ -238,7 +220,7 @@
 
   <section class="step-card" *ngIf="isStepActive('recomendacao')">
     <div class="step-head">
-      <span class="step-number">5</span>
+      <span class="step-number">4</span>
       <div>
         <h3>Classificação e recomendação</h3>
         <p>Consolide a conclusão técnica e o encaminhamento sugerido para a comissão.</p>
@@ -290,23 +272,70 @@
       </div>
     </div>
 
-    <div class="panel-box mt-3">
-      <span class="selected-local-label">Registro fotografico</span>
-      <div class="selection-grid vertical two-columns">
-        <label class="choice-card checkbox-card" *ngFor="let option of registroFotograficoOptions" [class.is-selected]="isOptionSelected(form.registroFotografico, option)">
-          <input
-            type="checkbox"
-            [checked]="isOptionSelected(form.registroFotografico, option)"
-            (change)="toggleMultiSelect('registroFotografico', option, $any($event.target).checked)"
-          />
-          <span>{{ option }}</span>
-        </label>
-      </div>
-      <div class="mt-3">
-        <label class="form-label">Quantidade de fotos</label>
-        <input class="form-control quantity-input" inputmode="numeric" [(ngModel)]="form.quantidadeFotos" />
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToNextStep()">Continuar</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isStepActive('fotos')">
+    <div class="step-head">
+      <span class="step-number">5</span>
+      <div>
+        <h3>Registro fotográfico</h3>
+        <p>Escolha o tipo do registro e fotografe o equipamento. Você pode adicionar várias fotos.</p>
       </div>
     </div>
+
+    <div class="selection-grid vertical">
+      <label class="choice-card" *ngFor="let option of registroFotograficoOptions" [class.is-selected]="selectedPhotoCategory === option">
+        <input type="radio" name="categoriaFoto" [value]="option" [(ngModel)]="selectedPhotoCategory" />
+        <span>{{ option }}</span>
+      </label>
+    </div>
+
+    <input
+      #photoInput
+      class="d-none"
+      type="file"
+      accept="image/*"
+      capture="environment"
+      (change)="onPhotoSelected($event)"
+    />
+
+    <button class="btn btn-primary photo-capture-button mt-3" type="button" (click)="openPhotoCamera()" [disabled]="!selectedPhotoCategory || cameraStarting || cameraOpen">
+      <i class="fa-solid fa-camera"></i>
+      {{ cameraStarting ? 'Abrindo câmera...' : 'Abrir câmera' }}
+    </button>
+
+    <div class="inline-camera mt-3" *ngIf="cameraOpen">
+      <video #photoVideo autoplay muted playsinline></video>
+      <div class="camera-category">
+        Foto atual: <strong>{{ selectedPhotoCategory }}</strong>
+      </div>
+      <div class="camera-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="closePhotoCamera()" [disabled]="cameraCapturing">Fechar câmera</button>
+        <button class="btn btn-primary" type="button" (click)="captureCameraPhoto()" [disabled]="cameraCapturing">
+          <i class="fa-solid fa-camera"></i>
+          {{ cameraCapturing ? 'Capturando...' : 'Capturar foto' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="cameraError">{{ cameraError }}</div>
+
+    <div class="photo-gallery mt-3" *ngIf="photos.length > 0">
+      <article class="photo-card" *ngFor="let photo of photos; let index = index">
+        <img [src]="photo.previewUrl" [alt]="photo.categoria" />
+        <div class="photo-card-body">
+          <strong>{{ photo.categoria }}</strong>
+          <span>{{ photo.file.name }}</span>
+          <button class="btn btn-sm btn-outline-danger" type="button" (click)="removePhoto(index)">Remover</button>
+        </div>
+      </article>
+    </div>
+
+    <div class="scan-feedback" *ngIf="photos.length === 0">Nenhuma foto adicionada.</div>
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousStep()">Etapa anterior</button>

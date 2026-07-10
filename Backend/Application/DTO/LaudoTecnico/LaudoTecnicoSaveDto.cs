@@ -11,6 +11,7 @@ public class LaudoTecnicoSaveDto
     public string TipoEquipamento { get; set; } = string.Empty;
     public string OutroTipoEquipamento { get; set; } = string.Empty;
     public string Patrimonio { get; set; } = string.Empty;
+    public string TombamentoAntigo { get; set; } = string.Empty;
     public string NumeroSerie { get; set; } = string.Empty;
     public string Marca { get; set; } = string.Empty;
     public string Modelo { get; set; } = string.Empty;

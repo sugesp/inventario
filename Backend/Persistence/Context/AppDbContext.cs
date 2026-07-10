@@ -46,6 +46,7 @@ public class AppDbContext : DbContext
     public DbSet<Transferencia> Transferencias { get; set; }
     public DbSet<TransferenciaItem> TransferenciasItens { get; set; }
     public DbSet<LaudoTecnico> LaudosTecnicos { get; set; }
+    public DbSet<LaudoTecnicoFoto> LaudosTecnicosFotos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -292,6 +293,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.TipoEquipamento).HasMaxLength(80).IsRequired();
             entity.Property(x => x.OutroTipoEquipamento).HasMaxLength(120);
             entity.Property(x => x.Patrimonio).HasMaxLength(120);
+            entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
             entity.Property(x => x.NumeroSerie).HasMaxLength(120);
             entity.Property(x => x.Marca).HasMaxLength(120);
             entity.Property(x => x.Modelo).HasMaxLength(120);
@@ -324,6 +326,20 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.LaudosTecnicos)
                 .HasForeignKey(x => x.ResponsavelTecnicoUsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LaudoTecnicoFoto>(entity =>
+        {
+            entity.ToTable("LaudosTecnicosFotos");
+            entity.Property(x => x.Categoria).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.NomeArquivo).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.NomeOriginal).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.CaminhoRelativo).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.Url).HasMaxLength(500).IsRequired();
+            entity.HasOne(x => x.LaudoTecnico)
+                .WithMany(x => x.Fotos)
+                .HasForeignKey(x => x.LaudoTecnicoId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

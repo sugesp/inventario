@@ -58,7 +58,7 @@
           <tr>
             <th>Data</th>
             <th>Equipamento</th>
-            <th>Patrimônio</th>
+            <th>Tombamento/Patrimônio</th>
             <th>Classificação</th>
             <th>Conclusão</th>
             <th>Responsável técnico</th>
@@ -96,6 +96,9 @@
         <h3>{{ loadingModal ? 'Carregando laudo...' : 'Laudo Técnico de TI' }}</h3>
       </div>
       <div class="modal-header-actions">
+        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLaudo && !editingIdentificacao" (click)="editIdentificacao()">
+          {{ activeLaudo.processoSei || activeLaudo.idDevolucaoSei || activeLaudo.unidadeGestora || activeLaudo.setor || activeLaudo.dataAvaliacao ? 'Editar identificação' : 'Preencher identificação' }}
+        </button>
         <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLaudo" (click)="printActiveLaudo()">
           Imprimir
         </button>
@@ -104,6 +107,38 @@
     </div>
 
     <div class="laudo-print-sheet" *ngIf="activeLaudo as laudo">
+      <section class="identificacao-editor" *ngIf="editingIdentificacao">
+        <h5>Identificação do laudo</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Processo SEI nº</label>
+            <input class="form-control" [(ngModel)]="identificacaoForm.processoSei" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ID devolução SEI</label>
+            <input class="form-control" [(ngModel)]="identificacaoForm.idDevolucaoSei" />
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Unidade gestora</label>
+            <input class="form-control" [(ngModel)]="identificacaoForm.unidadeGestora" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Setor</label>
+            <input class="form-control" [(ngModel)]="identificacaoForm.setor" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Data da avaliação</label>
+            <input class="form-control" type="date" [(ngModel)]="identificacaoForm.dataAvaliacao" />
+          </div>
+        </div>
+        <div class="step-actions mt-3 mb-0">
+          <button class="btn btn-outline-secondary" type="button" (click)="cancelIdentificacao()" [disabled]="savingIdentificacao">Cancelar</button>
+          <button class="btn btn-primary" type="button" (click)="saveIdentificacao()" [disabled]="savingIdentificacao">
+            {{ savingIdentificacao ? 'Salvando...' : 'Salvar identificação' }}
+          </button>
+        </div>
+      </section>
+
       <div class="print-title-block">
         <h4>LAUDO TÉCNICO DE TI - AVALIAÇÃO INDIVIDUAL</h4>
         <p>Avaliacao individual para desfazimento de bens de informatica</p>
@@ -124,7 +159,8 @@
         <h5>2. Identificação do equipamento</h5>
         <div class="print-grid two-columns">
           <div><strong>Tipo:</strong> <span>{{ laudo.tipoEquipamento || '-' }}<ng-container *ngIf="laudo.outroTipoEquipamento"> - {{ laudo.outroTipoEquipamento }}</ng-container></span></div>
-          <div><strong>Patrimônio:</strong> <span>{{ laudo.patrimonio || '-' }}</span></div>
+          <div><strong>Tombamento/Patrimônio E-Estado:</strong> <span>{{ laudo.patrimonio || '-' }}</span></div>
+          <div><strong>Tombamento antigo:</strong> <span>{{ laudo.tombamentoAntigo || '-' }}</span></div>
           <div><strong>Nº Série:</strong> <span>{{ laudo.numeroSerie || '-' }}</span></div>
           <div><strong>Marca:</strong> <span>{{ laudo.marca || '-' }}</span></div>
           <div><strong>Modelo:</strong> <span>{{ laudo.modelo || '-' }}</span></div>
@@ -135,10 +171,12 @@
       <section class="print-section">
         <h5>3. Configuração / Especificação</h5>
         <div class="print-grid two-columns">
+          <ng-container *ngIf="laudo.tipoEquipamento === 'Computador' || laudo.tipoEquipamento === 'Notebook'">
           <div><strong>Processador:</strong> <span>{{ laudo.processador || '-' }}</span></div>
           <div><strong>Memória:</strong> <span>{{ laudo.memoria || '-' }}</span></div>
           <div><strong>Armazenamento:</strong> <span>{{ laudo.armazenamento || '-' }}</span></div>
           <div><strong>Sistema operacional:</strong> <span>{{ laudo.sistemaOperacional || '-' }}</span></div>
+          </ng-container>
           <div class="full-row"><strong>Outros:</strong> <span>{{ laudo.outros || '-' }}</span></div>
         </div>
       </section>
@@ -177,6 +215,13 @@
           <div class="full-row"><strong>Registro fotográfico:</strong> <span>{{ formatList(laudo.registroFotografico) }}</span></div>
           <div><strong>Quantidade de fotos:</strong> <span>{{ laudo.quantidadeFotos ?? '-' }}</span></div>
           <div><strong>Classificação final:</strong> <span>{{ laudo.classificacaoFinal || '-' }}</span></div>
+        </div>
+        <div class="laudo-photo-gallery" *ngIf="laudo.fotos.length > 0">
+          <figure *ngFor="let foto of laudo.fotos">
+            <img *ngIf="photoUrl(foto.id) as url; else fotoLoading" [src]="url" [alt]="foto.categoria" />
+            <ng-template #fotoLoading><div class="photo-loading">Carregando foto...</div></ng-template>
+            <figcaption>{{ foto.categoria }}</figcaption>
+          </figure>
         </div>
       </section>
 

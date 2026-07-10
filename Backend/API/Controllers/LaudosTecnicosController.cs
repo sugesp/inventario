@@ -48,6 +48,47 @@ public class LaudosTecnicosController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,GTI.Tecnico")]
+    [HttpPut("{id:guid}/identificacao")]
+    public async Task<ActionResult<LaudoTecnicoDto>> UpdateIdentificacao(
+        Guid id,
+        [FromBody] LaudoTecnicoIdentificacaoDto dto,
+        CancellationToken cancellationToken)
+    {
+        var updated = await _service.UpdateIdentificacaoAsync(id, dto, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize(Roles = "Administrador,GTI.Tecnico")]
+    [HttpPost("{id:guid}/fotos")]
+    [RequestSizeLimit(50_000_000)]
+    public async Task<ActionResult<LaudoTecnicoDto>> AddFotos(
+        Guid id,
+        [FromForm] List<IFormFile> fotos,
+        [FromForm] List<string> categorias,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _service.AddFotosAsync(id, fotos, categorias, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Administrador,GTI.Tecnico,GTI.Gestor")]
+    [HttpGet("{id:guid}/fotos/{fotoId:guid}")]
+    public async Task<IActionResult> GetFoto(Guid id, Guid fotoId, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetFotoAsync(id, fotoId, cancellationToken);
+        return result is null
+            ? NotFound()
+            : File(result.Value.Stream, result.Value.ContentType, result.Value.FileName);
+    }
+
     private Guid GetUsuarioId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

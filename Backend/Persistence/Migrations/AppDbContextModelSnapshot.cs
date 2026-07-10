@@ -379,6 +379,11 @@ namespace Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("varchar(120)");
 
+                    b.Property<string>("TombamentoAntigo")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
                     b.Property<decimal?>("PercentualEstimado")
                         .HasPrecision(6, 2)
                         .HasColumnType("decimal(6,2)");
@@ -460,6 +465,56 @@ namespace Persistence.Migrations
                     b.HasIndex("ResponsavelTecnicoUsuarioId");
 
                     b.ToTable("LaudosTecnicos", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Model.LaudoTecnicoFoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CaminhoRelativo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("LaudoTecnicoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("NomeArquivo")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("NomeOriginal")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaudoTecnicoId");
+
+                    b.ToTable("LaudosTecnicosFotos", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Model.Levantamento", b =>
@@ -944,6 +999,17 @@ namespace Persistence.Migrations
                     b.Navigation("ResponsavelTecnicoUsuario");
                 });
 
+            modelBuilder.Entity("Domain.Model.LaudoTecnicoFoto", b =>
+                {
+                    b.HasOne("Domain.Model.LaudoTecnico", "LaudoTecnico")
+                        .WithMany("Fotos")
+                        .HasForeignKey("LaudoTecnicoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LaudoTecnico");
+                });
+
             modelBuilder.Entity("Domain.Model.Levantamento", b =>
                 {
                     b.HasOne("Domain.Model.Usuario", "CriadoPorUsuario")
@@ -1074,6 +1140,11 @@ namespace Persistence.Migrations
                 });
 
             modelBuilder.Entity("Domain.Model.ItemInventariado", b =>
+                {
+                    b.Navigation("Fotos");
+                });
+
+            modelBuilder.Entity("Domain.Model.LaudoTecnico", b =>
                 {
                     b.Navigation("Fotos");
                 });

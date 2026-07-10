@@ -11,6 +11,7 @@ public class LaudoTecnico : BaseEntity
     public string TipoEquipamento { get; set; } = string.Empty;
     public string OutroTipoEquipamento { get; set; } = string.Empty;
     public string Patrimonio { get; set; } = string.Empty;
+    public string TombamentoAntigo { get; set; } = string.Empty;
     public string NumeroSerie { get; set; } = string.Empty;
     public string Marca { get; set; } = string.Empty;
     public string Modelo { get; set; } = string.Empty;
@@ -50,4 +51,5 @@ public class LaudoTecnico : BaseEntity
     public string ResponsavelTecnicoCargo { get; set; } = string.Empty;
 
     public Usuario? ResponsavelTecnicoUsuario { get; set; }
+    public ICollection<LaudoTecnicoFoto> Fotos { get; set; } = new List<LaudoTecnicoFoto>();
 }

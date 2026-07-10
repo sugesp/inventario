@@ -12,6 +12,7 @@ public class LaudoTecnicoDto
     public string TipoEquipamento { get; set; } = string.Empty;
     public string OutroTipoEquipamento { get; set; } = string.Empty;
     public string Patrimonio { get; set; } = string.Empty;
+    public string TombamentoAntigo { get; set; } = string.Empty;
     public string NumeroSerie { get; set; } = string.Empty;
     public string Marca { get; set; } = string.Empty;
     public string Modelo { get; set; } = string.Empty;
@@ -51,4 +52,5 @@ public class LaudoTecnicoDto
     public string ResponsavelTecnicoCargo { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public IReadOnlyCollection<LaudoTecnicoFotoDto> Fotos { get; set; } = Array.Empty<LaudoTecnicoFotoDto>();
 }
