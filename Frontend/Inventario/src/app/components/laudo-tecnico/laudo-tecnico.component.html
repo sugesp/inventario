@@ -48,11 +48,20 @@
             placeholder="000.000.000"
             inputmode="numeric"
           />
-          <button class="btn btn-primary" type="button" (click)="openQrReader()" [disabled]="readingQrCode || consultingPatrimonio">
-            {{ readingQrCode ? 'Lendo...' : (consultingPatrimonio ? 'Consultando...' : 'Ler QR Code') }}
+          <button class="btn btn-primary" type="button" (click)="openQrReader()" [disabled]="readingQrCode || consultingPatrimonio || qrScannerStarting || qrScannerOpen">
+            {{ qrScannerStarting ? 'Abrindo câmera...' : (readingQrCode ? 'Lendo...' : (consultingPatrimonio ? 'Consultando...' : 'Ler QR Code')) }}
           </button>
         </div>
         <input #qrInput class="d-none" type="file" accept="image/*" capture="environment" (change)="onQrImageSelected($event)" />
+        <div class="qr-inline-scanner mt-3" *ngIf="qrScannerOpen">
+          <div class="qr-video-shell">
+            <video #qrVideo autoplay muted playsinline></video>
+            <div class="qr-scan-frame" aria-hidden="true"></div>
+          </div>
+          <p>Aponte a câmera para o QR Code da etiqueta patrimonial.</p>
+          <button class="btn btn-outline-light" type="button" (click)="closeQrScanner()">Fechar leitor</button>
+        </div>
+        <div class="scan-feedback" *ngIf="qrScannerError">{{ qrScannerError }}</div>
         <div class="scan-feedback" *ngIf="consultingPatrimonio">Consultando dados do patrimônio...</div>
         <div class="scan-feedback" *ngIf="!consultingPatrimonio && patrimonioMessage">{{ patrimonioMessage }}</div>
       </div>

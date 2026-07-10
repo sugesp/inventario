@@ -70,6 +70,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   private static readonly STORAGE_KEY = 'inventario.laudo-tecnico.state';
 
   @ViewChild('qrInput') qrInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('qrVideo') qrVideo?: ElementRef<HTMLVideoElement>;
   @ViewChild('photoInput') photoInput?: ElementRef<HTMLInputElement>;
   @ViewChild('photoVideo') photoVideo?: ElementRef<HTMLVideoElement>;
 
@@ -104,6 +105,9 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   saving = false;
   savedLaudo: LaudoTecnico | null = null;
   readingQrCode = false;
+  qrScannerOpen = false;
+  qrScannerStarting = false;
+  qrScannerError = '';
   consultingPatrimonio = false;
   patrimonioMessage = '';
   selectedPhotoCategory = '';
@@ -114,6 +118,10 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   cameraError = '';
   private lastConsultedPatrimonio = '';
   private cameraStream: MediaStream | null = null;
+  private qrScannerStream: MediaStream | null = null;
+  private qrScannerFrameId: number | null = null;
+  private qrScannerDetector: { detect(source: ImageBitmap): Promise<Array<{ rawValue?: string }>> } | null = null;
+  private qrScannerCanvas: HTMLCanvasElement | null = null;
   private lastPersistedSnapshot = '';
 
   form: LaudoForm = this.createEmptyForm();
@@ -144,6 +152,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopQrScanner();
     this.stopCamera();
     this.clearPhotoPreviews();
   }
@@ -199,8 +208,52 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     }
   }
 
-  openQrReader(): void {
-    this.qrInput?.nativeElement.click();
+  async openQrReader(): Promise<void> {
+    if (this.qrScannerOpen || this.qrScannerStarting) {
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || !window.isSecureContext) {
+      this.qrScannerError = 'A leitura ao vivo exige HTTPS. Selecione uma foto da etiqueta para continuar.';
+      this.qrInput?.nativeElement.click();
+      return;
+    }
+
+    this.qrScannerStarting = true;
+    this.qrScannerError = '';
+    this.patrimonioMessage = '';
+    try {
+      this.qrScannerDetector = await this.createQrDetector();
+      this.qrScannerCanvas = document.createElement('canvas');
+      this.qrScannerStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      this.qrScannerOpen = true;
+      setTimeout(() => {
+        const video = this.qrVideo?.nativeElement;
+        if (!video || !this.qrScannerStream) {
+          return;
+        }
+        video.srcObject = this.qrScannerStream;
+        video.setAttribute('playsinline', 'true');
+        video.play()
+          .then(() => this.scanQrVideoFrame())
+          .catch(() => {
+            this.qrScannerError = 'Não foi possível iniciar a câmera.';
+            this.closeQrScanner();
+          });
+      });
+    } catch {
+      this.qrScannerError = 'Não foi possível acessar a câmera. Verifique a permissão do navegador.';
+    } finally {
+      this.qrScannerStarting = false;
+    }
+  }
+
+  closeQrScanner(): void {
+    this.stopQrScanner();
+    this.qrScannerOpen = false;
   }
 
   async onQrImageSelected(event: Event): Promise<void> {
@@ -444,6 +497,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
         this.saving = false;
         this.savedLaudo = laudo;
         this.toastr.success('Laudo tecnico salvo com sucesso.');
+        this.closeQrScanner();
         this.closePhotoCamera();
         this.form = this.createEmptyForm();
         this.clearPhotoPreviews();
@@ -462,6 +516,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
 
   resetDraft(): void {
     this.savedLaudo = null;
+    this.closeQrScanner();
     this.closePhotoCamera();
     this.form = this.createEmptyForm();
     this.clearPhotoPreviews();
@@ -695,6 +750,96 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     return jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })?.data?.trim() ?? null;
+  }
+
+  private async createQrDetector(): Promise<{ detect(source: ImageBitmap): Promise<Array<{ rawValue?: string }>> } | null> {
+    if (!window.BarcodeDetector) {
+      return null;
+    }
+
+    if (typeof window.BarcodeDetector.getSupportedFormats === 'function') {
+      const supportedFormats = await window.BarcodeDetector.getSupportedFormats();
+      if (!supportedFormats.includes('qr_code')) {
+        return null;
+      }
+    }
+
+    return new window.BarcodeDetector({ formats: ['qr_code'] });
+  }
+
+  private scanQrVideoFrame(): void {
+    if (!this.qrScannerOpen) {
+      return;
+    }
+
+    const video = this.qrVideo?.nativeElement;
+    if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      this.qrScannerFrameId = window.requestAnimationFrame(() => this.scanQrVideoFrame());
+      return;
+    }
+
+    this.detectQrFromVideo(video)
+      .then((rawValue) => {
+        if (rawValue) {
+          this.form.patrimonio = this.formatTombamento(rawValue);
+          this.patrimonioMessage = 'QR Code identificado automaticamente pela câmera.';
+          this.closeQrScanner();
+          this.consultPatrimonio();
+          return;
+        }
+        if (this.qrScannerOpen) {
+          this.qrScannerFrameId = window.requestAnimationFrame(() => this.scanQrVideoFrame());
+        }
+      })
+      .catch(() => {
+        if (this.qrScannerOpen) {
+          this.qrScannerFrameId = window.requestAnimationFrame(() => this.scanQrVideoFrame());
+        }
+      });
+  }
+
+  private async detectQrFromVideo(video: HTMLVideoElement): Promise<string | null> {
+    if (this.qrScannerDetector) {
+      const bitmap = await createImageBitmap(video);
+      try {
+        const results = await this.qrScannerDetector.detect(bitmap);
+        const rawValue = results.find((item) => !!item.rawValue)?.rawValue?.trim();
+        if (rawValue) {
+          return rawValue;
+        }
+      } finally {
+        bitmap.close();
+      }
+    }
+
+    const canvas = this.qrScannerCanvas ?? document.createElement('canvas');
+    this.qrScannerCanvas = canvas;
+    const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      return null;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    return jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' })?.data?.trim() ?? null;
+  }
+
+  private stopQrScanner(): void {
+    if (this.qrScannerFrameId !== null) {
+      window.cancelAnimationFrame(this.qrScannerFrameId);
+      this.qrScannerFrameId = null;
+    }
+    const video = this.qrVideo?.nativeElement;
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+    this.qrScannerStream?.getTracks().forEach((track) => track.stop());
+    this.qrScannerStream = null;
+    this.qrScannerCanvas = null;
+    this.qrScannerDetector = null;
   }
 
   private loadImage(file: File): Promise<HTMLImageElement> {

@@ -242,6 +242,40 @@
   min-width: 150px;
 }
 
+.qr-inline-scanner {
+  padding: 12px;
+  border-radius: 16px;
+  background: #122231;
+  text-align: center;
+}
+
+.qr-video-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.qr-video-shell video {
+  display: block;
+  width: 100%;
+  max-height: 55vh;
+  object-fit: cover;
+  background: #000;
+}
+
+.qr-scan-frame {
+  position: absolute;
+  inset: 18% 12%;
+  border: 3px solid #66b3ff;
+  border-radius: 18px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.28);
+}
+
+.qr-inline-scanner p {
+  margin: 10px 0;
+  color: #dce8f2;
+}
+
 .photo-capture-button {
   display: inline-flex;
   align-items: center;
