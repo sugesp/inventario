@@ -190,8 +190,9 @@
 }
 
 .auth-logo {
-  width: min(220px, 72%);
-  height: auto;
+  width: auto;
+  max-width: 72%;
+  height: 61px;
   object-fit: contain;
 }
 
@@ -330,7 +331,8 @@
   }
 
   .auth-logo {
-    width: min(180px, 62%);
+    max-width: 62%;
+    height: 50px;
   }
 
   .auth-card h2 {
