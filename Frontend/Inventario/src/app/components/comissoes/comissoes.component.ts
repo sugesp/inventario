@@ -87,6 +87,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   form: ComissaoPayload = this.createEmptyForm();
   localForm = {
     nome: '',
+    localSuperiorId: null as string | null,
     latitude: null as number | null,
     longitude: null as number | null,
     membroUsuarioIds: [] as string[],
@@ -392,6 +393,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.localMemberTerm = '';
     this.localForm = {
       nome: '',
+      localSuperiorId: null,
       latitude: null,
       longitude: null,
       membroUsuarioIds: [],
@@ -407,6 +409,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.localMemberTerm = '';
     this.localForm = {
       nome: item.nome,
+      localSuperiorId: item.localSuperiorId ?? null,
       latitude: item.latitude ?? null,
       longitude: item.longitude ?? null,
       membroUsuarioIds: item.membros.map((membro) => membro.usuarioId),
@@ -447,6 +450,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     const payload = {
       nome,
       comissaoId: this.editingId,
+      localSuperiorId: this.localForm.localSuperiorId,
       latitude: this.localForm.latitude,
       longitude: this.localForm.longitude,
       membroUsuarioIds: [...new Set(this.localForm.membroUsuarioIds)],
@@ -623,6 +627,19 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.localFormHasGeolocalizacao
       ? `${this.localForm.latitude!.toFixed(6)}, ${this.localForm.longitude!.toFixed(6)}`
       : 'Clique no mapa ou pesquise um endereço para posicionar o local.';
+  }
+
+  get localSuperiorOptions(): Array<{ value: string; label: string }> {
+    return this.locaisDaComissaoEmEdicao
+      .filter((item) => item.id !== this.editingLocalId)
+      .map((item) => ({
+        value: item.id,
+        label: item.localSuperiorNome ? `${item.localSuperiorNome} > ${item.nome}` : item.nome,
+      }));
+  }
+
+  getLocalHierarchyLabel(local: Local): string {
+    return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
   }
 
   searchLocalAddress(): void {
@@ -916,9 +933,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     };
   }
 
-  private createEmptyLocalForm(): { nome: string; latitude: number | null; longitude: number | null; membroUsuarioIds: string[] } {
+  private createEmptyLocalForm(): { nome: string; localSuperiorId: string | null; latitude: number | null; longitude: number | null; membroUsuarioIds: string[] } {
     return {
       nome: '',
+      localSuperiorId: null,
       latitude: null,
       longitude: null,
       membroUsuarioIds: [],

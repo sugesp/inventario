@@ -333,6 +333,7 @@ public class ItemInventariadoService : IItemInventariadoService
                 UsuarioNome = x.Usuario != null ? x.Usuario.Nome : string.Empty,
                 Status = x.Status,
                 EstadoConservacao = x.EstadoConservacao,
+                JustificativaInservivel = x.JustificativaInservivel,
                 LancadoEEstado = x.LancadoEEstado,
                 DataInventario = x.DataInventario,
             })
@@ -419,6 +420,9 @@ public class ItemInventariadoService : IItemInventariadoService
             ComissaoId = dto.ComissaoId,
             Status = NormalizeClassificationStatus(dto.Status)!,
             EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!,
+            JustificativaInservivel = NormalizeClassificationStatus(dto.Status) == "INSERVÍVEL"
+                ? dto.JustificativaInservivel!.Trim()
+                : string.Empty,
             Observacao = dto.Observacao?.Trim() ?? string.Empty,
             DataInventario = dto.DataInventario ?? DateTime.UtcNow,
             Latitude = dto.Latitude,
@@ -464,6 +468,9 @@ public class ItemInventariadoService : IItemInventariadoService
         entity.ComissaoId = dto.ComissaoId ?? entity.ComissaoId;
         entity.Status = NormalizeClassificationStatus(dto.Status)!;
         entity.EstadoConservacao = NormalizeConservationState(dto.EstadoConservacao)!;
+        entity.JustificativaInservivel = entity.Status == "INSERVÍVEL"
+            ? dto.JustificativaInservivel!.Trim()
+            : string.Empty;
         entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
         entity.DataInventario = dto.DataInventario ?? entity.DataInventario;
         entity.Latitude = dto.Latitude;
@@ -576,6 +583,17 @@ public class ItemInventariadoService : IItemInventariadoService
         if (NormalizeClassificationStatus(dto.Status) is null)
         {
             throw new InvalidOperationException("Selecione uma classificação válida para o item.");
+        }
+
+        if (NormalizeClassificationStatus(dto.Status) == "INSERVÍVEL"
+            && string.IsNullOrWhiteSpace(dto.JustificativaInservivel))
+        {
+            throw new InvalidOperationException("A justificativa da classificação como inservível é obrigatória.");
+        }
+
+        if (dto.JustificativaInservivel?.Trim().Length > 2000)
+        {
+            throw new InvalidOperationException("A justificativa da classificação como inservível deve ter no máximo 2000 caracteres.");
         }
 
         if (string.IsNullOrWhiteSpace(dto.EstadoConservacao))
@@ -851,6 +869,7 @@ public class ItemInventariadoService : IItemInventariadoService
             ComissaoStatus = entity.Comissao?.Status,
             Status = entity.Status,
             EstadoConservacao = entity.EstadoConservacao,
+            JustificativaInservivel = entity.JustificativaInservivel,
             Observacao = entity.Observacao,
             DataInventario = entity.DataInventario,
             Latitude = entity.Latitude,

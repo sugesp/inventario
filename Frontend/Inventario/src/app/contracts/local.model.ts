@@ -3,6 +3,8 @@ export interface Local {
   nome: string;
   comissaoId: string;
   comissaoAno: number;
+  localSuperiorId?: string | null;
+  localSuperiorNome?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   membros: LocalMembro[];
@@ -17,6 +19,7 @@ export interface LocalMembro {
 export interface LocalPayload {
   nome: string;
   comissaoId: string;
+  localSuperiorId?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   membroUsuarioIds: string[];

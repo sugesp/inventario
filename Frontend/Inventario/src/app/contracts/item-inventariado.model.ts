@@ -22,6 +22,7 @@ export interface ItemInventariado {
   comissaoStatus?: string | null;
   status: string;
   estadoConservacao: string;
+  justificativaInservivel: string;
   observacao: string;
   dataInventario: string;
   latitude?: number | null;
@@ -135,6 +136,7 @@ export interface ConsultaTombamentoItemInventariado {
   usuarioNome: string;
   status: string;
   estadoConservacao: string;
+  justificativaInservivel: string;
   lancadoEEstado: boolean;
   dataInventario: string;
 }

@@ -73,6 +73,7 @@ public class ConsultaTombamentoItemInventariadoDto
     public string UsuarioNome { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string EstadoConservacao { get; set; } = string.Empty;
+    public string JustificativaInservivel { get; set; } = string.Empty;
     public bool LancadoEEstado { get; set; }
     public DateTime DataInventario { get; set; }
 }

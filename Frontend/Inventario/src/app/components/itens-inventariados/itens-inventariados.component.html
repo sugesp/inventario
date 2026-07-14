@@ -283,6 +283,10 @@
           <span>Observação</span>
           <p>{{ selectedItemDetalhes.observacao || 'Sem observações registradas.' }}</p>
         </div>
+        <div class="detalhes-observacao" *ngIf="selectedItemDetalhes.justificativaInservivel">
+          <span>Justificativa da classificação como inservível</span>
+          <p>{{ selectedItemDetalhes.justificativaInservivel }}</p>
+        </div>
       </section>
 
       <section class="detalhes-section">

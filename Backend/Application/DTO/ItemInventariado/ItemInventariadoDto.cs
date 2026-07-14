@@ -18,6 +18,7 @@ public class ItemInventariadoDto
     public string? ComissaoStatus { get; set; }
     public string Status { get; set; } = string.Empty;
     public string EstadoConservacao { get; set; } = string.Empty;
+    public string JustificativaInservivel { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; }
     public decimal? Latitude { get; set; }

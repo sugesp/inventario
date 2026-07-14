@@ -22,6 +22,62 @@ namespace Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Model.Bem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Tombamento")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("TombamentoAntigo")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("TombamentoFormatado")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<DateTime?>("UltimaConsultaEEstadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UrlConsulta")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Tombamento")
+                        .IsUnique();
+
+                    b.ToTable("Bens", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Model.Comissao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -73,9 +129,6 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid?>("EquipeId")
-                        .HasColumnType("char(36)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -83,8 +136,6 @@ namespace Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EquipeId");
 
                     b.HasIndex("UsuarioId");
 
@@ -151,6 +202,11 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("varchar(80)");
+
+                    b.Property<string>("JustificativaInservivel")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
 
                     b.Property<bool>("LancadoEEstado")
                         .HasColumnType("tinyint(1)");
@@ -379,11 +435,6 @@ namespace Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("varchar(120)");
 
-                    b.Property<string>("TombamentoAntigo")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("varchar(120)");
-
                     b.Property<decimal?>("PercentualEstimado")
                         .HasPrecision(6, 2)
                         .HasColumnType("decimal(6,2)");
@@ -447,6 +498,11 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("varchar(80)");
+
+                    b.Property<string>("TombamentoAntigo")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
 
                     b.Property<string>("UnidadeGestora")
                         .IsRequired()
@@ -650,14 +706,25 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("ComissaoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("EquipeId")
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(10, 8)
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<Guid?>("LocalSuperiorId")
                         .HasColumnType("char(36)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(11, 8)
+                        .HasColumnType("decimal(11,8)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -669,9 +736,42 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EquipeId");
+                    b.HasIndex("ComissaoId");
+
+                    b.HasIndex("LocalSuperiorId");
 
                     b.ToTable("Locais", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Model.LocalMembro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("LocalId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("LocalId", "UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("LocaisMembros", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Model.Transferencia", b =>
@@ -799,14 +899,6 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<decimal?>("Latitude")
-                        .HasPrecision(10, 8)
-                        .HasColumnType("decimal(10,8)");
-
-                    b.Property<decimal?>("Longitude")
-                        .HasPrecision(11, 8)
-                        .HasColumnType("decimal(11,8)");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -916,11 +1008,6 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Model.Equipe", "Equipe")
-                        .WithMany()
-                        .HasForeignKey("EquipeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Domain.Model.Usuario", "Usuario")
                         .WithMany("ComissoesMembro")
                         .HasForeignKey("UsuarioId")
@@ -928,8 +1015,6 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Comissao");
-
-                    b.Navigation("Equipe");
 
                     b.Navigation("Usuario");
                 });
@@ -1069,13 +1154,39 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.Local", b =>
                 {
-                    b.HasOne("Domain.Model.Equipe", "Equipe")
+                    b.HasOne("Domain.Model.Comissao", "Comissao")
                         .WithMany("Locais")
-                        .HasForeignKey("EquipeId")
+                        .HasForeignKey("ComissaoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Equipe");
+                    b.HasOne("Domain.Model.Local", "LocalSuperior")
+                        .WithMany("LocaisSubordinados")
+                        .HasForeignKey("LocalSuperiorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Comissao");
+
+                    b.Navigation("LocalSuperior");
+                });
+
+            modelBuilder.Entity("Domain.Model.LocalMembro", b =>
+                {
+                    b.HasOne("Domain.Model.Local", "Local")
+                        .WithMany("Membros")
+                        .HasForeignKey("LocalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Model.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Local");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Domain.Model.Transferencia", b =>
@@ -1131,12 +1242,9 @@ namespace Persistence.Migrations
 
                     b.Navigation("ItensInventariados");
 
-                    b.Navigation("Membros");
-                });
-
-            modelBuilder.Entity("Domain.Model.Equipe", b =>
-                {
                     b.Navigation("Locais");
+
+                    b.Navigation("Membros");
                 });
 
             modelBuilder.Entity("Domain.Model.ItemInventariado", b =>
@@ -1159,6 +1267,10 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Model.Local", b =>
                 {
                     b.Navigation("ItensInventariados");
+
+                    b.Navigation("LocaisSubordinados");
+
+                    b.Navigation("Membros");
                 });
 
             modelBuilder.Entity("Domain.Model.Transferencia", b =>
@@ -1183,11 +1295,11 @@ namespace Persistence.Migrations
 
                     b.Navigation("LaudosTecnicos");
 
-                    b.Navigation("LevantamentosCriados");
-
                     b.Navigation("LevantamentosCompartilhados");
 
                     b.Navigation("LevantamentosCompartilhadosPorUsuario");
+
+                    b.Navigation("LevantamentosCriados");
 
                     b.Navigation("LevantamentosItensConfirmados");
 

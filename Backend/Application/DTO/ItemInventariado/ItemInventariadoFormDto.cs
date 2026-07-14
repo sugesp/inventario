@@ -10,6 +10,7 @@ public class ItemInventariadoFormDto
     public Guid? ComissaoId { get; set; }
     public string? Status { get; set; }
     public string? EstadoConservacao { get; set; }
+    public string? JustificativaInservivel { get; set; }
     public string? Observacao { get; set; }
     public DateTime? DataInventario { get; set; }
     public decimal? Latitude { get; set; }

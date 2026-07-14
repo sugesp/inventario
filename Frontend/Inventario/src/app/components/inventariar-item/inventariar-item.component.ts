@@ -36,6 +36,7 @@ interface ItemInventarioForm {
   descricao: string;
   status: string;
   estadoConservacao: string;
+  justificativaInservivel: string;
   observacao: string;
 }
 
@@ -208,6 +209,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return !!this.selectedLocalId
       && !!this.form.descricao.trim()
       && !!this.form.status.trim()
+      && (this.form.status !== 'INSERVIVEL' || !!this.form.justificativaInservivel.trim())
       && !!this.form.estadoConservacao.trim()
       && !!this.etiquetaPhoto
       && !!this.frontalPhoto
@@ -231,6 +233,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     if (!this.form.status.trim()) {
       reasons.push('Selecione a classificação do item.');
+    }
+
+    if (this.form.status === 'INSERVIVEL' && !this.form.justificativaInservivel.trim()) {
+      reasons.push('Informe a justificativa da classificação como inservível.');
     }
 
     if (!this.form.estadoConservacao.trim()) {
@@ -279,11 +285,15 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get conservacaoOptions(): Array<{ value: string; label: string; description: string }> {
     return [
-      { value: 'BOM', label: 'BOM', description: 'Item com bom estado de conservação.' },
-      { value: 'EXCELENTE', label: 'EXCELENTE', description: 'Item muito bem conservado.' },
-      { value: 'REGULAR', label: 'REGULAR', description: 'Item com sinais moderados de uso.' },
-      { value: 'PESSIMO', label: 'PÉSSIMO', description: 'Item em estado crítico de conservação.' },
+      { value: 'EXCELENTE', label: 'EXCELENTE', description: 'Qualidade do bem móvel adquirido há menos de um ano e que ainda mantenha as mesmas características e condições de uso de sua aquisição.' },
+      { value: 'BOM', label: 'BOM', description: 'Qualidade do bem móvel que esteja em perfeitas condições de uso, mas com data de aquisição superior a um ano.' },
+      { value: 'REGULAR', label: 'REGULAR', description: 'Qualidade do bem móvel que esteja em condições de uso, mas que apresenta avarias que não impedem sua utilização.' },
+      { value: 'PESSIMO', label: 'PÉSSIMO', description: 'Qualidade do bem móvel que apresenta avarias que comprometem sua utilização, podendo ser viável ou não a sua reforma.' },
     ];
+  }
+
+  getLocalDisplayName(local: Local): string {
+    return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
   }
 
   get conservacaoSelecionadaLabel(): string {
@@ -599,6 +609,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     payload.append('descricao', this.form.descricao.trim());
     payload.append('status', this.form.status.trim());
     payload.append('estadoConservacao', this.form.estadoConservacao.trim());
+    payload.append('justificativaInservivel', this.form.justificativaInservivel.trim());
     payload.append('observacao', this.form.observacao.trim());
     if (geolocation) {
       payload.append('latitude', geolocation.latitude.toString());
@@ -698,7 +709,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   goToConservationStep(): void {
-    if (!this.form.status.trim()) {
+    if (!this.form.status.trim()
+      || (this.form.status === 'INSERVIVEL' && !this.form.justificativaInservivel.trim())) {
       return;
     }
 
@@ -879,6 +891,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       descricao: '',
       status: '',
       estadoConservacao: '',
+      justificativaInservivel: '',
       observacao: '',
     };
   }
@@ -1292,6 +1305,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     this.form.status = status;
+    if (status !== 'INSERVIVEL') {
+      this.form.justificativaInservivel = '';
+    }
+    this.persistState();
+  }
+
+  onJustificativaInservivelChange(value: string): void {
+    this.form.justificativaInservivel = value;
     this.persistState();
   }
 
@@ -1412,6 +1433,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
         descricao: state.form?.descricao ?? '',
         status: state.form?.status ?? '',
         estadoConservacao: state.form?.estadoConservacao ?? '',
+        justificativaInservivel: state.form?.justificativaInservivel ?? '',
         observacao: state.form?.observacao ?? '',
       };
       this.consultaPublicaMensagem = state.consultaPublicaMensagem ?? '';

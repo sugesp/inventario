@@ -197,7 +197,8 @@
             <div class="team-list" *ngIf="locaisDaComissaoEmEdicao.length > 0">
               <div class="team-item" *ngFor="let local of locaisDaComissaoEmEdicao">
                 <div class="team-copy">
-                  <strong>{{ local.nome }}</strong>
+                  <strong>{{ getLocalHierarchyLabel(local) }}</strong>
+                  <small>Local superior: {{ local.localSuperiorNome || 'Nenhum (local raiz)' }}</small>
                   <small>Responsáveis: {{ getLocalMembrosLabel(local) }}</small>
                   <small>{{ getLocalGeolocalizacaoLabel(local) }}</small>
                 </div>
@@ -440,6 +441,20 @@
             placeholder="Ex.: Depósito GTI"
             [readonly]="!canManageCurrentComissao"
           />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Local superior</label>
+          <app-searchable-select
+            name="modalLocalSuperior"
+            [(ngModel)]="localForm.localSuperiorId"
+            [options]="localSuperiorOptions"
+            [emptyOptionLabel]="'Nenhum (local raiz)'"
+            placeholder="Selecione o local superior"
+            searchPlaceholder="Buscar local"
+            [disabled]="!canManageCurrentComissao"
+          ></app-searchable-select>
+          <small class="form-text text-muted">Opcional. Use para vincular setores, núcleos, gerências ou depósitos a um local principal.</small>
         </div>
 
         <div class="col-12">

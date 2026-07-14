@@ -99,6 +99,10 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Locais)
                 .HasForeignKey(x => x.ComissaoId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.LocalSuperior)
+                .WithMany(x => x.LocaisSubordinados)
+                .HasForeignKey(x => x.LocalSuperiorId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<LocalMembro>(entity =>
@@ -162,6 +166,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Descricao).HasMaxLength(500).IsRequired();
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
             entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.JustificativaInservivel).HasMaxLength(2000);
             entity.Property(x => x.Observacao).HasMaxLength(2000);
             entity.Property(x => x.Latitude).HasPrecision(10, 8);
             entity.Property(x => x.Longitude).HasPrecision(11, 8);

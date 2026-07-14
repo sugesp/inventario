@@ -21,6 +21,7 @@ public class LocalService : ILocalService
             .AsNoTracking()
             .Where(x => x.DeletedAt == null && x.Comissao != null && x.Comissao.DeletedAt == null)
             .Include(x => x.Comissao)
+            .Include(x => x.LocalSuperior)
             .Include(x => x.Membros.Where(m => m.DeletedAt == null))
                 .ThenInclude(x => x.Usuario)
             .OrderBy(x => x.Nome)
@@ -34,6 +35,7 @@ public class LocalService : ILocalService
         var entity = await _context.Locais
             .AsNoTracking()
             .Include(x => x.Comissao)
+            .Include(x => x.LocalSuperior)
             .Include(x => x.Membros.Where(m => m.DeletedAt == null))
                 .ThenInclude(x => x.Usuario)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
@@ -43,12 +45,13 @@ public class LocalService : ILocalService
 
     public async Task<LocalDto> CreateAsync(LocalCreateUpdateDto dto, CancellationToken cancellationToken = default)
     {
-        var membroIds = await ValidateAsync(dto, cancellationToken);
+        var membroIds = await ValidateAsync(dto, null, cancellationToken);
 
         var entity = new Local
         {
             Nome = dto.Nome.Trim(),
             ComissaoId = dto.ComissaoId,
+            LocalSuperiorId = dto.LocalSuperiorId,
             Latitude = dto.Latitude,
             Longitude = dto.Longitude,
             Membros = membroIds
@@ -64,7 +67,7 @@ public class LocalService : ILocalService
 
     public async Task<LocalDto?> UpdateAsync(Guid id, LocalCreateUpdateDto dto, CancellationToken cancellationToken = default)
     {
-        var membroIds = await ValidateAsync(dto, cancellationToken);
+        var membroIds = await ValidateAsync(dto, id, cancellationToken);
 
         var entity = await _context.Locais
             .Include(x => x.Membros)
@@ -79,6 +82,7 @@ public class LocalService : ILocalService
 
         entity.Nome = dto.Nome.Trim();
         entity.ComissaoId = dto.ComissaoId;
+        entity.LocalSuperiorId = dto.LocalSuperiorId;
         entity.Latitude = dto.Latitude;
         entity.Longitude = dto.Longitude;
 
@@ -110,7 +114,7 @@ public class LocalService : ILocalService
         return await _context.SaveChangesAsync(cancellationToken) > 0;
     }
 
-    private async Task<List<Guid>> ValidateAsync(LocalCreateUpdateDto dto, CancellationToken cancellationToken)
+    private async Task<List<Guid>> ValidateAsync(LocalCreateUpdateDto dto, Guid? currentLocalId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(dto.Nome))
         {
@@ -130,6 +134,8 @@ public class LocalService : ILocalService
         {
             throw new InvalidOperationException("Comissão responsável não encontrada.");
         }
+
+        await ValidateLocalSuperiorAsync(dto, currentLocalId, cancellationToken);
 
         if (dto.Latitude.HasValue && (dto.Latitude.Value < -90 || dto.Latitude.Value > 90))
         {
@@ -171,6 +177,66 @@ public class LocalService : ILocalService
         return membroIds;
     }
 
+    private async Task ValidateLocalSuperiorAsync(
+        LocalCreateUpdateDto dto,
+        Guid? currentLocalId,
+        CancellationToken cancellationToken)
+    {
+        if (currentLocalId.HasValue
+            && dto.LocalSuperiorId.HasValue
+            && dto.LocalSuperiorId.Value == currentLocalId.Value)
+        {
+            throw new InvalidOperationException("Um local não pode ser superior a ele próprio.");
+        }
+
+        var locais = await _context.Locais
+            .AsNoTracking()
+            .Where(x => x.DeletedAt == null)
+            .Select(x => new { x.Id, x.ComissaoId, x.LocalSuperiorId })
+            .ToListAsync(cancellationToken);
+
+        if (currentLocalId.HasValue
+            && locais.Any(x => x.LocalSuperiorId == currentLocalId.Value && x.ComissaoId != dto.ComissaoId))
+        {
+            throw new InvalidOperationException("O local e seus subordinados devem pertencer à mesma comissão.");
+        }
+
+        if (!dto.LocalSuperiorId.HasValue)
+        {
+            return;
+        }
+
+        var localSuperior = locais.FirstOrDefault(x => x.Id == dto.LocalSuperiorId.Value);
+
+        if (localSuperior is null)
+        {
+            throw new InvalidOperationException("Local superior não encontrado.");
+        }
+
+        if (localSuperior.ComissaoId != dto.ComissaoId)
+        {
+            throw new InvalidOperationException("O local superior deve pertencer à mesma comissão.");
+        }
+
+        if (!currentLocalId.HasValue)
+        {
+            return;
+        }
+
+        var superioresPorLocal = locais.ToDictionary(x => x.Id, x => x.LocalSuperiorId);
+        var localVisitadoId = dto.LocalSuperiorId;
+        var locaisVisitados = new HashSet<Guid>();
+        while (localVisitadoId.HasValue)
+        {
+            if (localVisitadoId.Value == currentLocalId.Value || !locaisVisitados.Add(localVisitadoId.Value))
+            {
+                throw new InvalidOperationException("A hierarquia informada cria uma referência circular entre locais.");
+            }
+
+            localVisitadoId = superioresPorLocal.GetValueOrDefault(localVisitadoId.Value);
+        }
+    }
+
     private static LocalDto MapToDto(Local entity)
     {
         return new LocalDto
@@ -179,6 +245,8 @@ public class LocalService : ILocalService
             Nome = entity.Nome,
             ComissaoId = entity.ComissaoId,
             ComissaoAno = entity.Comissao?.Ano ?? 0,
+            LocalSuperiorId = entity.LocalSuperiorId,
+            LocalSuperiorNome = entity.LocalSuperior?.Nome,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
             Membros = entity.Membros

@@ -10,6 +10,7 @@ public class ItemInventariado : BaseEntity
     public Guid? ComissaoId { get; set; }
     public string Status { get; set; } = string.Empty;
     public string EstadoConservacao { get; set; } = string.Empty;
+    public string JustificativaInservivel { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; } = DateTime.UtcNow;
     public decimal? Latitude { get; set; }
