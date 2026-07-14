@@ -195,7 +195,12 @@
             </div>
 
             <div class="team-list" *ngIf="locaisDaComissaoEmEdicao.length > 0">
-              <div class="team-item" *ngFor="let local of locaisDaComissaoEmEdicao">
+              <div
+                class="team-item"
+                *ngFor="let local of locaisDaComissaoEmEdicao"
+                [class.team-item-child]="getLocalDepth(local) > 0"
+                [style.--local-depth]="getLocalDepth(local)"
+              >
                 <div class="team-copy">
                   <strong>{{ getLocalHierarchyLabel(local) }}</strong>
                   <small>Local superior: {{ local.localSuperiorNome || 'Nenhum (local raiz)' }}</small>

@@ -642,6 +642,21 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
   }
 
+  getLocalDepth(local: Local): number {
+    const locaisPorId = new Map(this.locaisDaComissaoEmEdicao.map((item) => [item.id, item]));
+    const visitados = new Set<string>();
+    let depth = 0;
+    let localSuperiorId = local.localSuperiorId;
+
+    while (localSuperiorId && locaisPorId.has(localSuperiorId) && !visitados.has(localSuperiorId)) {
+      visitados.add(localSuperiorId);
+      depth += 1;
+      localSuperiorId = locaisPorId.get(localSuperiorId)?.localSuperiorId;
+    }
+
+    return depth;
+  }
+
   searchLocalAddress(): void {
     const term = this.localAddressTerm.trim();
     if (!term) {
@@ -949,9 +964,36 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.locaisDaComissaoEmEdicao = this.locais
-      .filter((item) => item.comissaoId === this.editingId)
-      .sort((a, b) => a.nome.localeCompare(b.nome));
+    const locaisDaComissao = this.locais.filter((item) => item.comissaoId === this.editingId);
+    const locaisPorSuperior = new Map<string | null, Local[]>();
+    const ids = new Set(locaisDaComissao.map((item) => item.id));
+
+    locaisDaComissao.forEach((local) => {
+      const localSuperiorId = local.localSuperiorId && ids.has(local.localSuperiorId)
+        ? local.localSuperiorId
+        : null;
+      const locaisSubordinados = locaisPorSuperior.get(localSuperiorId) ?? [];
+      locaisSubordinados.push(local);
+      locaisPorSuperior.set(localSuperiorId, locaisSubordinados);
+    });
+
+    locaisPorSuperior.forEach((locais) => locais.sort((a, b) => a.nome.localeCompare(b.nome)));
+
+    const locaisOrdenados: Local[] = [];
+    const adicionados = new Set<string>();
+    const adicionarLocal = (local: Local): void => {
+      if (adicionados.has(local.id)) {
+        return;
+      }
+
+      adicionados.add(local.id);
+      locaisOrdenados.push(local);
+      (locaisPorSuperior.get(local.id) ?? []).forEach(adicionarLocal);
+    };
+
+    (locaisPorSuperior.get(null) ?? []).forEach(adicionarLocal);
+    locaisDaComissao.forEach(adicionarLocal);
+    this.locaisDaComissaoEmEdicao = locaisOrdenados;
   }
 
   private syncSelectedMembers(): void {

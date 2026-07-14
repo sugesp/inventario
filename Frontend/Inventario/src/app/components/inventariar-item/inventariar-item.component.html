@@ -30,13 +30,8 @@
     </div>
 
     <div class="local-card-grid" *ngIf="activeComissao && locaisDisponiveis.length > 0">
-      <button
-        class="local-card"
-        type="button"
-        *ngFor="let local of locaisDisponiveis"
-        [class.local-card-selected]="selectedLocalId === local.id"
-        (click)="selectLocal(local.id)"
-      >
+      <button class="local-card" type="button" *ngFor="let local of locaisDisponiveis"
+        [class.local-card-selected]="selectedLocalId === local.id" (click)="selectLocal(local.id)">
         <strong class="local-card-title">{{ getLocalDisplayName(local) }}</strong>
         <span class="local-card-action">Selecionar local</span>
       </button>
@@ -66,20 +61,16 @@
 
     <div class="row g-3">
       <div class="col-12">
-        <input
-          #identificationInput
-          class="d-none"
-          type="file"
-          accept="image/*"
-          [disabled]="readingCode"
-          (change)="onIdentificationPhotoSelected($event)"
-        />
+        <input #identificationInput class="d-none" type="file" accept="image/*" [disabled]="readingCode"
+          (change)="onIdentificationPhotoSelected($event)" />
 
         <div class="capture-choice-grid">
-          <button class="btn btn-primary capture-choice-button" type="button" (click)="startQrFlow()" [disabled]="readingCode || scannerStarting || processingPhoto">
+          <button class="btn btn-primary capture-choice-button" type="button" (click)="startQrFlow()"
+            [disabled]="readingCode || scannerStarting || processingPhoto">
             {{ scannerStarting ? 'Abrindo câmera...' : 'Ler QR code' }}
           </button>
-          <button class="btn btn-outline-secondary capture-choice-button" type="button" (click)="startManualFlow()" [disabled]="readingCode || scannerStarting || processingPhoto">
+          <button class="btn btn-outline-secondary capture-choice-button" type="button" (click)="startManualFlow()"
+            [disabled]="readingCode || scannerStarting || processingPhoto">
             Preencher manualmente
           </button>
         </div>
@@ -105,7 +96,8 @@
       <span class="step-number">2.1</span>
       <div>
         <h3>Informe o patrimônio</h3>
-        <p>Digite o patrimônio no padrão e-Estado para consultar o item. Se ele não possuir esse padrão, siga para o preenchimento totalmente manual.</p>
+        <p>Digite o patrimônio no padrão e-Estado para consultar o item. Se ele não possuir esse padrão, siga para o
+          preenchimento totalmente manual.</p>
       </div>
     </div>
 
@@ -121,14 +113,8 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Patrimônio (E-Estado)</label>
-          <input
-            class="form-control"
-            [ngModel]="form.tombamentoNovo"
-            (ngModelChange)="onTombamentoNovoChange($event)"
-            (blur)="onTombamentoNovoBlur()"
-            placeholder="000.000.000"
-            inputmode="numeric"
-          />
+          <input class="form-control" [ngModel]="form.tombamentoNovo" (ngModelChange)="onTombamentoNovoChange($event)"
+            (blur)="onTombamentoNovoBlur()" placeholder="000.000.000" inputmode="numeric" />
         </div>
       </div>
 
@@ -141,7 +127,8 @@
       <button class="btn btn-outline-secondary" type="button" (click)="continuarSemPatrimonioEEstado()">
         Não possui patrimônio e-Estado
       </button>
-      <button class="btn btn-primary" type="button" (click)="buscarPatrimonioManual()" [disabled]="consultaPublicaEmAndamento">
+      <button class="btn btn-primary" type="button" (click)="buscarPatrimonioManual()"
+        [disabled]="consultaPublicaEmAndamento">
         Buscar patrimônio
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -154,7 +141,8 @@
       <div>
         <h3>Conclua o inventário</h3>
         <p *ngIf="aguardandoConfirmacaoResumo; else detalhesEdicaoTexto">
-          Confira primeiro os dados lidos no QR code. Na próxima etapa você poderá editar as informações antes de continuar.
+          Confira primeiro os dados lidos no QR code. Na próxima etapa você poderá editar as informações antes de
+          continuar.
         </p>
         <ng-template #detalhesEdicaoTexto>
           <p>Revise e edite os dados do item antes de seguir para o registro das fotos.</p>
@@ -167,11 +155,8 @@
         <span class="selected-local-label">Local escolhido</span>
         <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
       </div>
-      <button
-        class="btn btn-outline-secondary btn-sm"
-        type="button"
-        (click)="identificationMode === 'manual' ? goToManualLookupStep() : goToCaptureStep()"
-      >
+      <button class="btn btn-outline-secondary btn-sm" type="button"
+        (click)="identificationMode === 'manual' ? goToManualLookupStep() : goToCaptureStep()">
         Voltar ao tombamento
       </button>
     </div>
@@ -205,11 +190,13 @@
     <div class="row g-3" *ngIf="!aguardandoConfirmacaoResumo">
       <div class="col-md-6">
         <label class="form-label">Tombamento (E-Estado)</label>
-        <input class="form-control" [(ngModel)]="form.tombamentoNovo" (ngModelChange)="onTombamentoNovoChange($event)" (blur)="onTombamentoNovoBlur()" />
+        <input class="form-control" [(ngModel)]="form.tombamentoNovo" (ngModelChange)="onTombamentoNovoChange($event)"
+          (blur)="onTombamentoNovoBlur()" />
       </div>
       <div class="col-md-6">
         <label class="form-label">Tombamento antigo</label>
-        <input class="form-control" [(ngModel)]="form.tombamentoAntigo" (ngModelChange)="onTombamentoAntigoChange($event)" />
+        <input class="form-control" [(ngModel)]="form.tombamentoAntigo"
+          (ngModelChange)="onTombamentoAntigoChange($event)" />
       </div>
       <div class="col-md-8">
         <label class="form-label">Descrição do item</label>
@@ -217,16 +204,19 @@
       </div>
       <div class="col-12">
         <label class="form-label">Observação</label>
-        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao" (ngModelChange)="persistState()"></textarea>
+        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao"
+          (ngModelChange)="persistState()"></textarea>
       </div>
     </div>
 
     <div class="scan-feedback" *ngIf="consultaPublicaEmAndamento">Consultando dados públicos do bem...</div>
-    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem }}</div>
+    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem
+      }}</div>
 
     <div class="step-actions" *ngIf="!aguardandoConfirmacaoResumo">
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Limpar fluxo</button>
-      <button class="btn btn-primary" type="button" (click)="goToClassificationStep()" [disabled]="consultaPublicaEmAndamento">
+      <button class="btn btn-primary" type="button" (click)="goToClassificationStep()"
+        [disabled]="consultaPublicaEmAndamento">
         Continuar para classificação
       </button>
     </div>
@@ -247,18 +237,14 @@
         <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos dados</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos
+        dados</button>
     </div>
 
     <div class="local-card-grid">
-      <button
-        class="local-card"
-        type="button"
-        *ngFor="let option of classificacaoOptions"
+      <button class="local-card" type="button" *ngFor="let option of classificacaoOptions"
         [ngClass]="'local-card-' + getClassificacaoCardTone(option.value)"
-        [class.local-card-selected]="form.status === option.value"
-        (click)="selecionarClassificacao(option.value)"
-      >
+        [class.local-card-selected]="form.status === option.value" (click)="selecionarClassificacao(option.value)">
         <strong class="local-card-title">{{ option.label }}</strong>
         <span class="local-card-action">{{ option.description }}</span>
       </button>
@@ -266,22 +252,17 @@
 
     <div class="mt-3" *ngIf="form.status === 'INSERVIVEL'">
       <label class="form-label" for="justificativaInservivel">Justificativa da classificação como inservível</label>
-      <textarea
-        id="justificativaInservivel"
-        class="form-control"
-        rows="4"
-        maxlength="2000"
-        required
-        [ngModel]="form.justificativaInservivel"
-        (ngModelChange)="onJustificativaInservivelChange($event)"
-        placeholder="Descreva as avarias e as condições visíveis do item"
-      ></textarea>
-      <small class="form-text text-muted">Esta descrição será utilizada para auxiliar a triagem e o processo de desfazimento.</small>
+      <textarea id="justificativaInservivel" class="form-control" rows="4" maxlength="2000" required
+        [ngModel]="form.justificativaInservivel" (ngModelChange)="onJustificativaInservivelChange($event)"
+        placeholder="Descreva as avarias e as condições visíveis do item que demonstrem  indício de inservibilidade"></textarea>
+      <small class="form-text text-muted">Esta descrição será utilizada para auxiliar a triagem e o processo de
+        desfazimento.</small>
     </div>
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="goToConservationStep()" [disabled]="!form.status || (form.status === 'INSERVIVEL' && !form.justificativaInservivel.trim())">
+      <button class="btn btn-primary" type="button" (click)="goToConservationStep()"
+        [disabled]="!form.status || (form.status === 'INSERVIVEL' && !form.justificativaInservivel.trim())">
         Continuar para conservação
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -303,26 +284,25 @@
         <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'classificacao'">Voltar à classificação</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'classificacao'">Voltar à
+        classificação</button>
     </div>
 
     <div class="local-card-grid">
-      <button
-        class="local-card"
-        type="button"
-        *ngFor="let option of conservacaoOptions"
+      <button class="local-card" type="button" *ngFor="let option of conservacaoOptions"
         [ngClass]="'local-card-' + getConservacaoCardTone(option.value)"
         [class.local-card-selected]="form.estadoConservacao === option.value"
-        (click)="selecionarEstadoConservacao(option.value)"
-      >
+        (click)="selecionarEstadoConservacao(option.value)">
         <strong class="local-card-title">{{ option.label }}</strong>
         <span class="local-card-action">{{ option.description }}</span>
       </button>
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'classificacao'">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()" [disabled]="!form.estadoConservacao">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'classificacao'">Etapa
+        anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()"
+        [disabled]="!form.estadoConservacao">
         Continuar para as fotos
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -344,16 +324,11 @@
         <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'conservacao'">Voltar à conservação</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'conservacao'">Voltar à
+        conservação</button>
     </div>
 
-    <input
-      #etiquetaPhotoInput
-      class="d-none"
-      type="file"
-      accept="image/*"
-      (change)="onEtiquetaPhotoSelected($event)"
-    />
+    <input #etiquetaPhotoInput class="d-none" type="file" accept="image/*" (change)="onEtiquetaPhotoSelected($event)" />
 
     <div class="photo-step-card">
       <div class="photo-step-status" [class.is-complete]="!!etiquetaPhoto">
@@ -371,7 +346,8 @@
       </ng-template>
 
       <div class="photo-step-actions">
-        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('etiqueta')" [disabled]="processingPhoto || photoCaptureStarting">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('etiqueta')"
+          [disabled]="processingPhoto || photoCaptureStarting">
           {{ etiquetaPhoto ? 'Refazer foto' : 'Abrir câmera' }}
         </button>
         <button class="btn btn-outline-secondary" type="button" *ngIf="etiquetaPhoto" (click)="removeEtiquetaPhoto()">
@@ -381,8 +357,10 @@
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'conservacao'">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()" [disabled]="!etiquetaPhoto || processingPhoto">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'conservacao'">Etapa
+        anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToPhotoFrontalStep()"
+        [disabled]="!etiquetaPhoto || processingPhoto">
         Continuar
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -406,13 +384,7 @@
       </div>
     </div>
 
-    <input
-      #frontalPhotoInput
-      class="d-none"
-      type="file"
-      accept="image/*"
-      (change)="onFrontalPhotoSelected($event)"
-    />
+    <input #frontalPhotoInput class="d-none" type="file" accept="image/*" (change)="onFrontalPhotoSelected($event)" />
 
     <div class="photo-step-card">
       <div class="photo-step-status" [class.is-complete]="!!frontalPhoto">
@@ -430,7 +402,8 @@
       </ng-template>
 
       <div class="photo-step-actions">
-        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('frontal')" [disabled]="processingPhoto || photoCaptureStarting">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('frontal')"
+          [disabled]="processingPhoto || photoCaptureStarting">
           {{ frontalPhoto ? 'Refazer foto' : 'Abrir câmera' }}
         </button>
         <button class="btn btn-outline-secondary" type="button" *ngIf="frontalPhoto" (click)="removeFrontalPhoto()">
@@ -441,7 +414,8 @@
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoEtiquetaStep()">Etapa anterior</button>
-      <button class="btn btn-primary" type="button" (click)="goToPhotoTraseiraStep()" [disabled]="!frontalPhoto || processingPhoto">
+      <button class="btn btn-primary" type="button" (click)="goToPhotoTraseiraStep()"
+        [disabled]="!frontalPhoto || processingPhoto">
         Continuar
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -465,13 +439,7 @@
       </div>
     </div>
 
-    <input
-      #traseiraPhotoInput
-      class="d-none"
-      type="file"
-      accept="image/*"
-      (change)="onTraseiraPhotoSelected($event)"
-    />
+    <input #traseiraPhotoInput class="d-none" type="file" accept="image/*" (change)="onTraseiraPhotoSelected($event)" />
 
     <div class="photo-step-card">
       <div class="photo-step-status" [class.is-complete]="!!traseiraPhoto">
@@ -489,7 +457,8 @@
       </ng-template>
 
       <div class="photo-step-actions">
-        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('traseira')" [disabled]="processingPhoto || photoCaptureStarting">
+        <button class="btn btn-primary" type="button" (click)="openPhotoCapture('traseira')"
+          [disabled]="processingPhoto || photoCaptureStarting">
           {{ traseiraPhoto ? 'Refazer foto' : 'Abrir câmera' }}
         </button>
         <button class="btn btn-outline-secondary" type="button" *ngIf="traseiraPhoto" (click)="removeTraseiraPhoto()">
@@ -528,7 +497,8 @@
 
     <div class="step-actions">
       <button class="btn btn-outline-secondary" type="button" (click)="goToPhotoFrontalStep()">Etapa anterior</button>
-      <button class="btn btn-primary btn-filled" type="button" (click)="submit()" [disabled]="saving || processingPhoto || geolocationLoading">
+      <button class="btn btn-primary btn-filled" type="button" (click)="submit()"
+        [disabled]="saving || processingPhoto || geolocationLoading">
         {{ saving ? (geolocationLoading ? 'Obtendo localização...' : 'Salvando...') : 'Cadastrar item inventariado' }}
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
@@ -559,7 +529,8 @@
 </div>
 
 <div class="scanner-backdrop" *ngIf="photoCaptureOpen"></div>
-<div class="scanner-modal" *ngIf="photoCaptureOpen" appCloseOnOutsideClick (appCloseOnOutsideClick)="closePhotoCapture()">
+<div class="scanner-modal" *ngIf="photoCaptureOpen" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closePhotoCapture()">
   <div class="scanner-card">
     <div class="scanner-header">
       <div>
@@ -576,7 +547,8 @@
     <div class="scanner-footer">
       <div class="scan-feedback scan-feedback-light" *ngIf="photoCaptureError">{{ photoCaptureError }}</div>
       <div class="photo-step-actions">
-        <button class="btn btn-primary btn-filled w-100" type="button" (click)="capturePhoto()" [disabled]="processingPhoto">
+        <button class="btn btn-primary btn-filled w-100" type="button" (click)="capturePhoto()"
+          [disabled]="processingPhoto">
           {{ processingPhoto ? 'Processando foto...' : 'Capturar foto' }}
         </button>
         <button class="btn btn-secondary w-100" type="button" (click)="closePhotoCapture()">Cancelar</button>

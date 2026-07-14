@@ -254,6 +254,14 @@
   background: #fff;
 }
 
+.team-item-child {
+  width: calc(100% - (var(--local-depth) * 24px));
+  margin-left: calc(var(--local-depth) * 24px);
+  border-left: 4px solid #5b8fc4;
+  border-radius: 6px 14px 14px 6px;
+  background: #f8fbff;
+}
+
 .team-actions {
   display: inline-flex;
   gap: 8px;
@@ -477,6 +485,11 @@
   .team-item {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .team-item-child {
+    width: calc(100% - (var(--local-depth) * 14px));
+    margin-left: calc(var(--local-depth) * 14px);
   }
 
   .inconsistencia-head {
