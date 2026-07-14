@@ -13,7 +13,7 @@ import { LocalService } from '../../contracts/local.service';
 declare global {
   interface Window {
     BarcodeDetector?: {
-      new (options?: { formats?: string[] }): {
+      new(options?: { formats?: string[] }): {
         detect(source: ImageBitmap): Promise<Array<{ rawValue?: string }>>;
       };
       getSupportedFormats?: () => Promise<string[]>;
@@ -120,7 +120,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     private readonly localService: LocalService,
     private readonly itemInventariadoService: ItemInventariadoService,
     private readonly toastr: ToastrService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadActiveComissao();
@@ -269,8 +269,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   get classificacaoOptions(): Array<{ value: string; label: string; description: string }> {
     return [
       { value: 'SERVIVEL', label: 'SERVÍVEL', description: 'Item em condições de uso.' },
-      { value: 'INSERVIVEL', label: 'INSERVÍVEL', description: 'Item sem condição de uso.' },
-      { value: 'OBSOLETO', label: 'OBSOLETO', description: 'Item defasado ou sem utilidade operacional.' },
+      { value: 'INSERVIVEL', label: 'INSERVÍVEL', description: 'Item sem condição de uso.' }
     ];
   }
 

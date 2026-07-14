@@ -148,14 +148,16 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             }
 
             var saved = await _fileStorageService.SaveAsync(foto, "laudos", cancellationToken);
-            entity.Fotos.Add(new LaudoTecnicoFoto
+            var fotoEntity = new LaudoTecnicoFoto
             {
                 Categoria = categoria,
                 NomeArquivo = saved.NomeArquivo,
                 NomeOriginal = foto.FileName,
                 CaminhoRelativo = saved.CaminhoRelativo,
                 Url = saved.Url
-            });
+            };
+            entity.Fotos.Add(fotoEntity);
+            _context.Entry(fotoEntity).State = EntityState.Added;
         }
 
         entity.RegistroFotograficoJson = SerializeList(entity.Fotos.Select(x => x.Categoria).Distinct());
