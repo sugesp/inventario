@@ -539,3 +539,26 @@
     gap: 10px;
   }
 }
+
+@media print {
+  .admin-shell {
+    display: block;
+    min-height: 0;
+    background: #fff;
+  }
+
+  .sidebar,
+  .sidebar-backdrop,
+  .mobile-topbar {
+    display: none !important;
+  }
+
+  .content-area {
+    display: block;
+    margin-left: 0;
+  }
+
+  .content-wrapper {
+    padding: 0;
+  }
+}
