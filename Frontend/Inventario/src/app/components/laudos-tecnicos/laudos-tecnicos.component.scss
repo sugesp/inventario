@@ -308,6 +308,11 @@
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
   .inventario-grid {
     display: none !important;
   }
@@ -343,5 +348,15 @@
     border-radius: 0;
     box-shadow: none !important;
     filter: none !important;
+  }
+
+  .print-grid.two-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .print-section,
+  .laudo-photo-gallery figure {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
