@@ -233,6 +233,10 @@
   color: #12283d;
 }
 
+.print-grid strong + span {
+  margin-left: 0.35rem;
+}
+
 .full-row {
   grid-column: 1 / -1;
 }
@@ -318,14 +322,17 @@
     position: static;
     display: block;
     padding: 0;
+    background: #fff !important;
   }
 
   .laudo-modal-card {
     width: auto;
     max-height: none;
     overflow: visible;
-    box-shadow: none;
-    background: transparent;
+    border-radius: 0;
+    background: #fff !important;
+    box-shadow: none !important;
+    filter: none !important;
   }
 
   .laudo-print-sheet {
@@ -333,6 +340,8 @@
     margin: 0;
     padding: 0;
     border: 0;
-    box-shadow: none;
+    border-radius: 0;
+    box-shadow: none !important;
+    filter: none !important;
   }
 }
