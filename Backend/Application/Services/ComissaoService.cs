@@ -57,6 +57,7 @@ public class ComissaoService : IComissaoService
         var entity = new Comissao
         {
             Ano = dto.Ano,
+            QuantidadeItensEsperados = dto.QuantidadeItensEsperados,
             Status = NormalizeStatus(dto.Status),
             PresidenteId = dto.PresidenteId,
             Membros = membros
@@ -89,6 +90,7 @@ public class ComissaoService : IComissaoService
             : new ComissaoCreateUpdateDto
             {
                 Ano = entity.Ano,
+                QuantidadeItensEsperados = dto.QuantidadeItensEsperados,
                 Status = entity.Status,
                 PresidenteId = entity.PresidenteId,
                 Membros = dto.Membros
@@ -97,6 +99,7 @@ public class ComissaoService : IComissaoService
         var membros = await ValidateAsync(effectiveDto, id, cancellationToken);
 
         entity.Ano = effectiveDto.Ano;
+        entity.QuantidadeItensEsperados = effectiveDto.QuantidadeItensEsperados;
         entity.Status = NormalizeStatus(effectiveDto.Status);
         entity.PresidenteId = effectiveDto.PresidenteId;
 
@@ -160,7 +163,8 @@ public class ComissaoService : IComissaoService
             .Where(x => x.DeletedAt == null)
             .Include(x => x.Presidente)
             .Include(x => x.Membros.Where(m => m.DeletedAt == null))
-                .ThenInclude(x => x.Usuario);
+                .ThenInclude(x => x.Usuario)
+            .Include(x => x.ItensInventariados.Where(item => item.DeletedAt == null));
     }
 
     private async Task<List<ComissaoMembroSaveDto>> ValidateAsync(
@@ -172,6 +176,11 @@ public class ComissaoService : IComissaoService
         if (dto.Ano < 2000 || dto.Ano > 9999)
         {
             throw new InvalidOperationException("Informe um ano válido para a comissão.");
+        }
+
+        if (dto.QuantidadeItensEsperados < 0)
+        {
+            throw new InvalidOperationException("A quantidade de itens esperados não pode ser negativa.");
         }
 
         if (dto.PresidenteId == Guid.Empty)
@@ -251,10 +260,23 @@ public class ComissaoService : IComissaoService
 
     private static ComissaoDto MapToDto(Comissao entity)
     {
+        var quantidadeItensLocalizados = entity.ItensInventariados
+            .Select(item => NormalizeTombamento(item.TombamentoNovo))
+            .Where(tombamento => !string.IsNullOrWhiteSpace(tombamento))
+            .Distinct()
+            .Count();
+        var percentualProgresso = entity.QuantidadeItensEsperados > 0
+            ? Math.Round((decimal)quantidadeItensLocalizados / entity.QuantidadeItensEsperados * 100, 2)
+            : 0;
+
         return new ComissaoDto
         {
             Id = entity.Id,
             Ano = entity.Ano,
+            QuantidadeItensEsperados = entity.QuantidadeItensEsperados,
+            QuantidadeItensLocalizados = quantidadeItensLocalizados,
+            QuantidadeItensRestantes = Math.Max(0, entity.QuantidadeItensEsperados - quantidadeItensLocalizados),
+            PercentualProgresso = percentualProgresso,
             Status = entity.Status,
             PresidenteId = entity.PresidenteId,
             PresidenteNome = entity.Presidente?.Nome ?? string.Empty,
@@ -269,5 +291,21 @@ public class ComissaoService : IComissaoService
                 })
                 .ToArray()
         };
+    }
+
+    private static string NormalizeTombamento(string value)
+    {
+        var digits = string.Concat(value.Where(char.IsDigit));
+        if (string.IsNullOrWhiteSpace(digits))
+        {
+            return string.Empty;
+        }
+
+        if (digits.Length > 9)
+        {
+            digits = digits[..9];
+        }
+
+        return digits.PadLeft(9, '0');
     }
 }

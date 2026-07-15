@@ -136,6 +136,7 @@ public class AppDbContext : DbContext
             entity.ToTable("Comissoes");
             entity.HasIndex(x => x.Ano).IsUnique();
             entity.Property(x => x.Ano).IsRequired();
+            entity.Property(x => x.QuantidadeItensEsperados).IsRequired().HasDefaultValue(0);
             entity.Property(x => x.Status).HasMaxLength(20).IsRequired();
             entity.HasOne(x => x.Presidente)
                 .WithMany(x => x.ComissoesPresididas)

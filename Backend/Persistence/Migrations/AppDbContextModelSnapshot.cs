@@ -96,6 +96,11 @@ namespace Persistence.Migrations
                     b.Property<Guid>("PresidenteId")
                         .HasColumnType("char(36)");
 
+                    b.Property<int>("QuantidadeItensEsperados")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)

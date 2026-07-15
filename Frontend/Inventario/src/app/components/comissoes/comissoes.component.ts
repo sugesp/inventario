@@ -162,6 +162,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.authService.isAdmin;
   }
 
+  get percentualProgressoVisual(): number {
+    return Math.min(100, Math.max(0, this.comissaoEmEdicao?.percentualProgresso ?? 0));
+  }
+
   loadComissoes(): void {
     if (this.isEditPage) {
       return;
@@ -261,8 +265,14 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
+    if (!Number.isInteger(Number(this.form.quantidadeItensEsperados)) || Number(this.form.quantidadeItensEsperados) < 0) {
+      this.toastr.warning('Informe uma quantidade inteira não negativa para os itens esperados.');
+      return;
+    }
+
     const payload: ComissaoPayload = {
       ano: this.canEditCurrentComissaoBasics ? Number(this.form.ano) : this.comissaoEmEdicao?.ano ?? Number(this.form.ano),
+      quantidadeItensEsperados: Number(this.form.quantidadeItensEsperados),
       status: this.canEditCurrentComissaoBasics ? this.form.status : this.comissaoEmEdicao?.status ?? this.form.status,
       presidenteId: this.canEditCurrentComissaoBasics ? this.form.presidenteId : this.comissaoEmEdicao?.presidenteId ?? this.form.presidenteId,
       membros: this.form.membros.reduce<Array<{ usuarioId: string }>>((acc, item) => {
@@ -859,6 +869,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
     const payload: ComissaoPayload = {
       ano: this.comissaoEmEdicao?.ano ?? Number(this.form.ano),
+      quantidadeItensEsperados: Number(this.form.quantidadeItensEsperados),
       status: this.comissaoEmEdicao?.status ?? this.form.status,
       presidenteId: this.comissaoEmEdicao?.presidenteId ?? this.form.presidenteId,
       membros: nextMembers.reduce<Array<{ usuarioId: string }>>((acc, item) => {
@@ -895,6 +906,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
         this.syncComissaoCollections();
         this.form = {
           ano: item.ano,
+          quantidadeItensEsperados: item.quantidadeItensEsperados,
           status: item.status,
           presidenteId: item.presidenteId,
           membros: item.membros.map((membro) => ({
@@ -942,6 +954,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   private createEmptyForm(): ComissaoPayload {
     return {
       ano: new Date().getFullYear(),
+      quantidadeItensEsperados: 0,
       status: 'Inativa',
       presidenteId: '',
       membros: [],

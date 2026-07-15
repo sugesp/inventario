@@ -97,6 +97,30 @@
           </select>
         </div>
 
+        <div class="col-md-4">
+          <label class="form-label">Quantidade de itens esperados</label>
+          <input
+            class="form-control"
+            name="paginaQuantidadeItensEsperados"
+            [(ngModel)]="form.quantidadeItensEsperados"
+            type="number"
+            min="0"
+            step="1"
+            required
+            [readonly]="!canManageCurrentComissao"
+          />
+          <small class="form-text text-muted">Meta de bens que a comissão espera localizar.</small>
+          <button
+            class="btn btn-primary mt-2"
+            type="button"
+            *ngIf="canManageCurrentComissao"
+            (click)="submit()"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Salvando...' : 'Salvar expectativa' }}
+          </button>
+        </div>
+
         <div class="col-12">
           <div class="comissao-tabs">
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'resumo'" (click)="setActiveTab('resumo')">Resumo</button>
@@ -124,12 +148,38 @@
                   <strong>{{ locaisDaComissaoEmEdicao.length }}</strong>
                 </div>
                 <div class="summary-tile">
-                  <span>Itens inventariados</span>
-                  <strong>{{ itensInventariadosDaComissao.length }}</strong>
+                  <span>Itens únicos localizados</span>
+                  <strong>{{ comissaoEmEdicao.quantidadeItensLocalizados | number:'1.0-0':'pt-BR' }}</strong>
                 </div>
                 <div class="summary-tile">
                   <span>Inconsistências</span>
                   <strong>{{ inconsistenciasDaComissao.length }}</strong>
+                </div>
+              </div>
+              <div class="inventory-progress" aria-live="polite">
+                <div class="inventory-progress-heading">
+                  <div>
+                    <strong>Progresso da localização</strong>
+                    <span>
+                      {{ comissaoEmEdicao.quantidadeItensLocalizados | number:'1.0-0':'pt-BR' }} de
+                      {{ comissaoEmEdicao.quantidadeItensEsperados | number:'1.0-0':'pt-BR' }} itens localizados —
+                      {{ comissaoEmEdicao.percentualProgresso | number:'1.2-2':'pt-BR' }}%
+                    </span>
+                  </div>
+                  <span class="inventory-progress-remaining">
+                    {{ comissaoEmEdicao.quantidadeItensRestantes | number:'1.0-0':'pt-BR' }} restante(s)
+                  </span>
+                </div>
+                <div
+                  class="inventory-progress-track"
+                  role="progressbar"
+                  aria-label="Progresso dos itens localizados pela comissão"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="percentualProgressoVisual"
+                  [attr.aria-valuetext]="(comissaoEmEdicao.quantidadeItensLocalizados | number:'1.0-0':'pt-BR') + ' de ' + (comissaoEmEdicao.quantidadeItensEsperados | number:'1.0-0':'pt-BR') + ' itens localizados'"
+                >
+                  <span class="inventory-progress-bar" [style.width.%]="percentualProgressoVisual"></span>
                 </div>
               </div>
             </div>
@@ -311,7 +361,24 @@
             <input class="form-control" name="ano" [(ngModel)]="form.ano" type="number" min="2000" max="9999" required />
           </div>
 
-          <div class="col-md-8">
+          <div class="col-md-4">
+            <label class="form-label">Quantidade de itens esperados</label>
+            <input
+              class="form-control"
+              name="quantidadeItensEsperados"
+              [(ngModel)]="form.quantidadeItensEsperados"
+              type="number"
+              min="0"
+              step="1"
+              required
+              #quantidadeItensEsperadosNg="ngModel"
+            />
+            <small class="text-danger" *ngIf="quantidadeItensEsperadosNg.invalid && quantidadeItensEsperadosNg.touched">
+              Informe uma quantidade inteira não negativa.
+            </small>
+          </div>
+
+          <div class="col-md-4">
             <label class="form-label">Presidente</label>
             <select class="form-select" name="presidenteId" [(ngModel)]="form.presidenteId" required>
               <option value="" disabled>Selecione</option>

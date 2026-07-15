@@ -3,6 +3,7 @@ namespace Domain.Model;
 public class Comissao : BaseEntity
 {
     public int Ano { get; set; }
+    public int QuantidadeItensEsperados { get; set; }
     public string Status { get; set; } = "Inativa";
     public Guid PresidenteId { get; set; }
 

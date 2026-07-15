@@ -11,6 +11,10 @@ export interface ComissaoMembroPayload {
 export interface Comissao {
   id: string;
   ano: number;
+  quantidadeItensEsperados: number;
+  quantidadeItensLocalizados: number;
+  quantidadeItensRestantes: number;
+  percentualProgresso: number;
   status: 'Ativa' | 'Inativa';
   presidenteId: string;
   presidenteNome: string;
@@ -19,6 +23,7 @@ export interface Comissao {
 
 export interface ComissaoPayload {
   ano: number;
+  quantidadeItensEsperados: number;
   status: 'Ativa' | 'Inativa';
   presidenteId: string;
   membros: ComissaoMembroPayload[];

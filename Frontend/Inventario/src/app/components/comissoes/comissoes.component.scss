@@ -313,6 +313,50 @@
   line-height: 1;
 }
 
+.inventory-progress {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #d8e2ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.inventory-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #17324f;
+}
+
+.inventory-progress-heading span {
+  display: block;
+  margin-top: 4px;
+  color: #5f7084;
+}
+
+.inventory-progress-remaining {
+  flex: 0 0 auto;
+  margin-top: 0 !important;
+  font-weight: 700;
+}
+
+.inventory-progress-track {
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf4;
+}
+
+.inventory-progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #198754;
+  transition: width 0.25s ease;
+}
+
 .inconsistencia-summary {
   display: flex;
   flex-wrap: wrap;
@@ -493,6 +537,10 @@
   }
 
   .inconsistencia-head {
+    flex-direction: column;
+  }
+
+  .inventory-progress-heading {
     flex-direction: column;
   }
 
