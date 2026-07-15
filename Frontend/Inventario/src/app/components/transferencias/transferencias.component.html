@@ -85,17 +85,19 @@
             <td>{{ transferencia.criadoPorUsuarioNome || '-' }}</td>
             <td>{{ transferencia.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="actions-cell">
-              <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">
-                Detalhes
-              </a>
-              <button
-                *ngIf="canConcluirTransferencia(transferencia)"
-                class="btn btn-sm btn-success"
-                type="button"
-                (click)="openConclusaoModal(transferencia)"
-              >
-                Concluir
-              </button>
+              <div class="actions-cell-buttons">
+                <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">
+                  Detalhes
+                </a>
+                <button
+                  *ngIf="canConcluirTransferencia(transferencia)"
+                  class="btn btn-sm btn-success"
+                  type="button"
+                  (click)="openConclusaoModal(transferencia)"
+                >
+                  Concluir
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

@@ -133,7 +133,12 @@
 }
 
 .actions-cell {
+  white-space: nowrap;
+}
+
+.actions-cell-buttons {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
@@ -241,10 +246,6 @@
 
   .filters-grid-search {
     grid-column: auto;
-  }
-
-  .actions-cell {
-    flex-direction: column;
   }
 
   .list-pagination-actions {
