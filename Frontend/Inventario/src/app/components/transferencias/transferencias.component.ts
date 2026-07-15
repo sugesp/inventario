@@ -16,6 +16,9 @@ export class TransferenciasComponent implements OnInit {
   searchTerm = '';
   pageNumber = 1;
   readonly pageSize = 20;
+  transferenciaParaConcluir: Transferencia | null = null;
+  conclusaoForm = { idSeiTermo: '', dataEntrega: '' };
+  concluindo = false;
 
   constructor(
     readonly authService: AuthService,
@@ -145,6 +148,55 @@ export class TransferenciasComponent implements OnInit {
 
   canDeleteTransferencia(transferencia: Transferencia): boolean {
     return this.authService.isAdmin && !this.isConcluida(transferencia.status);
+  }
+
+  canConcluirTransferencia(transferencia: Transferencia): boolean {
+    const status = this.normalize(transferencia.status);
+    return status !== 'concluida' && status !== 'cancelada' && transferencia.itens.length > 0;
+  }
+
+  openConclusaoModal(transferencia: Transferencia): void {
+    this.transferenciaParaConcluir = transferencia;
+    this.conclusaoForm = { idSeiTermo: '', dataEntrega: '' };
+  }
+
+  closeConclusaoModal(): void {
+    if (this.concluindo) {
+      return;
+    }
+
+    this.transferenciaParaConcluir = null;
+    this.conclusaoForm = { idSeiTermo: '', dataEntrega: '' };
+  }
+
+  concluirTransferencia(): void {
+    if (!this.transferenciaParaConcluir) {
+      return;
+    }
+
+    const idSeiTermo = this.conclusaoForm.idSeiTermo.trim();
+    if (!idSeiTermo || !this.conclusaoForm.dataEntrega) {
+      this.toastr.warning('Informe o ID SEI do termo e a data de entrega.');
+      return;
+    }
+
+    this.concluindo = true;
+    this.transferenciaService.concluir(this.transferenciaParaConcluir.id, {
+      idSeiTermo,
+      dataEntrega: this.conclusaoForm.dataEntrega,
+    }).subscribe({
+      next: () => {
+        this.concluindo = false;
+        this.transferenciaParaConcluir = null;
+        this.conclusaoForm = { idSeiTermo: '', dataEntrega: '' };
+        this.toastr.success('Transferência concluída com sucesso.');
+        this.loadTransferencias();
+      },
+      error: (error) => {
+        this.concluindo = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível concluir a transferência.');
+      },
+    });
   }
 
   isConcluida(status: string | null | undefined): boolean {

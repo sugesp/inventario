@@ -137,6 +137,77 @@
   gap: 8px;
 }
 
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 31, 46, 0.56);
+}
+
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  width: min(520px, 100%);
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 31, 46, 0.24);
+}
+
+.modal-header-custom,
+.modal-body-custom,
+.modal-footer-custom {
+  padding: 20px;
+}
+
+.modal-header-custom,
+.modal-footer-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header-custom {
+  border-bottom: 1px solid #e4eaf1;
+}
+
+.modal-header-custom h4 {
+  margin: 0 0 4px;
+}
+
+.modal-header-custom p {
+  color: #61788f;
+}
+
+.modal-footer-custom {
+  justify-content: flex-end;
+  border-top: 1px solid #e4eaf1;
+}
+
+.conclusao-destino {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #edf4fb;
+}
+
+.conclusao-destino span {
+  color: #61788f;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
 .list-pagination {
   display: flex;
   justify-content: space-between;

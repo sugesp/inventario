@@ -17,7 +17,7 @@
       <span class="step-number">T</span>
       <div>
         <h3>Transferências cadastradas</h3>
-        <p>Abra uma transferência para continuar a conferência ou concluir no computador.</p>
+        <p>Abra uma transferência para continuar a conferência ou conclua a entrega diretamente pela listagem.</p>
       </div>
     </div>
 
@@ -89,6 +89,14 @@
                 {{ isConcluida(transferencia.status) ? 'Detalhes' : 'Abrir' }}
               </a>
               <button
+                *ngIf="canConcluirTransferencia(transferencia)"
+                class="btn btn-sm btn-success"
+                type="button"
+                (click)="openConclusaoModal(transferencia)"
+              >
+                Concluir
+              </button>
+              <button
                 *ngIf="canDeleteTransferencia(transferencia)"
                 class="btn btn-sm btn-standard-danger"
                 type="button"
@@ -117,4 +125,66 @@
       </div>
     </div>
   </section>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="transferenciaParaConcluir"></div>
+<div
+  class="modal-custom"
+  *ngIf="transferenciaParaConcluir"
+  appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closeConclusaoModal()"
+>
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div>
+        <h4>Concluir transferência</h4>
+        <p class="mb-0">Informe os dados formais da entrega para concluir a transferência.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeConclusaoModal()" [disabled]="concluindo"></button>
+    </div>
+
+    <form (ngSubmit)="concluirTransferencia()" #conclusaoFormNg="ngForm">
+      <div class="modal-body-custom">
+        <div class="conclusao-destino">
+          <span>Destino</span>
+          <strong>
+            {{ transferenciaParaConcluir.unidadeAdministrativaDestinoSigla
+              ? (transferenciaParaConcluir.unidadeAdministrativaDestinoSigla + ' - ' + transferenciaParaConcluir.unidadeAdministrativaDestinoNome)
+              : transferenciaParaConcluir.unidadeAdministrativaDestinoNome }}
+          </strong>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">ID SEI do termo</label>
+            <input
+              class="form-control"
+              name="idSeiTermoConclusao"
+              [(ngModel)]="conclusaoForm.idSeiTermo"
+              maxlength="120"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Data da entrega</label>
+            <input
+              class="form-control"
+              name="dataEntregaConclusao"
+              [(ngModel)]="conclusaoForm.dataEntrega"
+              type="date"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" type="button" (click)="closeConclusaoModal()" [disabled]="concluindo">Cancelar</button>
+        <button class="btn btn-success" type="submit" [disabled]="concluindo || conclusaoFormNg.invalid">
+          {{ concluindo ? 'Concluindo...' : 'Concluir transferência' }}
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

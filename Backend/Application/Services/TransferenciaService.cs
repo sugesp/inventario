@@ -47,17 +47,12 @@ public class TransferenciaService : ITransferenciaService
             UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId,
             CriadoPorUsuarioId = usuarioAutenticadoId,
             ResponsavelDestino = dto.ResponsavelDestino.Trim(),
-            IdSeiTermo = dto.IdSeiTermo.Trim(),
-            DataEntrega = dto.DataEntrega,
+            IdSeiTermo = string.Empty,
+            DataEntrega = null,
             Status = NormalizeStatus(dto.Status)!,
             Observacao = dto.Observacao.Trim(),
             Itens = dto.Itens.Select(MapToEntity).ToList()
         };
-
-        if (entity.Status == StatusConcluida)
-        {
-            entity.FinalizadoPorUsuarioId = usuarioAutenticadoId;
-        }
 
         _context.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);
@@ -85,8 +80,6 @@ public class TransferenciaService : ITransferenciaService
 
         entity.UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId;
         entity.ResponsavelDestino = dto.ResponsavelDestino.Trim();
-        entity.IdSeiTermo = dto.IdSeiTermo.Trim();
-        entity.DataEntrega = dto.DataEntrega;
         entity.Status = NormalizeStatus(dto.Status)!;
         entity.Observacao = dto.Observacao.Trim();
 
@@ -97,14 +90,60 @@ public class TransferenciaService : ITransferenciaService
 
         entity.Itens = dto.Itens.Select(MapToEntity).ToList();
 
-        if (entity.Status == StatusConcluida)
+        await _context.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
+    }
+
+    public async Task<TransferenciaDto?> ConcluirAsync(
+        Guid id,
+        TransferenciaConclusaoDto dto,
+        Guid usuarioAutenticadoId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(dto.IdSeiTermo))
         {
-            entity.FinalizadoPorUsuarioId = usuarioAutenticadoId;
+            throw new InvalidOperationException("Informe o ID SEI do termo para concluir a transferência.");
         }
-        else
+
+        if (dto.IdSeiTermo.Trim().Length > 120)
         {
-            entity.FinalizadoPorUsuarioId = null;
+            throw new InvalidOperationException("O ID SEI do termo deve possuir no máximo 120 caracteres.");
         }
+
+        if (!dto.DataEntrega.HasValue)
+        {
+            throw new InvalidOperationException("Informe a data de entrega para concluir a transferência.");
+        }
+
+        var entity = await _context.Set<Transferencia>()
+            .Include(x => x.Itens.Where(item => item.DeletedAt == null))
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (entity is null)
+        {
+            return null;
+        }
+
+        if (IsConcluida(entity.Status))
+        {
+            throw new InvalidOperationException("Esta transferência já foi concluída.");
+        }
+
+        if (string.Equals(NormalizeStatus(entity.Status), "CANCELADA", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Transferências canceladas não podem ser concluídas.");
+        }
+
+        if (entity.Itens.Count == 0)
+        {
+            throw new InvalidOperationException("Adicione ao menos um item antes de concluir a transferência.");
+        }
+
+        entity.IdSeiTermo = dto.IdSeiTermo.Trim();
+        entity.DataEntrega = dto.DataEntrega.Value.Date;
+        entity.Status = StatusConcluida;
+        entity.FinalizadoPorUsuarioId = usuarioAutenticadoId;
 
         await _context.SaveChangesAsync(cancellationToken);
         return await GetByIdAsync(id, cancellationToken);
@@ -171,6 +210,11 @@ public class TransferenciaService : ITransferenciaService
         if (string.IsNullOrWhiteSpace(dto.Status) || NormalizeStatus(dto.Status) is null)
         {
             throw new InvalidOperationException("Selecione um status válido para a transferência.");
+        }
+
+        if (IsConcluida(dto.Status))
+        {
+            throw new InvalidOperationException("Conclua a transferência pela ação disponível na listagem.");
         }
 
         if (dto.Itens.Count == 0)

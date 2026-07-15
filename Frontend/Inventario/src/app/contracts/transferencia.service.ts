@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Transferencia, TransferenciaPayload } from './transferencia.model';
+import { Transferencia, TransferenciaConclusaoPayload, TransferenciaPayload } from './transferencia.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransferenciaService {
@@ -24,6 +24,10 @@ export class TransferenciaService {
 
   update(id: string, payload: TransferenciaPayload): Observable<Transferencia> {
     return this.http.post<Transferencia>(`${this.baseUrl}/${id}/update`, payload);
+  }
+
+  concluir(id: string, payload: TransferenciaConclusaoPayload): Observable<Transferencia> {
+    return this.http.post<Transferencia>(`${this.baseUrl}/${id}/concluir`, payload);
   }
 
   delete(id: string): Observable<void> {

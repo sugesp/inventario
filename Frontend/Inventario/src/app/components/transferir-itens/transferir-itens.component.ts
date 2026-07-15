@@ -121,10 +121,6 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
     return this.buildUnidadeDestinoOptions();
   }
 
-  get statusOptions(): string[] {
-    return ['RASCUNHO', 'AGUARDANDO ASSINATURA', 'CONCLUÍDA', 'CANCELADA'];
-  }
-
   get condicaoOptions(): string[] {
     return ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO', 'DEFEITO'];
   }

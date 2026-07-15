@@ -45,3 +45,8 @@ export interface TransferenciaPayload {
   observacao: string;
   itens: TransferenciaItemPayload[];
 }
+
+export interface TransferenciaConclusaoPayload {
+  idSeiTermo: string;
+  dataEntrega: string;
+}

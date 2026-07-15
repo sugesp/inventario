@@ -3,7 +3,7 @@
     <span class="list-header-eyebrow">Transferências</span>
     <h2 class="list-header-title">{{ isReadOnly ? 'Detalhes da transferência' : (transferenciaId ? 'Editar transferência' : 'Nova transferência') }}</h2>
     <p class="hero-copy">
-      {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e finalize pelo resumo.' }}
+      {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e encaminhe para assinatura.' }}
     </p>
   </section>
 
@@ -155,7 +155,7 @@
       <span class="step-number">3</span>
       <div>
         <h3>Resumo dos itens</h3>
-        <p>Confira os itens adicionados e conclua a transferência quando estiver tudo certo.</p>
+        <p>Confira os itens adicionados. A conclusão será feita pela listagem após a assinatura e a entrega.</p>
       </div>
     </div>
 
@@ -185,23 +185,17 @@
           <span class="summary-overview-label">Atualizado em</span>
           <strong>{{ transferenciaAtual?.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
         </div>
+        <div class="summary-overview-card" *ngIf="isReadOnly">
+          <span class="summary-overview-label">ID SEI do termo</span>
+          <strong>{{ transferenciaAtual?.idSeiTermo || '-' }}</strong>
+        </div>
+        <div class="summary-overview-card" *ngIf="isReadOnly">
+          <span class="summary-overview-label">Data da entrega</span>
+          <strong>{{ transferenciaAtual?.dataEntrega | date:'dd/MM/yyyy' }}</strong>
+        </div>
       </div>
 
       <div class="summary-card transfer-summary-card summary-form-card">
-        <div>
-          <label class="form-label">Status</label>
-          <select class="form-select" [(ngModel)]="form.status" [disabled]="isReadOnly">
-            <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">ID SEI Termo</label>
-          <input class="form-control" [(ngModel)]="form.idSeiTermo" placeholder="Opcional" [readonly]="isReadOnly" />
-        </div>
-        <div>
-          <label class="form-label">Data da entrega</label>
-          <input class="form-control" type="date" [(ngModel)]="form.dataEntrega" [readonly]="isReadOnly" />
-        </div>
         <div class="summary-card-full">
           <label class="form-label">Observação geral</label>
           <textarea class="form-control summary-observacao" rows="2" [(ngModel)]="form.observacao" [readonly]="isReadOnly"></textarea>
@@ -271,9 +265,6 @@
       </button>
       <button class="btn btn-primary btn-filled" type="button" (click)="save('AGUARDANDO ASSINATURA')" [disabled]="saving || !canSave">
         Enviar para assinatura
-      </button>
-      <button class="btn btn-success btn-filled" type="button" (click)="save('CONCLUÍDA')" [disabled]="saving || !canSave">
-        Concluir transferência
       </button>
     </div>
   </section>

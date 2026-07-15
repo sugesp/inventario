@@ -64,6 +64,25 @@ public class TransferenciasController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,GTI.Gestor")]
+    [HttpPost("{id:guid}/concluir")]
+    public async Task<ActionResult<TransferenciaDto>> Concluir(
+        Guid id,
+        [FromBody] TransferenciaConclusaoDto dto,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var updated = await _service.ConcluirAsync(id, dto, GetUsuarioId(), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [Authorize(Roles = "Administrador")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
