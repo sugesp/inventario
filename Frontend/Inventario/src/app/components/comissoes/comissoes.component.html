@@ -97,30 +97,6 @@
           </select>
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Quantidade de itens esperados</label>
-          <input
-            class="form-control"
-            name="paginaQuantidadeItensEsperados"
-            [(ngModel)]="form.quantidadeItensEsperados"
-            type="number"
-            min="0"
-            step="1"
-            required
-            [readonly]="!canManageCurrentComissao"
-          />
-          <small class="form-text text-muted">Meta de bens que a comissão espera localizar.</small>
-          <button
-            class="btn btn-primary mt-2"
-            type="button"
-            *ngIf="canManageCurrentComissao"
-            (click)="submit()"
-            [disabled]="saving"
-          >
-            {{ saving ? 'Salvando...' : 'Salvar expectativa' }}
-          </button>
-        </div>
-
         <div class="col-12">
           <div class="comissao-tabs">
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'resumo'" (click)="setActiveTab('resumo')">Resumo</button>
