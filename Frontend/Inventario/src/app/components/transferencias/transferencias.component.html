@@ -86,7 +86,7 @@
             <td>{{ transferencia.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="actions-cell">
               <a class="btn btn-sm btn-outline-primary" [routerLink]="['/transferencias', transferencia.id]">
-                {{ isConcluida(transferencia.status) ? 'Detalhes' : 'Abrir' }}
+                Detalhes
               </a>
               <button
                 *ngIf="canConcluirTransferencia(transferencia)"
@@ -95,14 +95,6 @@
                 (click)="openConclusaoModal(transferencia)"
               >
                 Concluir
-              </button>
-              <button
-                *ngIf="canDeleteTransferencia(transferencia)"
-                class="btn btn-sm btn-standard-danger"
-                type="button"
-                (click)="deleteTransferencia(transferencia.id)"
-              >
-                Excluir
               </button>
             </td>
           </tr>

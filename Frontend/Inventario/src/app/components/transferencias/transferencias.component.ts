@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { AuthService } from '../../auth/auth.service';
 import { Transferencia } from '../../contracts/transferencia.model';
 import { TransferenciaService } from '../../contracts/transferencia.service';
 
@@ -21,7 +20,6 @@ export class TransferenciasComponent implements OnInit {
   concluindo = false;
 
   constructor(
-    readonly authService: AuthService,
     private readonly transferenciaService: TransferenciaService,
     private readonly toastr: ToastrService
   ) {}
@@ -128,26 +126,6 @@ export class TransferenciasComponent implements OnInit {
     }
 
     this.pageNumber += 1;
-  }
-
-  deleteTransferencia(id: string): void {
-    if (!confirm('Deseja excluir esta transferência?')) {
-      return;
-    }
-
-    this.transferenciaService.delete(id).subscribe({
-      next: () => {
-        this.toastr.success('Transferência excluída com sucesso.');
-        this.loadTransferencias();
-      },
-      error: (error) => {
-        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir a transferência.');
-      },
-    });
-  }
-
-  canDeleteTransferencia(transferencia: Transferencia): boolean {
-    return this.authService.isAdmin && !this.isConcluida(transferencia.status);
   }
 
   canConcluirTransferencia(transferencia: Transferencia): boolean {
