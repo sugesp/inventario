@@ -113,6 +113,14 @@
                   <label class="form-label mb-1">Resumo</label>
                   <p class="section-card-hint mb-0">Acompanhe os principais números desta comissão.</p>
                 </div>
+                <button
+                  class="btn btn-outline-primary"
+                  type="button"
+                  (click)="gerarRelatorioComissao()"
+                  [disabled]="loadingItensInventariados"
+                >
+                  {{ loadingItensInventariados ? 'Carregando itens...' : 'Gerar relatório da comissão' }}
+                </button>
               </div>
               <div class="summary-dashboard">
                 <div class="summary-tile">

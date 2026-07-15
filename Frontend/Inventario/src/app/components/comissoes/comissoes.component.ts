@@ -1,6 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
@@ -570,6 +572,134 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.inconsistenciasDaComissao.reduce((total, item) => total + item.quantidadeOcorrencias, 0);
   }
 
+  gerarRelatorioComissao(): void {
+    if (!this.comissaoEmEdicao) {
+      return;
+    }
+
+    const itens = this.itensInventariadosDaComissao;
+    if (itens.length === 0) {
+      this.toastr.info('Esta comissão ainda não possui itens inventariados para o relatório.');
+      return;
+    }
+
+    const locaisPorId = new Map(this.locaisDaComissaoEmEdicao.map((local) => [local.id, local]));
+    const itensPorLocal = new Map<string, ItemInventariado[]>();
+
+    itens.forEach((item) => {
+      const chave = item.localId || 'sem-local';
+      const itensDoLocal = itensPorLocal.get(chave) ?? [];
+      itensDoLocal.push(item);
+      itensPorLocal.set(chave, itensDoLocal);
+    });
+
+    const grupos = [...itensPorLocal.entries()]
+      .map(([localId, itensDoLocal]) => ({
+        localNome: locaisPorId.get(localId)?.nome || itensDoLocal[0]?.localNome || 'Local não informado',
+        itens: [...itensDoLocal].sort((a, b) =>
+          (a.tombamentoNovo || a.descricao).localeCompare(b.tombamentoNovo || b.descricao)
+        ),
+      }))
+      .sort((a, b) => a.localNome.localeCompare(b.localNome));
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(16);
+    pdf.text('Relatório da Comissão de Inventário', margin, 14);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.text(`Comissão ${this.comissaoEmEdicao.ano} | Presidente: ${this.comissaoEmEdicao.presidenteNome || '-'}`, margin, 20);
+    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, 25);
+    pdf.text(
+      `Locais com inventário: ${grupos.length} | Registros coletados: ${itens.length} | Itens únicos: ${this.comissaoEmEdicao.quantidadeItensLocalizados} | Esperados: ${this.comissaoEmEdicao.quantidadeItensEsperados}`,
+      margin,
+      30
+    );
+
+    let startY = 37;
+    grupos.forEach((grupo, index) => {
+      if (startY > pageHeight - 28) {
+        pdf.addPage();
+        startY = 14;
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.text(`${grupo.localNome} (${grupo.itens.length} item(ns))`, margin, startY);
+
+      autoTable(pdf, {
+        startY: startY + 3,
+        margin: { left: margin, right: margin, top: 12, bottom: 10 },
+        head: [[
+          'Tombamento novo',
+          'Tombamento antigo',
+          'Descrição',
+          'Classificação',
+          'Conservação',
+          'Detalhes coletados',
+          'Inventariado por',
+          'Data',
+          'E-Estado',
+        ]],
+        body: grupo.itens.map((item) => [
+          item.tombamentoNovo || '-',
+          item.tombamentoAntigo || '-',
+          item.descricao || '-',
+          item.status || '-',
+          item.estadoConservacao || '-',
+          [
+            item.justificativaInservivel ? `Justificativa: ${item.justificativaInservivel}` : '',
+            item.observacao ? `Observação: ${item.observacao}` : '',
+            item.latitude !== null && item.latitude !== undefined && item.longitude !== null && item.longitude !== undefined
+              ? `Localização: ${item.latitude}, ${item.longitude}${item.precisaoLocalizacao ? ` (precisão ${item.precisaoLocalizacao} m)` : ''}`
+              : '',
+            `Fotos: ${item.fotos.length}`,
+          ].filter(Boolean).join(' | '),
+          item.usuarioNome || '-',
+          this.formatReportDate(item.dataInventario),
+          item.lancadoEEstado
+            ? `Lançado${item.lancadoEEstadoPorUsuarioNome ? ` por ${item.lancadoEEstadoPorUsuarioNome}` : ''}${item.lancadoEEstadoEm ? ` em ${this.formatReportDate(item.lancadoEEstadoEm)}` : ''}`
+            : 'Pendente',
+        ]),
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 6.5, cellPadding: 1.4, valign: 'top', overflow: 'linebreak' },
+        headStyles: { fillColor: [41, 95, 150], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [244, 247, 250] },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 48 },
+          3: { cellWidth: 22 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 55 },
+          6: { cellWidth: 30 },
+          7: { cellWidth: 24 },
+          8: { cellWidth: 17 },
+        },
+        didDrawPage: () => {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7);
+          pdf.text(
+            `Comissão ${this.comissaoEmEdicao!.ano} — página ${pdf.getNumberOfPages()}`,
+            pageWidth - margin,
+            pageHeight - 5,
+            { align: 'right' }
+          );
+        },
+      });
+
+      const finalY = (pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? startY;
+      startY = finalY + (index < grupos.length - 1 ? 9 : 0);
+    });
+
+    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}.pdf`);
+    this.toastr.success('Relatório da comissão gerado com sucesso.');
+  }
+
   getInconsistenciaLocaisLabel(inconsistencia: InconsistenciaInventario): string {
     const locais = [...new Set(inconsistencia.ocorrencias.map((item) => item.localNome).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b));
@@ -959,6 +1089,15 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       presidenteId: '',
       membros: [],
     };
+  }
+
+  private formatReportDate(value: string | null | undefined): string {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString('pt-BR');
   }
 
   private createEmptyLocalForm(): { nome: string; localSuperiorId: string | null; latitude: number | null; longitude: number | null; membroUsuarioIds: string[] } {

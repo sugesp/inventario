@@ -7,7 +7,7 @@
     </p>
   </section>
 
-  <section class="step-card transfer-navigation-card" *ngIf="!loading; else loadingTransferencia">
+  <section class="step-card transfer-navigation-card" *ngIf="!loading && !isReadOnly">
     <div class="transfer-steps">
       <button type="button" class="transfer-step-tab" [class.is-active]="currentStep === 'dados'" (click)="goToDadosStep()">
         <span>1</span>
@@ -23,6 +23,8 @@
       </button>
     </div>
   </section>
+
+  <ng-container *ngIf="loading" [ngTemplateOutlet]="loadingTransferencia"></ng-container>
 
   <section class="step-card" *ngIf="!loading && currentStep === 'dados'">
     <div class="step-head">
@@ -154,10 +156,11 @@
 
   <section class="step-card" *ngIf="!loading && currentStep === 'resumo'">
     <div class="step-head">
-      <span class="step-number">3</span>
+      <span class="step-number" *ngIf="!isReadOnly">3</span>
       <div>
-        <h3>Resumo dos itens</h3>
-        <p>Confira os itens adicionados. A conclusão será feita posteriormente pela listagem.</p>
+        <h3>{{ isReadOnly ? 'Resumo da transferência' : 'Resumo dos itens' }}</h3>
+        <p *ngIf="!isReadOnly">Confira os itens adicionados. A conclusão será feita posteriormente pela listagem.</p>
+        <p *ngIf="isReadOnly">Consulte os dados da entrega e os itens transferidos.</p>
       </div>
     </div>
 
