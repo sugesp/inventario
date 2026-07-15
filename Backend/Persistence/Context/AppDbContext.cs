@@ -259,6 +259,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.ResponsavelDestino).HasMaxLength(200).IsRequired();
             entity.Property(x => x.IdSeiTermo).HasMaxLength(120);
             entity.Property(x => x.Status).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Situacao).HasMaxLength(20).IsRequired().HasDefaultValue("CEDIDO");
             entity.Property(x => x.Observacao).HasMaxLength(2000);
             entity.HasOne(x => x.UnidadeAdministrativaDestino)
                 .WithMany(x => x.TransferenciasDestino)
@@ -280,7 +281,6 @@ public class AppDbContext : DbContext
             entity.Property(x => x.TombamentoNovo).HasMaxLength(120);
             entity.Property(x => x.TombamentoAntigo).HasMaxLength(120);
             entity.Property(x => x.Descricao).HasMaxLength(500).IsRequired();
-            entity.Property(x => x.StatusItem).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Condicao).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Observacao).HasMaxLength(2000);
             entity.HasOne(x => x.Transferencia)

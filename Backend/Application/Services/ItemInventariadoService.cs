@@ -240,7 +240,7 @@ public class ItemInventariadoService : IItemInventariadoService
                 TombamentoAntigo = x.TombamentoAntigo,
                 Descricao = x.Descricao,
                 StatusTransferencia = x.Transferencia!.Status,
-                StatusItem = x.StatusItem,
+                SituacaoTransferencia = x.Transferencia.Situacao,
                 Condicao = x.Condicao,
                 UnidadeAdministrativaDestinoNome = x.Transferencia.UnidadeAdministrativaDestino != null
                     ? x.Transferencia.UnidadeAdministrativaDestino.Nome

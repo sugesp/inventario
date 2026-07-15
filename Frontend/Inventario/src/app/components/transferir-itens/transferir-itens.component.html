@@ -3,7 +3,7 @@
     <span class="list-header-eyebrow">Transferências</span>
     <h2 class="list-header-title">{{ isReadOnly ? 'Detalhes da transferência' : (transferenciaId ? 'Editar transferência' : 'Nova transferência') }}</h2>
     <p class="hero-copy">
-      {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e encaminhe para assinatura.' }}
+      {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e salve.' }}
     </p>
   </section>
 
@@ -49,6 +49,12 @@
       <div class="col-md-6">
         <label class="form-label">Responsável</label>
         <input class="form-control" [(ngModel)]="form.responsavelDestino" placeholder="Opcional" [readonly]="isReadOnly" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Situação da transferência</label>
+        <select class="form-select" [(ngModel)]="form.situacao" [disabled]="isReadOnly">
+          <option *ngFor="let situacao of situacaoOptions" [value]="situacao">{{ situacao }}</option>
+        </select>
       </div>
     </div>
 
@@ -122,10 +128,6 @@
           <span>{{ itemPendente.condicao || '-' }}</span>
         </div>
         <div>
-          <strong>Status</strong>
-          <span>{{ itemPendente.statusItem || '-' }}</span>
-        </div>
-        <div>
           <strong>Observação</strong>
           <span>{{ itemPendente.observacao || '-' }}</span>
         </div>
@@ -155,7 +157,7 @@
       <span class="step-number">3</span>
       <div>
         <h3>Resumo dos itens</h3>
-        <p>Confira os itens adicionados. A conclusão será feita pela listagem após a assinatura e a entrega.</p>
+        <p>Confira os itens adicionados. A conclusão será feita posteriormente pela listagem.</p>
       </div>
     </div>
 
@@ -168,6 +170,10 @@
         <div class="summary-overview-card">
           <span class="summary-overview-label">Responsável</span>
           <strong>{{ form.responsavelDestino || '-' }}</strong>
+        </div>
+        <div class="summary-overview-card">
+          <span class="summary-overview-label">Situação</span>
+          <strong>{{ form.situacao }}</strong>
         </div>
         <div class="summary-overview-card" *ngIf="transferenciaAtual">
           <span class="summary-overview-label">Criado por</span>
@@ -215,7 +221,6 @@
             <strong>{{ item.descricao || 'Sem descrição' }}</strong>
             <div class="transfer-item-tags">
               <span class="transfer-item-tag">{{ item.tombamentoNovo || 'Sem tombamento' }}</span>
-              <span class="transfer-item-tag transfer-item-tag-muted">{{ item.statusItem || 'Sem status' }}</span>
             </div>
           </div>
           <button class="btn btn-standard-danger transfer-item-remove" type="button" *ngIf="!isReadOnly" (click)="removeItem(i)">Remover</button>
@@ -229,10 +234,6 @@
           <div class="transfer-item-field transfer-item-field-lg">
             <label class="form-label">Descrição</label>
             <input class="form-control" [(ngModel)]="item.descricao" [readonly]="isReadOnly" />
-          </div>
-          <div class="transfer-item-field transfer-item-field-sm">
-            <label class="form-label">Status do item</label>
-            <input class="form-control" [(ngModel)]="item.statusItem" [readonly]="isReadOnly" />
           </div>
           <div class="transfer-item-field transfer-item-field-sm">
             <label class="form-label">Condição</label>
@@ -260,11 +261,8 @@
 
     <div class="step-actions" *ngIf="!isReadOnly">
       <button class="btn btn-outline-secondary" type="button" (click)="goToItensStep()">Etapa anterior</button>
-      <button class="btn btn-secondary" type="button" (click)="save('RASCUNHO')" [disabled]="saving || !canSave">
-        Salvar rascunho
-      </button>
-      <button class="btn btn-primary btn-filled" type="button" (click)="save('AGUARDANDO ASSINATURA')" [disabled]="saving || !canSave">
-        Enviar para assinatura
+      <button class="btn btn-primary btn-filled" type="button" (click)="save()" [disabled]="saving || !canSave">
+        {{ saving ? 'Salvando...' : 'Salvar' }}
       </button>
     </div>
   </section>
@@ -323,11 +321,7 @@
           <label class="form-label">Descrição</label>
           <input class="form-control" [(ngModel)]="manualItem.descricao" />
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Status do item</label>
-          <input class="form-control" [(ngModel)]="manualItem.statusItem" />
-        </div>
-        <div class="col-md-6">
+        <div class="col-12">
           <label class="form-label">Condição</label>
           <select class="form-select" [(ngModel)]="manualItem.condicao">
             <option *ngFor="let condicao of condicaoOptions" [value]="condicao">{{ condicao }}</option>

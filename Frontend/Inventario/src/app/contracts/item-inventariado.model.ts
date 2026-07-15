@@ -89,7 +89,7 @@ export interface ConsultaTombamentoTransferencia {
   tombamentoAntigo: string;
   descricao: string;
   statusTransferencia: string;
-  statusItem: string;
+  situacaoTransferencia: string;
   condicao: string;
   unidadeAdministrativaDestinoNome: string;
   unidadeAdministrativaDestinoSigla: string;

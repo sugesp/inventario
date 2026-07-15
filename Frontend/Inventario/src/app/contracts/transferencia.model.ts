@@ -3,7 +3,6 @@ export interface TransferenciaItem {
   tombamentoNovo: string;
   tombamentoAntigo: string;
   descricao: string;
-  statusItem: string;
   condicao: string;
   observacao: string;
 }
@@ -21,6 +20,7 @@ export interface Transferencia {
   idSeiTermo: string;
   dataEntrega?: string | null;
   status: string;
+  situacao: 'CEDIDO' | 'DEVOLVIDO';
   observacao: string;
   createdAt: string;
   updatedAt?: string | null;
@@ -31,7 +31,6 @@ export interface TransferenciaItemPayload {
   tombamentoNovo: string;
   tombamentoAntigo: string;
   descricao: string;
-  statusItem: string;
   condicao: string;
   observacao: string;
 }
@@ -42,6 +41,7 @@ export interface TransferenciaPayload {
   idSeiTermo: string;
   dataEntrega?: string | null;
   status: string;
+  situacao: 'CEDIDO' | 'DEVOLVIDO';
   observacao: string;
   itens: TransferenciaItemPayload[];
 }

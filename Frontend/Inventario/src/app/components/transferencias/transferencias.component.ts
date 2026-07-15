@@ -29,7 +29,7 @@ export class TransferenciasComponent implements OnInit {
   }
 
   get statusOptions(): string[] {
-    return ['RASCUNHO', 'AGUARDANDO ASSINATURA', 'CONCLUÍDA', 'CANCELADA'];
+    return ['PENDENTE', 'CONCLUÍDA', 'CANCELADA'];
   }
 
   get filteredTransferencias(): Transferencia[] {
@@ -60,6 +60,7 @@ export class TransferenciasComponent implements OnInit {
       return [
         destino,
         item.responsavelDestino,
+        item.situacao,
         item.idSeiTermo,
         dataEntrega,
         ...itensSearch,

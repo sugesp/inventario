@@ -815,6 +815,13 @@ namespace Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("Situacao")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("CEDIDO");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -863,11 +870,6 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
-
-                    b.Property<string>("StatusItem")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("varchar(80)");
 
                     b.Property<string>("TombamentoAntigo")
                         .IsRequired()

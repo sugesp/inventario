@@ -142,6 +142,28 @@
   gap: 8px;
 }
 
+.situacao-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #526579;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.situacao-badge-cedido {
+  background: #e8f2ff;
+  color: #175b9c;
+}
+
+.situacao-badge-devolvido {
+  background: #e8f7ee;
+  color: #187142;
+}
+
 .modal-backdrop-custom {
   position: fixed;
   inset: 0;

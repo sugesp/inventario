@@ -14,6 +14,7 @@ public class TransferenciaDto
     public string IdSeiTermo { get; set; } = string.Empty;
     public DateTime? DataEntrega { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string Situacao { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

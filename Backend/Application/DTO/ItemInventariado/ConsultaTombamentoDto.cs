@@ -23,7 +23,7 @@ public class ConsultaTombamentoTransferenciaDto
     public string TombamentoAntigo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public string StatusTransferencia { get; set; } = string.Empty;
-    public string StatusItem { get; set; } = string.Empty;
+    public string SituacaoTransferencia { get; set; } = string.Empty;
     public string Condicao { get; set; } = string.Empty;
     public string UnidadeAdministrativaDestinoNome { get; set; } = string.Empty;
     public string UnidadeAdministrativaDestinoSigla { get; set; } = string.Empty;

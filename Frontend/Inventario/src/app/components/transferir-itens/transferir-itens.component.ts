@@ -29,6 +29,7 @@ interface TransferenciaForm {
   idSeiTermo: string;
   dataEntrega: string;
   status: string;
+  situacao: 'CEDIDO' | 'DEVOLVIDO';
   observacao: string;
 }
 
@@ -38,7 +39,6 @@ interface DraftItem {
   descricao: string;
   observacao: string;
   condicao: string;
-  statusItem: string;
 }
 
 interface UnidadeDestinoOption extends SearchableSelectOption {
@@ -125,6 +125,10 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
     return ['SERVÍVEL', 'INSERVÍVEL', 'OBSOLETO', 'DEFEITO'];
   }
 
+  get situacaoOptions(): Array<'CEDIDO' | 'DEVOLVIDO'> {
+    return ['CEDIDO', 'DEVOLVIDO'];
+  }
+
   get canSave(): boolean {
     return !this.isReadOnly && !!this.form.unidadeAdministrativaDestinoId && !!this.form.responsavelDestino.trim() && this.itens.length > 0;
   }
@@ -138,7 +142,8 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
   }
 
   get isReadOnly(): boolean {
-    return this.isConcluida;
+    const status = this.normalizeStatus(this.form.status);
+    return status === 'concluida' || status === 'cancelada';
   }
 
   loadUnidadesAdministrativas(): void {
@@ -294,7 +299,6 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       tombamentoNovo: this.formatTombamentoValue(this.manualItem.tombamento),
       tombamentoAntigo: this.manualItem.tombamentoAntigo.trim(),
       descricao: this.manualItem.descricao.trim(),
-      statusItem: this.manualItem.statusItem || 'CEDIDO',
       condicao: this.manualItem.condicao || 'SERVÍVEL',
       observacao: this.manualItem.observacao.trim(),
     };
@@ -444,7 +448,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       });
   }
 
-  save(status?: string): void {
+  save(): void {
     if (this.isReadOnly) {
       this.toastr.info('Transferências concluídas ficam disponíveis apenas para consulta.');
       return;
@@ -455,7 +459,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload = this.toPayload(status);
+    const payload = this.toPayload();
     this.saving = true;
 
     const request = this.transferenciaId
@@ -518,7 +522,6 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
               tombamentoNovo: tombamento,
               tombamentoAntigo: '',
               descricao: `Item ${tombamento}`,
-              statusItem: 'CEDIDO',
               condicao: this.manualItem.condicao || 'SERVÍVEL',
               observacao: this.manualItem.observacao.trim(),
             };
@@ -541,25 +544,26 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       idSeiTermo: transferencia.idSeiTermo,
       dataEntrega: transferencia.dataEntrega ? transferencia.dataEntrega.slice(0, 10) : '',
       status: transferencia.status,
+      situacao: transferencia.situacao,
       observacao: transferencia.observacao,
     };
     this.itens = transferencia.itens.map((item) => ({ ...item }));
     this.currentStep = this.isReadOnly || this.itens.length > 0 ? 'resumo' : 'dados';
   }
 
-  private toPayload(nextStatus?: string): TransferenciaPayload {
+  private toPayload(): TransferenciaPayload {
     return {
       unidadeAdministrativaDestinoId: this.form.unidadeAdministrativaDestinoId ?? '',
       responsavelDestino: this.form.responsavelDestino.trim(),
       idSeiTermo: this.form.idSeiTermo.trim(),
       dataEntrega: this.form.dataEntrega || null,
-      status: nextStatus ?? this.form.status,
+      status: 'PENDENTE',
+      situacao: this.form.situacao,
       observacao: this.form.observacao.trim(),
       itens: this.itens.map((item) => ({
         tombamentoNovo: item.tombamentoNovo,
         tombamentoAntigo: this.normalizeTombamentoAntigoValue(item.tombamentoAntigo),
         descricao: item.descricao,
-        statusItem: item.statusItem,
         condicao: item.condicao,
         observacao: item.observacao,
       })),
@@ -572,7 +576,6 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       tombamentoNovo: this.formatTombamentoValue(resumo.tombamento || tombamento),
       tombamentoAntigo: this.normalizeTombamentoAntigoValue(resumo.tombamentoAntigo),
       descricao: resumo.descricao || resumo.tipo || `Item ${tombamento}`,
-      statusItem: this.manualItem.statusItem || 'CEDIDO',
       condicao: this.manualItem.condicao || 'SERVÍVEL',
       observacao: this.manualItem.observacao.trim(),
     };
@@ -584,7 +587,8 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       responsavelDestino: '',
       idSeiTermo: '',
       dataEntrega: '',
-      status: 'RASCUNHO',
+      status: 'PENDENTE',
+      situacao: 'CEDIDO',
       observacao: '',
     };
   }
@@ -604,7 +608,6 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
       descricao: '',
       observacao: '',
       condicao: 'SERVÍVEL',
-      statusItem: 'CEDIDO',
     };
   }
 

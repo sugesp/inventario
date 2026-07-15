@@ -9,6 +9,7 @@ public class Transferencia : BaseEntity
     public string IdSeiTermo { get; set; } = string.Empty;
     public DateTime? DataEntrega { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string Situacao { get; set; } = "CEDIDO";
     public string Observacao { get; set; } = string.Empty;
 
     public UnidadeAdministrativa? UnidadeAdministrativaDestino { get; set; }

@@ -8,7 +8,7 @@
       <a class="btn btn-primary" routerLink="/transferir">Nova transferência</a>
     </div>
     <p class="hero-copy">
-      Acompanhe as movimentações de itens entre setores, revise os rascunhos e conclua as entregas.
+      Acompanhe as movimentações de itens entre setores, consulte as pendências e conclua as entregas.
     </p>
   </section>
 
@@ -66,6 +66,7 @@
             <th>Destino</th>
             <th>Responsável</th>
             <th>Status</th>
+            <th>Movimentação</th>
             <th>ID SEI Termo</th>
             <th>Data entrega</th>
             <th>Itens</th>
@@ -79,6 +80,15 @@
             <td>{{ transferencia.unidadeAdministrativaDestinoSigla ? (transferencia.unidadeAdministrativaDestinoSigla + ' - ' + transferencia.unidadeAdministrativaDestinoNome) : (transferencia.unidadeAdministrativaDestinoNome || '-') }}</td>
             <td>{{ transferencia.responsavelDestino || '-' }}</td>
             <td>{{ transferencia.status || '-' }}</td>
+            <td>
+              <span
+                class="situacao-badge"
+                [class.situacao-badge-cedido]="transferencia.situacao === 'CEDIDO'"
+                [class.situacao-badge-devolvido]="transferencia.situacao === 'DEVOLVIDO'"
+              >
+                {{ transferencia.situacao || 'NÃO INFORMADA' }}
+              </span>
+            </td>
             <td>{{ transferencia.idSeiTermo || '-' }}</td>
             <td>{{ transferencia.dataEntrega ? (transferencia.dataEntrega | date:'dd/MM/yyyy') : '-' }}</td>
             <td>{{ transferencia.itens.length }}</td>

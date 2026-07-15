@@ -50,6 +50,7 @@ public class TransferenciaService : ITransferenciaService
             IdSeiTermo = string.Empty,
             DataEntrega = null,
             Status = NormalizeStatus(dto.Status)!,
+            Situacao = NormalizeSituacao(dto.Situacao)!,
             Observacao = dto.Observacao.Trim(),
             Itens = dto.Itens.Select(MapToEntity).ToList()
         };
@@ -78,9 +79,15 @@ public class TransferenciaService : ITransferenciaService
             throw new InvalidOperationException("Transferências concluídas não podem ser alteradas.");
         }
 
+        if (string.Equals(NormalizeStatus(entity.Status), "CANCELADA", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Transferências canceladas não podem ser alteradas.");
+        }
+
         entity.UnidadeAdministrativaDestinoId = dto.UnidadeAdministrativaDestinoId;
         entity.ResponsavelDestino = dto.ResponsavelDestino.Trim();
         entity.Status = NormalizeStatus(dto.Status)!;
+        entity.Situacao = NormalizeSituacao(dto.Situacao)!;
         entity.Observacao = dto.Observacao.Trim();
 
         foreach (var item in entity.Itens)
@@ -217,6 +224,11 @@ public class TransferenciaService : ITransferenciaService
             throw new InvalidOperationException("Conclua a transferência pela ação disponível na listagem.");
         }
 
+        if (string.IsNullOrWhiteSpace(dto.Situacao) || NormalizeSituacao(dto.Situacao) is null)
+        {
+            throw new InvalidOperationException("Selecione uma situação válida para a transferência.");
+        }
+
         if (dto.Itens.Count == 0)
         {
             throw new InvalidOperationException("Adicione ao menos um item à transferência.");
@@ -250,7 +262,6 @@ public class TransferenciaService : ITransferenciaService
             TombamentoNovo = FormatTombamento(dto.TombamentoNovo),
             TombamentoAntigo = dto.TombamentoAntigo.Trim(),
             Descricao = dto.Descricao.Trim(),
-            StatusItem = string.IsNullOrWhiteSpace(dto.StatusItem) ? "CEDIDO" : dto.StatusItem.Trim().ToUpperInvariant(),
             Condicao = NormalizeCondicao(dto.Condicao)!,
             Observacao = dto.Observacao.Trim()
         };
@@ -272,6 +283,7 @@ public class TransferenciaService : ITransferenciaService
             IdSeiTermo = entity.IdSeiTermo,
             DataEntrega = entity.DataEntrega,
             Status = NormalizeStatus(entity.Status) ?? entity.Status,
+            Situacao = NormalizeSituacao(entity.Situacao) ?? entity.Situacao,
             Observacao = entity.Observacao,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
@@ -284,7 +296,6 @@ public class TransferenciaService : ITransferenciaService
                     TombamentoNovo = x.TombamentoNovo,
                     TombamentoAntigo = x.TombamentoAntigo,
                     Descricao = x.Descricao,
-                    StatusItem = x.StatusItem,
                     Condicao = x.Condicao,
                     Observacao = x.Observacao
                 })
@@ -302,10 +313,11 @@ public class TransferenciaService : ITransferenciaService
         var normalized = RemoveDiacritics(status).Trim().ToUpperInvariant();
         return normalized switch
         {
-            "RASCUNHO" => "RASCUNHO",
-            "EM SEPARACAO" => "AGUARDANDO ASSINATURA",
-            "AGUARDANDO CONCLUSAO" => "AGUARDANDO ASSINATURA",
-            "AGUARDANDO ASSINATURA" => "AGUARDANDO ASSINATURA",
+            "PENDENTE" => "PENDENTE",
+            "RASCUNHO" => "PENDENTE",
+            "EM SEPARACAO" => "PENDENTE",
+            "AGUARDANDO CONCLUSAO" => "PENDENTE",
+            "AGUARDANDO ASSINATURA" => "PENDENTE",
             "CONCLUIDA" => StatusConcluida,
             "CANCELADA" => "CANCELADA",
             _ => null
@@ -315,6 +327,21 @@ public class TransferenciaService : ITransferenciaService
     private static bool IsConcluida(string? status)
     {
         return string.Equals(NormalizeStatus(status), StatusConcluida, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? NormalizeSituacao(string? situacao)
+    {
+        if (string.IsNullOrWhiteSpace(situacao))
+        {
+            return null;
+        }
+
+        return RemoveDiacritics(situacao).Trim().ToUpperInvariant() switch
+        {
+            "CEDIDO" => "CEDIDO",
+            "DEVOLVIDO" => "DEVOLVIDO",
+            _ => null
+        };
     }
 
     private static string? NormalizeCondicao(string? condicao)

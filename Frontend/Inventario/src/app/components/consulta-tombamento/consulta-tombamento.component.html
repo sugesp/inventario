@@ -107,7 +107,7 @@
             </td>
             <td>
               <span class="status-pill">{{ item.statusTransferencia }}</span>
-              <small>{{ item.statusItem || 'Item sem status' }} · {{ item.condicao || 'Sem condição' }}</small>
+              <small>{{ item.situacaoTransferencia || 'Situação não informada' }} · {{ item.condicao || 'Sem condição' }}</small>
             </td>
             <td>{{ item.idSeiTermo || 'Não informado' }}</td>
             <td>{{ formatDate(item.dataEntrega || item.createdAt) }}</td>
