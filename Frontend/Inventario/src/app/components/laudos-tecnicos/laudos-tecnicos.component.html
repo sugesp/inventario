@@ -32,7 +32,8 @@
         <label class="form-label">Filtrar por classificação</label>
         <select class="form-select" [(ngModel)]="selectedClassificacao">
           <option value="">Todas</option>
-          <option *ngFor="let classificacao of classificacaoOptions" [value]="classificacao">{{ classificacao }}</option>
+          <option *ngFor="let classificacao of classificacaoOptions" [value]="classificacao">{{ classificacao }}
+          </option>
         </select>
       </div>
       <div>
@@ -88,7 +89,8 @@
 </div>
 
 <div class="laudo-modal-backdrop" *ngIf="activeLaudo || loadingModal"></div>
-<div class="laudo-modal" *ngIf="activeLaudo || loadingModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
+<div class="laudo-modal" *ngIf="activeLaudo || loadingModal" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closeModal()">
   <div class="laudo-modal-card" (click)="$event.stopPropagation()">
     <div class="laudo-modal-header">
       <div>
@@ -96,8 +98,10 @@
         <h3>{{ loadingModal ? 'Carregando laudo...' : 'Laudo Técnico de TI' }}</h3>
       </div>
       <div class="modal-header-actions">
-        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLaudo && !editingIdentificacao" (click)="editIdentificacao()">
-          {{ activeLaudo.processoSei || activeLaudo.idDevolucaoSei || activeLaudo.unidadeGestora || activeLaudo.setor || activeLaudo.dataAvaliacao ? 'Editar identificação' : 'Preencher identificação' }}
+        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLaudo && !editingIdentificacao"
+          (click)="editIdentificacao()">
+          {{ activeLaudo.processoSei || activeLaudo.idDevolucaoSei || activeLaudo.unidadeGestora || activeLaudo.setor ||
+          activeLaudo.dataAvaliacao ? 'Editar identificação' : 'Preencher identificação' }}
         </button>
         <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLaudo" (click)="printActiveLaudo()">
           Imprimir
@@ -107,6 +111,26 @@
     </div>
 
     <div class="laudo-print-sheet" *ngIf="activeLaudo as laudo">
+      <table class="print-document-layout">
+        <thead>
+          <tr><td>
+      <header class="print-document-header">
+        <img src="assets/brasão_ro.png" alt="Brasão do Estado de Rondônia" />
+        <div class="print-government-copy">
+          <span>Governo do Estado de Rondônia</span>
+          <strong>Superintendência de Gestão dos Gastos Públicos Administrativos</strong>
+          <small>Sistema de Gestão Patrimonial</small>
+        </div>
+        <div class="print-document-identification">
+          <span>LAUDO TÉCNICO DE TI</span>
+          <strong>{{ laudo.patrimonio || laudo.numeroSerie || 'SEM IDENTIFICAÇÃO' }}</strong>
+        </div>
+      </header>
+          </td></tr>
+        </thead>
+        <tbody>
+          <tr><td>
+
       <section class="identificacao-editor" *ngIf="editingIdentificacao">
         <h5>Identificação do laudo</h5>
         <div class="row g-3">
@@ -132,7 +156,8 @@
           </div>
         </div>
         <div class="step-actions mt-3 mb-0">
-          <button class="btn btn-outline-secondary" type="button" (click)="cancelIdentificacao()" [disabled]="savingIdentificacao">Cancelar</button>
+          <button class="btn btn-outline-secondary" type="button" (click)="cancelIdentificacao()"
+            [disabled]="savingIdentificacao">Cancelar</button>
           <button class="btn btn-primary" type="button" (click)="saveIdentificacao()" [disabled]="savingIdentificacao">
             {{ savingIdentificacao ? 'Salvando...' : 'Salvar identificação' }}
           </button>
@@ -141,85 +166,90 @@
 
       <div class="print-title-block">
         <h4>LAUDO TÉCNICO DE TI - AVALIAÇÃO INDIVIDUAL</h4>
-        <p>Avaliacao individual para desfazimento de bens de informatica</p>
       </div>
 
       <section class="print-section">
         <h5>1. Identificação</h5>
         <div class="print-grid two-columns">
-          <div><strong>Processo SEI:</strong> <span>{{ laudo.processoSei || '-' }}</span></div>
-          <div><strong>ID Devolução SEI:</strong> <span>{{ laudo.idDevolucaoSei || '-' }}</span></div>
-          <div><strong>Unidade Gestora:</strong> <span>{{ laudo.unidadeGestora || '-' }}</span></div>
-          <div><strong>Setor:</strong> <span>{{ laudo.setor || '-' }}</span></div>
-          <div><strong>Data da avaliação:</strong> <span>{{ laudo.dataAvaliacao ? (laudo.dataAvaliacao | date:'dd/MM/yyyy') : '-' }}</span></div>
+          <div *ngIf="laudo.processoSei"><strong>Processo SEI:</strong> <span>{{ laudo.processoSei }}</span></div>
+          <div *ngIf="laudo.idDevolucaoSei"><strong>ID Devolução SEI:</strong> <span>{{ laudo.idDevolucaoSei }}</span></div>
+          <div *ngIf="laudo.unidadeGestora"><strong>Unidade Gestora:</strong> <span>{{ laudo.unidadeGestora }}</span></div>
+          <div *ngIf="laudo.setor"><strong>Setor:</strong> <span>{{ laudo.setor }}</span></div>
+          <div *ngIf="laudo.dataAvaliacao"><strong>Data da avaliação:</strong> <span>{{ laudo.dataAvaliacao | date:'dd/MM/yyyy' }}</span></div>
         </div>
       </section>
 
       <section class="print-section">
         <h5>2. Identificação do equipamento</h5>
         <div class="print-grid two-columns">
-          <div><strong>Tipo:</strong> <span>{{ laudo.tipoEquipamento || '-' }}<ng-container *ngIf="laudo.outroTipoEquipamento"> - {{ laudo.outroTipoEquipamento }}</ng-container></span></div>
-          <div><strong>Tombamento/Patrimônio E-Estado:</strong> <span>{{ laudo.patrimonio || '-' }}</span></div>
-          <div><strong>Tombamento antigo:</strong> <span>{{ laudo.tombamentoAntigo || '-' }}</span></div>
-          <div><strong>Nº Série:</strong> <span>{{ laudo.numeroSerie || '-' }}</span></div>
-          <div><strong>Marca:</strong> <span>{{ laudo.marca || '-' }}</span></div>
-          <div><strong>Modelo:</strong> <span>{{ laudo.modelo || '-' }}</span></div>
-          <div><strong>Ano de aquisição:</strong> <span>{{ laudo.anoAquisicao || '-' }}</span></div>
+          <div *ngIf="laudo.tipoEquipamento"><strong>Tipo:</strong> <span>{{ laudo.tipoEquipamento }}<ng-container
+                *ngIf="laudo.outroTipoEquipamento"> - {{ laudo.outroTipoEquipamento }}</ng-container></span></div>
+          <div *ngIf="laudo.patrimonio"><strong>Tombamento/Patrimônio E-Estado:</strong> <span>{{ laudo.patrimonio }}</span></div>
+          <div *ngIf="laudo.tombamentoAntigo"><strong>Tombamento antigo:</strong> <span>{{ laudo.tombamentoAntigo }}</span></div>
+          <div *ngIf="laudo.numeroSerie"><strong>Nº Série:</strong> <span>{{ laudo.numeroSerie }}</span></div>
+          <div *ngIf="laudo.marca"><strong>Marca:</strong> <span>{{ laudo.marca }}</span></div>
+          <div *ngIf="laudo.modelo"><strong>Modelo:</strong> <span>{{ laudo.modelo }}</span></div>
+          <div *ngIf="laudo.anoAquisicao"><strong>Ano de aquisição:</strong> <span>{{ laudo.anoAquisicao }}</span></div>
         </div>
       </section>
 
-      <section class="print-section">
+      <section class="print-section" *ngIf="laudo.processador || laudo.memoria || laudo.armazenamento || laudo.sistemaOperacional || laudo.outros">
         <h5>3. Configuração / Especificação</h5>
         <div class="print-grid two-columns">
           <ng-container *ngIf="laudo.tipoEquipamento === 'Computador' || laudo.tipoEquipamento === 'Notebook'">
-          <div><strong>Processador:</strong> <span>{{ laudo.processador || '-' }}</span></div>
-          <div><strong>Memória:</strong> <span>{{ laudo.memoria || '-' }}</span></div>
-          <div><strong>Armazenamento:</strong> <span>{{ laudo.armazenamento || '-' }}</span></div>
-          <div><strong>Sistema operacional:</strong> <span>{{ laudo.sistemaOperacional || '-' }}</span></div>
+            <div *ngIf="laudo.processador"><strong>Processador:</strong> <span>{{ laudo.processador }}</span></div>
+            <div *ngIf="laudo.memoria"><strong>Memória:</strong> <span>{{ laudo.memoria }}</span></div>
+            <div *ngIf="laudo.armazenamento"><strong>Armazenamento:</strong> <span>{{ laudo.armazenamento }}</span></div>
+            <div *ngIf="laudo.sistemaOperacional"><strong>Sistema operacional:</strong> <span>{{ laudo.sistemaOperacional }}</span></div>
           </ng-container>
-          <div class="full-row"><strong>Outros:</strong> <span>{{ laudo.outros || '-' }}</span></div>
+          <div class="full-row" *ngIf="laudo.outros"><strong>Outros:</strong> <span>{{ laudo.outros }}</span></div>
         </div>
       </section>
 
       <section class="print-section">
         <h5>4. Avaliação técnica</h5>
         <div class="print-grid two-columns">
-          <div><strong>Funcionamento:</strong> <span>{{ laudo.condicaoFuncionamento || '-' }}</span></div>
-          <div><strong>Conservação:</strong> <span>{{ laudo.estadoConservacao || '-' }}</span></div>
-          <div class="full-row"><strong>Descrição do funcionamento:</strong> <span>{{ laudo.descricaoFuncionamento || '-' }}</span></div>
-          <div class="full-row"><strong>Problemas identificados:</strong> <span>{{ formatList(laudo.problemasIdentificados) }}</span></div>
-          <div class="full-row"><strong>Outro problema:</strong> <span>{{ laudo.outroProblema || '-' }}</span></div>
-          <div class="full-row"><strong>Descrição técnica detalhada:</strong> <span>{{ laudo.descricaoTecnicaDetalhada || '-' }}</span></div>
+          <div *ngIf="laudo.condicaoFuncionamento"><strong>Funcionamento:</strong> <span>{{ laudo.condicaoFuncionamento }}</span></div>
+          <div *ngIf="laudo.estadoConservacao"><strong>Conservação:</strong> <span>{{ laudo.estadoConservacao }}</span></div>
+          <div class="full-row" *ngIf="laudo.descricaoFuncionamento"><strong>Descrição do funcionamento:</strong> <span>{{ laudo.descricaoFuncionamento }}</span></div>
+          <div class="full-row" *ngIf="laudo.problemasIdentificados.length"><strong>Problemas identificados:</strong> <span>{{
+              formatList(laudo.problemasIdentificados) }}</span></div>
+          <div class="full-row" *ngIf="laudo.outroProblema"><strong>Outro problema:</strong> <span>{{ laudo.outroProblema }}</span></div>
+          <div class="full-row" *ngIf="laudo.descricaoTecnicaDetalhada"><strong>Descrição técnica detalhada:</strong> <span>{{ laudo.descricaoTecnicaDetalhada }}</span></div>
         </div>
       </section>
 
       <section class="print-section">
         <h5>5. Viabilidade técnica</h5>
         <div class="print-grid two-columns">
-          <div><strong>Possibilidade de reparo:</strong> <span>{{ laudo.possuiReparo === null ? '-' : (laudo.possuiReparo ? 'Sim' : 'Nao') }}</span></div>
-          <div><strong>Percentual estimado:</strong> <span>{{ laudo.percentualEstimado ?? '-' }}<ng-container *ngIf="laudo.percentualEstimado !== null && laudo.percentualEstimado !== undefined">%</ng-container></span></div>
-          <div><strong>Valor de mercado:</strong> <span>{{ laudo.valorEstimadoMercado !== null && laudo.valorEstimadoMercado !== undefined ? (laudo.valorEstimadoMercado | currency:'BRL':'symbol':'1.2-2') : '-' }}</span></div>
-          <div><strong>Custo de manutenção:</strong> <span>{{ laudo.custoEstimadoManutencao !== null && laudo.custoEstimadoManutencao !== undefined ? (laudo.custoEstimadoManutencao | currency:'BRL':'symbol':'1.2-2') : '-' }}</span></div>
-          <div class="full-row"><strong>Descrição do reparo:</strong> <span>{{ laudo.descricaoReparo || '-' }}</span></div>
+          <div *ngIf="laudo.possuiReparo !== null && laudo.possuiReparo !== undefined"><strong>Possibilidade de reparo:</strong> <span>{{ laudo.possuiReparo ? 'Sim' : 'Não' }}</span></div>
+          <div *ngIf="laudo.percentualEstimado !== null && laudo.percentualEstimado !== undefined"><strong>Percentual estimado:</strong> <span>{{ laudo.percentualEstimado }}%</span>
+          </div>
+          <div *ngIf="laudo.valorEstimadoMercado !== null && laudo.valorEstimadoMercado !== undefined"><strong>Valor de mercado:</strong> <span>{{ laudo.valorEstimadoMercado | currency:'BRL':'symbol':'1.2-2' }}</span></div>
+          <div *ngIf="laudo.custoEstimadoManutencao !== null && laudo.custoEstimadoManutencao !== undefined"><strong>Custo de manutenção:</strong> <span>{{ laudo.custoEstimadoManutencao | currency:'BRL':'symbol':'1.2-2' }}</span></div>
+          <div class="full-row" *ngIf="laudo.descricaoReparo"><strong>Descrição do reparo:</strong> <span>{{ laudo.descricaoReparo }}</span>
+          </div>
         </div>
       </section>
 
       <section class="print-section">
         <h5>6. Classificação e recomendação</h5>
         <div class="print-grid two-columns">
-          <div><strong>Classificação técnica:</strong> <span>{{ laudo.classificacaoTecnica || '-' }}</span></div>
-          <div><strong>Conclusão:</strong> <span>{{ laudo.conclusaoCondicao || '-' }}</span></div>
-          <div class="full-row"><strong>Justificativa técnica:</strong> <span>{{ laudo.justificativaTecnica || '-' }}</span></div>
-          <div class="full-row"><strong>Recomendação:</strong> <span>{{ formatList(laudo.recomendacoes) }}</span></div>
-          <div class="full-row"><strong>Sugestão de destinação:</strong> <span>{{ formatList(laudo.sugestoesDestinacao) }}</span></div>
-          <div class="full-row"><strong>Registro fotográfico:</strong> <span>{{ formatList(laudo.registroFotografico) }}</span></div>
-          <div><strong>Quantidade de fotos:</strong> <span>{{ laudo.quantidadeFotos ?? '-' }}</span></div>
-          <div><strong>Classificação final:</strong> <span>{{ laudo.classificacaoFinal || '-' }}</span></div>
+          <div *ngIf="laudo.classificacaoTecnica"><strong>Classificação técnica:</strong> <span>{{ laudo.classificacaoTecnica }}</span></div>
+          <div *ngIf="laudo.conclusaoCondicao"><strong>Conclusão:</strong> <span>{{ laudo.conclusaoCondicao }}</span></div>
+          <div class="full-row" *ngIf="laudo.justificativaTecnica"><strong>Justificativa técnica:</strong> <span>{{ laudo.justificativaTecnica }}</span></div>
+          <div class="full-row" *ngIf="laudo.recomendacoes.length"><strong>Recomendação:</strong> <span>{{ formatList(laudo.recomendacoes) }}</span></div>
+          <div class="full-row" *ngIf="laudo.sugestoesDestinacao.length"><strong>Sugestão de destinação:</strong> <span>{{ formatList(laudo.sugestoesDestinacao) }}</span></div>
+          <div class="full-row" *ngIf="laudo.registroFotografico.length"><strong>Registro fotográfico:</strong> <span>{{ formatList(laudo.registroFotografico) }}</span></div>
+          <div *ngIf="laudo.quantidadeFotos !== null && laudo.quantidadeFotos !== undefined"><strong>Quantidade de fotos:</strong> <span>{{ laudo.quantidadeFotos }}</span></div>
+          <div *ngIf="laudo.classificacaoFinal"><strong>Classificação final:</strong> <span>{{ laudo.classificacaoFinal }}</span></div>
         </div>
         <div class="laudo-photo-gallery" *ngIf="laudo.fotos.length > 0">
           <figure *ngFor="let foto of laudo.fotos">
             <img *ngIf="photoUrl(foto.id) as url; else fotoLoading" [src]="url" [alt]="foto.categoria" />
-            <ng-template #fotoLoading><div class="photo-loading">Carregando foto...</div></ng-template>
+            <ng-template #fotoLoading>
+              <div class="photo-loading">Carregando foto...</div>
+            </ng-template>
             <figcaption>{{ foto.categoria }}</figcaption>
           </figure>
         </div>
@@ -228,10 +258,22 @@
       <section class="print-section">
         <h5>7. Responsável técnico</h5>
         <div class="print-grid two-columns">
-          <div><strong>Nome:</strong> <span>{{ laudo.responsavelTecnicoNome || '-' }}</span></div>
-          <div><strong>Cargo:</strong> <span>{{ laudo.responsavelTecnicoCargo || '-' }}</span></div>
+          <div *ngIf="laudo.responsavelTecnicoNome"><strong>Nome:</strong> <span>{{ laudo.responsavelTecnicoNome }}</span></div>
+          <div *ngIf="laudo.responsavelTecnicoCargo"><strong>Cargo:</strong> <span>{{ laudo.responsavelTecnicoCargo }}</span></div>
         </div>
       </section>
+
+          </td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>
+      <footer class="print-document-footer">
+        <span>Documento emitido em {{ printDate | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span>Identificação: {{ laudo.id }}</span>
+      </footer>
+          </td></tr>
+        </tfoot>
+      </table>
     </div>
 
     <div class="scan-feedback" *ngIf="loadingModal">Carregando dados do laudo...</div>

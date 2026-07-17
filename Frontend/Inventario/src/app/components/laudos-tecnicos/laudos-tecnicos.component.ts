@@ -17,6 +17,7 @@ export class LaudosTecnicosComponent implements OnInit, OnDestroy {
   loadingModal = false;
   editingIdentificacao = false;
   savingIdentificacao = false;
+  printDate = new Date();
   identificacaoForm: LaudoTecnicoIdentificacaoPayload = this.emptyIdentificacao();
   photoUrls = new Map<string, string>();
 
@@ -126,6 +127,7 @@ export class LaudosTecnicosComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.printDate = new Date();
     window.print();
   }
 

@@ -170,6 +170,76 @@
   box-shadow: 0 20px 40px rgba(23, 39, 55, 0.08);
 }
 
+.print-document-layout {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-document-layout > thead > tr > td,
+.print-document-layout > tbody > tr > td,
+.print-document-layout > tfoot > tr > td {
+  padding: 0;
+}
+
+.print-document-header {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #7f96ad;
+  color: #17395d;
+}
+
+.print-document-header img {
+  display: block;
+  width: 46px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.print-government-copy,
+.print-document-identification {
+  display: flex;
+  flex-direction: column;
+}
+
+.print-government-copy span,
+.print-government-copy small,
+.print-document-identification span {
+  font-size: 0.72rem;
+}
+
+.print-government-copy strong {
+  font-size: 0.92rem;
+}
+
+.print-document-identification {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.print-document-identification strong {
+  margin-top: 4px;
+  font-size: 0.86rem;
+}
+
+.print-document-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 8px;
+  margin-top: 22px;
+  border-top: 1px solid #7f96ad;
+  color: #60758a;
+  font-size: 0.64rem;
+}
+
+.print-document-footer span:last-child {
+  text-align: right;
+}
+
 .identificacao-editor {
   padding: 20px;
   margin-bottom: 24px;
@@ -310,7 +380,14 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 12mm 12mm 18mm;
+
+    @bottom-center {
+      content: "Página " counter(page) " de " counter(pages);
+      color: #60758a;
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+    }
   }
 
   .inventario-grid {
@@ -348,6 +425,24 @@
     border-radius: 0;
     box-shadow: none !important;
     filter: none !important;
+  }
+
+  .print-document-header {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-document-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-document-layout > thead {
+    display: table-header-group;
+  }
+
+  .print-document-layout > tfoot {
+    display: table-footer-group;
   }
 
   .print-grid.two-columns {
