@@ -39,6 +39,11 @@ public class ItemInventariadoService : IItemInventariadoService
 
         if (!usuarioAdministrador)
         {
+            var locaisAcessiveisIds = await GetLocaisAcessiveisIdsAsync(
+                usuarioAutenticadoId,
+                cancellationToken
+            );
+
             query = query.Where(x =>
                 x.Comissao != null
                 && x.Comissao.DeletedAt == null
@@ -47,9 +52,7 @@ public class ItemInventariadoService : IItemInventariadoService
                     x.Comissao.PresidenteId == usuarioAutenticadoId
                     || (
                         x.Local != null
-                        && x.Local.Membros.Any(m =>
-                            m.UsuarioId == usuarioAutenticadoId
-                            && m.DeletedAt == null)
+                        && locaisAcessiveisIds.Contains(x.Local.Id)
                     )
                 )
             );
@@ -681,12 +684,61 @@ public class ItemInventariadoService : IItemInventariadoService
             return;
         }
 
-        var usuarioPodeInventariar = local.Membros.Any(x => x.UsuarioId == usuarioId && x.DeletedAt == null);
+        var locaisAcessiveisIds = await GetLocaisAcessiveisIdsAsync(usuarioId, cancellationToken);
+        var usuarioPodeInventariar = locaisAcessiveisIds.Contains(local.Id);
 
         if (!usuarioPodeInventariar)
         {
-            throw new InvalidOperationException("Somente membros responsáveis pelo local podem realizar inventários neste local.");
+            throw new InvalidOperationException("Somente membros responsáveis pelo local ou por um local superior podem realizar inventários neste local.");
         }
+    }
+
+    private async Task<HashSet<Guid>> GetLocaisAcessiveisIdsAsync(
+        Guid usuarioId,
+        CancellationToken cancellationToken
+    )
+    {
+        var locais = await _context.Locais
+            .AsNoTracking()
+            .Where(x => x.DeletedAt == null)
+            .Select(x => new
+            {
+                x.Id,
+                x.LocalSuperiorId,
+                UsuarioPossuiAcesso = x.Membros.Any(m =>
+                    m.UsuarioId == usuarioId
+                    && m.DeletedAt == null)
+            })
+            .ToListAsync(cancellationToken);
+
+        var locaisAcessiveisIds = locais
+            .Where(x => x.UsuarioPossuiAcesso)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        var subordinadosPorSuperior = locais
+            .Where(x => x.LocalSuperiorId.HasValue)
+            .GroupBy(x => x.LocalSuperiorId!.Value)
+            .ToDictionary(x => x.Key, x => x.Select(local => local.Id).ToArray());
+
+        var locaisPendentes = new Queue<Guid>(locaisAcessiveisIds);
+        while (locaisPendentes.TryDequeue(out var localId))
+        {
+            if (!subordinadosPorSuperior.TryGetValue(localId, out var subordinados))
+            {
+                continue;
+            }
+
+            foreach (var subordinadoId in subordinados)
+            {
+                if (locaisAcessiveisIds.Add(subordinadoId))
+                {
+                    locaisPendentes.Enqueue(subordinadoId);
+                }
+            }
+        }
+
+        return locaisAcessiveisIds;
     }
 
     private async Task EnsureTombamentoDisponivelNoLocalAsync(

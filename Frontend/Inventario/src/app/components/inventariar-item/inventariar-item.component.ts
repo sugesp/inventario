@@ -146,9 +146,27 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       return locaisDaComissao;
     }
 
-    return locaisDaComissao.filter((item) =>
-      item.membros.some((membro) => membro.usuarioId === this.authService.session?.userId)
-    );
+    const usuarioId = this.authService.session?.userId;
+    const locaisPorId = new Map(locaisDaComissao.map((item) => [item.id, item]));
+
+    return locaisDaComissao.filter((item) => {
+      let localAtual: Local | undefined = item;
+      const locaisVisitados = new Set<string>();
+
+      while (localAtual && !locaisVisitados.has(localAtual.id)) {
+        locaisVisitados.add(localAtual.id);
+
+        if (localAtual.membros.some((membro) => membro.usuarioId === usuarioId)) {
+          return true;
+        }
+
+        localAtual = localAtual.localSuperiorId
+          ? locaisPorId.get(localAtual.localSuperiorId)
+          : undefined;
+      }
+
+      return false;
+    });
   }
 
   get localSelecionado(): Local | null {
