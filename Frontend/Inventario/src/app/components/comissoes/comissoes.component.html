@@ -253,7 +253,7 @@
             <div class="team-list" *ngIf="locaisDaComissaoEmEdicao.length > 0">
               <div
                 class="team-item"
-                *ngFor="let local of locaisPaginados"
+                *ngFor="let local of locaisVisiveis"
                 [class.team-item-child]="getLocalDepth(local) > 0"
                 [style.--local-depth]="getLocalDepth(local)"
               >
@@ -280,19 +280,8 @@
               </div>
             </div>
 
-            <div class="local-list-footer" *ngIf="locaisVisiveis.length > 0">
-              <span class="list-pagination-summary">
-                {{ locaisVisiveis.length }} de {{ locaisDaComissaoEmEdicao.length }} local(is).
-              </span>
-              <div class="list-pagination-actions">
-                <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousLocalPage()" [disabled]="localPageNumber <= 1">
-                  Anterior
-                </button>
-                <span class="list-pagination-label">{{ localPageLabel }}</span>
-                <button class="btn btn-outline-secondary" type="button" (click)="goToNextLocalPage()" [disabled]="localPageNumber >= localTotalPages">
-                  Próxima
-                </button>
-              </div>
+            <div class="local-list-summary" *ngIf="locaisVisiveis.length > 0">
+              {{ locaisVisiveis.length }} de {{ locaisDaComissaoEmEdicao.length }} local(is) visível(is).
             </div>
           </div>
         </div>
@@ -554,7 +543,7 @@
             [options]="localSuperiorOptions"
             [emptyOptionLabel]="'Nenhum (local raiz)'"
             placeholder="Selecione o local superior"
-            searchPlaceholder="Buscar local"
+            searchPlaceholder="Pesquisar local superior"
             [disabled]="!canManageCurrentComissao"
           ></app-searchable-select>
           <small class="form-text text-muted">Opcional. Use para vincular setores, núcleos, gerências ou depósitos a um local principal.</small>

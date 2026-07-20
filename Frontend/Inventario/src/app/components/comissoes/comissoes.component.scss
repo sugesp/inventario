@@ -233,12 +233,16 @@
   gap: 10px;
 }
 
-.local-list-toolbar,
-.local-list-footer {
+.local-list-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: end;
   gap: 12px;
+}
+
+.local-list-summary {
+  color: #5b6f88;
+  font-size: 0.95rem;
 }
 
 .local-list-search {
@@ -562,8 +566,7 @@
     grid-template-columns: 1fr;
   }
 
-  .local-list-toolbar,
-  .local-list-footer {
+  .local-list-toolbar {
     align-items: stretch;
     flex-direction: column;
   }

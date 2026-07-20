@@ -14,6 +14,7 @@ import { ItemInventariadoService } from '../../contracts/item-inventariado.servi
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
+import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
 type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias';
 
@@ -66,8 +67,6 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   memberOptions: Array<{ id: string; nome: string; cpf: string }> = [];
   loadingMemberOptions = false;
   localListTerm = '';
-  localPageNumber = 1;
-  readonly localPageSize = 10;
   readonly collapsedLocalIds = new Set<string>();
   localMemberTerm = '';
   localAddressTerm = '';
@@ -89,6 +88,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   } | null = null;
   private readonly memberSearchChanged$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
+  private collapsedLocalsInitializedForCommissionId: string | null = null;
 
   form: ComissaoPayload = this.createEmptyForm();
   localForm = {
@@ -801,36 +801,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     });
   }
 
-  get locaisPaginados(): Local[] {
-    const inicio = (this.localPageNumber - 1) * this.localPageSize;
-    return this.locaisVisiveis.slice(inicio, inicio + this.localPageSize);
-  }
-
-  get localTotalPages(): number {
-    return Math.ceil(this.locaisVisiveis.length / this.localPageSize);
-  }
-
-  get localPageLabel(): string {
-    return this.localTotalPages === 0
-      ? 'Página 0 de 0'
-      : `Página ${this.localPageNumber} de ${this.localTotalPages}`;
-  }
-
   onLocalListTermChange(value: string): void {
     this.localListTerm = value;
-    this.localPageNumber = 1;
-  }
-
-  goToPreviousLocalPage(): void {
-    if (this.localPageNumber > 1) {
-      this.localPageNumber -= 1;
-    }
-  }
-
-  goToNextLocalPage(): void {
-    if (this.localPageNumber < this.localTotalPages) {
-      this.localPageNumber += 1;
-    }
   }
 
   hasLocalChildren(local: Local): boolean {
@@ -847,19 +819,16 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     } else {
       this.collapsedLocalIds.add(local.id);
     }
-    this.localPageNumber = 1;
   }
 
   collapseAllLocals(): void {
     this.locaisDaComissaoEmEdicao
       .filter((local) => this.hasLocalChildren(local))
       .forEach((local) => this.collapsedLocalIds.add(local.id));
-    this.localPageNumber = 1;
   }
 
   expandAllLocals(): void {
     this.collapsedLocalIds.clear();
-    this.localPageNumber = 1;
   }
 
   getLocalGeolocalizacaoLabel(local: Local): string {
@@ -888,13 +857,34 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       : 'Clique no mapa ou pesquise um endereço para posicionar o local.';
   }
 
-  get localSuperiorOptions(): Array<{ value: string; label: string }> {
-    return this.locaisDaComissaoEmEdicao
-      .filter((item) => item.id !== this.editingLocalId)
-      .map((item) => ({
-        value: item.id,
-        label: item.localSuperiorNome ? `${item.localSuperiorNome} > ${item.nome}` : item.nome,
-      }));
+  get localSuperiorOptions(): SearchableSelectOption[] {
+    const idsIndisponiveis = this.getUnavailableLocalSuperiorIds();
+    const locaisDisponiveis = this.locaisDaComissaoEmEdicao
+      .filter((item) => !idsIndisponiveis.has(item.id));
+    const idsDisponiveis = new Set(locaisDisponiveis.map((item) => item.id));
+    const locaisPorSuperior = new Map<string | null, Local[]>();
+
+    locaisDisponiveis.forEach((local) => {
+      const superiorId = local.localSuperiorId && idsDisponiveis.has(local.localSuperiorId)
+        ? local.localSuperiorId
+        : null;
+      const subordinados = locaisPorSuperior.get(superiorId) ?? [];
+      subordinados.push(local);
+      locaisPorSuperior.set(superiorId, subordinados);
+    });
+
+    locaisPorSuperior.forEach((locais) => locais.sort((a, b) => a.nome.localeCompare(b.nome)));
+
+    const options: SearchableSelectOption[] = [];
+    const adicionarOptions = (superiorId: string | null, depth: number): void => {
+      (locaisPorSuperior.get(superiorId) ?? []).forEach((local) => {
+        options.push({ value: local.id, label: local.nome, depth });
+        adicionarOptions(local.id, depth + 1);
+      });
+    };
+
+    adicionarOptions(null, 0);
+    return options;
   }
 
   getLocalHierarchyLabel(local: Local): string {
@@ -922,6 +912,36 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .trim();
+  }
+
+  private getUnavailableLocalSuperiorIds(): Set<string> {
+    const idsIndisponiveis = new Set<string>();
+    if (!this.editingLocalId) {
+      return idsIndisponiveis;
+    }
+
+    const locaisPorSuperior = new Map<string, Local[]>();
+    this.locaisDaComissaoEmEdicao.forEach((local) => {
+      if (!local.localSuperiorId) {
+        return;
+      }
+
+      const subordinados = locaisPorSuperior.get(local.localSuperiorId) ?? [];
+      subordinados.push(local);
+      locaisPorSuperior.set(local.localSuperiorId, subordinados);
+    });
+
+    const adicionarIndisponiveis = (localId: string): void => {
+      if (idsIndisponiveis.has(localId)) {
+        return;
+      }
+
+      idsIndisponiveis.add(localId);
+      (locaisPorSuperior.get(localId) ?? []).forEach((local) => adicionarIndisponiveis(local.id));
+    };
+
+    adicionarIndisponiveis(this.editingLocalId);
+    return idsIndisponiveis;
   }
 
   searchLocalAddress(): void {
@@ -1273,12 +1293,20 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     (locaisPorSuperior.get(null) ?? []).forEach(adicionarLocal);
     locaisDaComissao.forEach(adicionarLocal);
     this.locaisDaComissaoEmEdicao = locaisOrdenados;
+
+    if (locaisOrdenados.length > 0 && this.collapsedLocalsInitializedForCommissionId !== this.editingId) {
+      this.collapsedLocalIds.clear();
+      locaisOrdenados
+        .filter((local) => (locaisPorSuperior.get(local.id) ?? []).length > 0)
+        .forEach((local) => this.collapsedLocalIds.add(local.id));
+      this.collapsedLocalsInitializedForCommissionId = this.editingId;
+    }
+
     this.collapsedLocalIds.forEach((id) => {
       if (!ids.has(id)) {
         this.collapsedLocalIds.delete(id);
       }
     });
-    this.localPageNumber = Math.min(this.localPageNumber, Math.max(1, this.localTotalPages));
   }
 
   private syncSelectedMembers(): void {
