@@ -233,6 +233,42 @@
   gap: 10px;
 }
 
+.local-list-toolbar,
+.local-list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+}
+
+.local-list-search {
+  flex: 1;
+  max-width: 620px;
+}
+
+.local-tree-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.local-tree-toggle {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #c8d6e5;
+  border-radius: 9px;
+  background: #f3f7fb;
+  color: #244b73;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.local-tree-toggle:hover {
+  background: #e6f0fa;
+}
+
 .team-copy {
   min-width: 0;
 }
@@ -524,6 +560,12 @@
 
   .team-form {
     grid-template-columns: 1fr;
+  }
+
+  .local-list-toolbar,
+  .local-list-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .team-item {

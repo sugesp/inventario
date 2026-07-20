@@ -65,6 +65,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   memberTotalPages = 0;
   memberOptions: Array<{ id: string; nome: string; cpf: string }> = [];
   loadingMemberOptions = false;
+  localListTerm = '';
+  localPageNumber = 1;
+  readonly localPageSize = 10;
+  readonly collapsedLocalIds = new Set<string>();
   localMemberTerm = '';
   localAddressTerm = '';
   localAddressResults: AddressSearchResult[] = [];
@@ -743,6 +747,121 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return nomes.length > 0 ? nomes.join(', ') : 'Nenhum responsável informado';
   }
 
+  get locaisVisiveis(): Local[] {
+    const term = this.normalizeLocalSearchTerm(this.localListTerm);
+    const locaisPorId = new Map(this.locaisDaComissaoEmEdicao.map((item) => [item.id, item]));
+    let idsIncluidos: Set<string> | null = null;
+
+    if (term) {
+      idsIncluidos = new Set<string>();
+
+      this.locaisDaComissaoEmEdicao.forEach((local) => {
+        const textoLocal = this.normalizeLocalSearchTerm([
+          local.nome,
+          local.localSuperiorNome,
+          ...local.membros.map((membro) => membro.nome),
+        ].join(' '));
+
+        if (!textoLocal.includes(term)) {
+          return;
+        }
+
+        let localAtual: Local | undefined = local;
+        const visitados = new Set<string>();
+        while (localAtual && !visitados.has(localAtual.id)) {
+          visitados.add(localAtual.id);
+          idsIncluidos!.add(localAtual.id);
+          localAtual = localAtual.localSuperiorId
+            ? locaisPorId.get(localAtual.localSuperiorId)
+            : undefined;
+        }
+      });
+    }
+
+    return this.locaisDaComissaoEmEdicao.filter((local) => {
+      if (idsIncluidos && !idsIncluidos.has(local.id)) {
+        return false;
+      }
+
+      if (term) {
+        return true;
+      }
+
+      let localSuperiorId = local.localSuperiorId;
+      const visitados = new Set<string>();
+      while (localSuperiorId && !visitados.has(localSuperiorId)) {
+        visitados.add(localSuperiorId);
+        if (this.collapsedLocalIds.has(localSuperiorId)) {
+          return false;
+        }
+        localSuperiorId = locaisPorId.get(localSuperiorId)?.localSuperiorId;
+      }
+
+      return true;
+    });
+  }
+
+  get locaisPaginados(): Local[] {
+    const inicio = (this.localPageNumber - 1) * this.localPageSize;
+    return this.locaisVisiveis.slice(inicio, inicio + this.localPageSize);
+  }
+
+  get localTotalPages(): number {
+    return Math.ceil(this.locaisVisiveis.length / this.localPageSize);
+  }
+
+  get localPageLabel(): string {
+    return this.localTotalPages === 0
+      ? 'Página 0 de 0'
+      : `Página ${this.localPageNumber} de ${this.localTotalPages}`;
+  }
+
+  onLocalListTermChange(value: string): void {
+    this.localListTerm = value;
+    this.localPageNumber = 1;
+  }
+
+  goToPreviousLocalPage(): void {
+    if (this.localPageNumber > 1) {
+      this.localPageNumber -= 1;
+    }
+  }
+
+  goToNextLocalPage(): void {
+    if (this.localPageNumber < this.localTotalPages) {
+      this.localPageNumber += 1;
+    }
+  }
+
+  hasLocalChildren(local: Local): boolean {
+    return this.locaisDaComissaoEmEdicao.some((item) => item.localSuperiorId === local.id);
+  }
+
+  isLocalCollapsed(local: Local): boolean {
+    return this.collapsedLocalIds.has(local.id);
+  }
+
+  toggleLocalCollapsed(local: Local): void {
+    if (this.collapsedLocalIds.has(local.id)) {
+      this.collapsedLocalIds.delete(local.id);
+    } else {
+      this.collapsedLocalIds.add(local.id);
+    }
+    this.localPageNumber = 1;
+  }
+
+  collapseAllLocals(): void {
+    this.locaisDaComissaoEmEdicao
+      .filter((local) => this.hasLocalChildren(local))
+      .forEach((local) => this.collapsedLocalIds.add(local.id));
+    this.localPageNumber = 1;
+  }
+
+  expandAllLocals(): void {
+    this.collapsedLocalIds.clear();
+    this.localPageNumber = 1;
+  }
+
   getLocalGeolocalizacaoLabel(local: Local): string {
     return this.hasLocalGeolocalizacao(local)
       ? `${local.latitude!.toFixed(6)}, ${local.longitude!.toFixed(6)}`
@@ -795,6 +914,14 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     }
 
     return depth;
+  }
+
+  private normalizeLocalSearchTerm(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   searchLocalAddress(): void {
@@ -1146,6 +1273,12 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     (locaisPorSuperior.get(null) ?? []).forEach(adicionarLocal);
     locaisDaComissao.forEach(adicionarLocal);
     this.locaisDaComissaoEmEdicao = locaisOrdenados;
+    this.collapsedLocalIds.forEach((id) => {
+      if (!ids.has(id)) {
+        this.collapsedLocalIds.delete(id);
+      }
+    });
+    this.localPageNumber = Math.min(this.localPageNumber, Math.max(1, this.localTotalPages));
   }
 
   private syncSelectedMembers(): void {

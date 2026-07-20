@@ -228,13 +228,45 @@
               Nenhum local cadastrado nesta comissão até o momento.
             </div>
 
+            <div class="local-list-toolbar" *ngIf="locaisDaComissaoEmEdicao.length > 0">
+              <div class="local-list-search">
+                <label class="form-label" for="local-list-search">Buscar local</label>
+                <input
+                  id="local-list-search"
+                  class="form-control"
+                  type="search"
+                  placeholder="Nome do local, superior ou responsável"
+                  [ngModel]="localListTerm"
+                  (ngModelChange)="onLocalListTermChange($event)"
+                />
+              </div>
+              <div class="local-tree-actions">
+                <button class="btn btn-outline-secondary" type="button" (click)="collapseAllLocals()">Minimizar superiores</button>
+                <button class="btn btn-outline-secondary" type="button" (click)="expandAllLocals()">Expandir todos</button>
+              </div>
+            </div>
+
+            <div class="inline-hint" *ngIf="locaisDaComissaoEmEdicao.length > 0 && locaisVisiveis.length === 0">
+              Nenhum local encontrado para a busca informada.
+            </div>
+
             <div class="team-list" *ngIf="locaisDaComissaoEmEdicao.length > 0">
               <div
                 class="team-item"
-                *ngFor="let local of locaisDaComissaoEmEdicao"
+                *ngFor="let local of locaisPaginados"
                 [class.team-item-child]="getLocalDepth(local) > 0"
                 [style.--local-depth]="getLocalDepth(local)"
               >
+                <button
+                  class="local-tree-toggle"
+                  type="button"
+                  *ngIf="hasLocalChildren(local)"
+                  (click)="toggleLocalCollapsed(local)"
+                  [attr.aria-expanded]="!isLocalCollapsed(local)"
+                  [attr.aria-label]="(isLocalCollapsed(local) ? 'Expandir ' : 'Minimizar ') + local.nome"
+                >
+                  {{ isLocalCollapsed(local) ? '▸' : '▾' }}
+                </button>
                 <div class="team-copy">
                   <strong>{{ getLocalHierarchyLabel(local) }}</strong>
                   <small>Local superior: {{ local.localSuperiorNome || 'Nenhum (local raiz)' }}</small>
@@ -245,6 +277,21 @@
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
                   <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeLocal(local)">Excluir</button>
                 </div>
+              </div>
+            </div>
+
+            <div class="local-list-footer" *ngIf="locaisVisiveis.length > 0">
+              <span class="list-pagination-summary">
+                {{ locaisVisiveis.length }} de {{ locaisDaComissaoEmEdicao.length }} local(is).
+              </span>
+              <div class="list-pagination-actions">
+                <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousLocalPage()" [disabled]="localPageNumber <= 1">
+                  Anterior
+                </button>
+                <span class="list-pagination-label">{{ localPageLabel }}</span>
+                <button class="btn btn-outline-secondary" type="button" (click)="goToNextLocalPage()" [disabled]="localPageNumber >= localTotalPages">
+                  Próxima
+                </button>
               </div>
             </div>
           </div>
