@@ -36,27 +36,22 @@
           placeholder="Digite o local ou o local superior" autocomplete="off" />
       </div>
 
-      <div class="empty-state" *ngIf="locaisAgrupados.length === 0">
+      <div class="empty-state" *ngIf="locaisEmArvore.length === 0">
         Nenhum local encontrado para “{{ localSearchTerm }}”.
       </div>
 
-      <section class="local-group" *ngFor="let grupo of locaisAgrupados">
-        <div class="local-group-head">
-          <div>
-            <span class="local-group-label">Local superior</span>
-            <h4>{{ grupo.nome }}</h4>
-          </div>
-          <span class="local-group-count">{{ grupo.locais.length }} {{ grupo.locais.length === 1 ? 'local' : 'locais' }}</span>
-        </div>
-
-        <div class="local-card-grid">
-          <button class="local-card" type="button" *ngFor="let local of grupo.locais"
-            [class.local-card-selected]="selectedLocalId === local.id" (click)="selectLocal(local.id)">
-            <strong class="local-card-title">{{ local.nome }}</strong>
-            <span class="local-card-action">Selecionar local</span>
-          </button>
-        </div>
-      </section>
+      <div class="local-tree" *ngIf="locaisEmArvore.length > 0">
+        <button class="local-tree-item" type="button" *ngFor="let item of locaisEmArvore"
+          [class.local-tree-item-root]="item.nivel === 0"
+          [class.local-card-selected]="selectedLocalId === item.local.id"
+          [style.--local-level]="item.nivel" (click)="selectLocal(item.local.id)">
+          <span class="local-tree-branch" *ngIf="item.nivel > 0" aria-hidden="true">›</span>
+          <span class="local-tree-content">
+            <strong>{{ item.caminho }}</strong>
+            <small>Selecionar local</small>
+          </span>
+        </button>
+      </div>
     </div>
 
     <div class="step-actions">

@@ -56,10 +56,10 @@ interface InventoryGeolocation {
   accuracy: number | null;
 }
 
-interface LocalGroup {
-  id: string;
-  nome: string;
-  locais: Local[];
+interface LocalTreeItem {
+  local: Local;
+  nivel: number;
+  caminho: string;
 }
 
 @Component({
@@ -180,44 +180,50 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.locaisDisponiveis.find((item) => item.id === this.selectedLocalId) ?? null;
   }
 
-  get locaisAgrupados(): LocalGroup[] {
+  get locaisEmArvore(): LocalTreeItem[] {
     const termo = this.normalizeSearchValue(this.localSearchTerm);
-    const grupos = new Map<string, LocalGroup>();
+    const locais = this.locaisDisponiveis;
+    const locaisPorId = new Map(locais.map((local) => [local.id, local]));
+    const filhosPorSuperior = new Map<string, Local[]>();
+    const resultado: LocalTreeItem[] = [];
+    const visitados = new Set<string>();
 
-    for (const local of this.locaisDisponiveis) {
-      const nomeCompleto = this.getLocalDisplayName(local);
-
-      if (termo && !this.normalizeSearchValue(nomeCompleto).includes(termo)) {
-        continue;
-      }
-
-      const id = local.localSuperiorId ?? '';
-      const grupo = grupos.get(id) ?? {
-        id,
-        nome: local.localSuperiorNome ?? 'Locais principais',
-        locais: [],
-      };
-
-      grupo.locais.push(local);
-      grupos.set(id, grupo);
+    for (const local of locais) {
+      const superiorId = local.localSuperiorId && locaisPorId.has(local.localSuperiorId)
+        ? local.localSuperiorId
+        : '';
+      const filhos = filhosPorSuperior.get(superiorId) ?? [];
+      filhos.push(local);
+      filhosPorSuperior.set(superiorId, filhos);
     }
 
-    return Array.from(grupos.values())
-      .map((grupo) => ({
-        ...grupo,
-        locais: grupo.locais.sort((a, b) => a.nome.localeCompare(b.nome)),
-      }))
-      .sort((a, b) => {
-        if (!a.id) {
-          return -1;
-        }
+    const adicionarLocal = (local: Local, nivel: number, caminhoSuperior: string[]): void => {
+      if (visitados.has(local.id)) {
+        return;
+      }
 
-        if (!b.id) {
-          return 1;
-        }
+      visitados.add(local.id);
+      const caminhoAtual = [...caminhoSuperior, local.nome];
+      resultado.push({ local, nivel, caminho: caminhoAtual.join(' > ') });
 
-        return a.nome.localeCompare(b.nome);
-      });
+      const filhos = filhosPorSuperior.get(local.id) ?? [];
+      filhos
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+        .forEach((filho) => adicionarLocal(filho, nivel + 1, caminhoAtual));
+    };
+
+    (filhosPorSuperior.get('') ?? [])
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+      .forEach((local) => adicionarLocal(local, 0, []));
+
+    locais
+      .filter((local) => !visitados.has(local.id))
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+      .forEach((local) => adicionarLocal(local, 0, []));
+
+    return termo
+      ? resultado.filter((item) => this.normalizeSearchValue(item.caminho).includes(termo))
+      : resultado;
   }
 
   get canAdvanceToScan(): boolean {
@@ -358,7 +364,19 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   getLocalDisplayName(local: Local): string {
-    return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
+    const locaisPorId = new Map(this.locaisDisponiveis.map((item) => [item.id, item]));
+    const caminho = [local.nome];
+    const visitados = new Set<string>([local.id]);
+    let superiorId = local.localSuperiorId;
+
+    while (superiorId && locaisPorId.has(superiorId) && !visitados.has(superiorId)) {
+      const superior = locaisPorId.get(superiorId)!;
+      caminho.unshift(superior.nome);
+      visitados.add(superior.id);
+      superiorId = superior.localSuperiorId;
+    }
+
+    return caminho.join(' > ');
   }
 
   private normalizeSearchValue(value: string): string {
