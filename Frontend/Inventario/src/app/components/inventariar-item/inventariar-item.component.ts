@@ -56,6 +56,12 @@ interface InventoryGeolocation {
   accuracy: number | null;
 }
 
+interface LocalGroup {
+  id: string;
+  nome: string;
+  locais: Local[];
+}
+
 @Component({
   selector: 'app-inventariar-item',
   templateUrl: './inventariar-item.component.html',
@@ -80,6 +86,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   @ViewChild('traseiraPhotoInput') traseiraPhotoInput?: ElementRef<HTMLInputElement>;
 
   locais: Local[] = [];
+  localSearchTerm = '';
   activeComissao: Comissao | null = null;
   selectedLocalId = '';
   activeStep: InventoryStep = 'local';
@@ -171,6 +178,46 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get localSelecionado(): Local | null {
     return this.locaisDisponiveis.find((item) => item.id === this.selectedLocalId) ?? null;
+  }
+
+  get locaisAgrupados(): LocalGroup[] {
+    const termo = this.normalizeSearchValue(this.localSearchTerm);
+    const grupos = new Map<string, LocalGroup>();
+
+    for (const local of this.locaisDisponiveis) {
+      const nomeCompleto = this.getLocalDisplayName(local);
+
+      if (termo && !this.normalizeSearchValue(nomeCompleto).includes(termo)) {
+        continue;
+      }
+
+      const id = local.localSuperiorId ?? '';
+      const grupo = grupos.get(id) ?? {
+        id,
+        nome: local.localSuperiorNome ?? 'Locais principais',
+        locais: [],
+      };
+
+      grupo.locais.push(local);
+      grupos.set(id, grupo);
+    }
+
+    return Array.from(grupos.values())
+      .map((grupo) => ({
+        ...grupo,
+        locais: grupo.locais.sort((a, b) => a.nome.localeCompare(b.nome)),
+      }))
+      .sort((a, b) => {
+        if (!a.id) {
+          return -1;
+        }
+
+        if (!b.id) {
+          return 1;
+        }
+
+        return a.nome.localeCompare(b.nome);
+      });
   }
 
   get canAdvanceToScan(): boolean {
@@ -312,6 +359,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   getLocalDisplayName(local: Local): string {
     return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
+  }
+
+  private normalizeSearchValue(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('pt-BR')
+      .trim();
   }
 
   get conservacaoSelecionadaLabel(): string {

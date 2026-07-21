@@ -29,12 +29,34 @@
       Nenhum local disponível para inventário.
     </div>
 
-    <div class="local-card-grid" *ngIf="activeComissao && locaisDisponiveis.length > 0">
-      <button class="local-card" type="button" *ngFor="let local of locaisDisponiveis"
-        [class.local-card-selected]="selectedLocalId === local.id" (click)="selectLocal(local.id)">
-        <strong class="local-card-title">{{ getLocalDisplayName(local) }}</strong>
-        <span class="local-card-action">Selecionar local</span>
-      </button>
+    <div class="local-browser" *ngIf="activeComissao && locaisDisponiveis.length > 0">
+      <div class="local-search">
+        <label class="form-label" for="local-search-input">Buscar local</label>
+        <input id="local-search-input" class="form-control" type="search" [(ngModel)]="localSearchTerm"
+          placeholder="Digite o local ou o local superior" autocomplete="off" />
+      </div>
+
+      <div class="empty-state" *ngIf="locaisAgrupados.length === 0">
+        Nenhum local encontrado para “{{ localSearchTerm }}”.
+      </div>
+
+      <section class="local-group" *ngFor="let grupo of locaisAgrupados">
+        <div class="local-group-head">
+          <div>
+            <span class="local-group-label">Local superior</span>
+            <h4>{{ grupo.nome }}</h4>
+          </div>
+          <span class="local-group-count">{{ grupo.locais.length }} {{ grupo.locais.length === 1 ? 'local' : 'locais' }}</span>
+        </div>
+
+        <div class="local-card-grid">
+          <button class="local-card" type="button" *ngFor="let local of grupo.locais"
+            [class.local-card-selected]="selectedLocalId === local.id" (click)="selectLocal(local.id)">
+            <strong class="local-card-title">{{ local.nome }}</strong>
+            <span class="local-card-action">Selecionar local</span>
+          </button>
+        </div>
+      </section>
     </div>
 
     <div class="step-actions">
