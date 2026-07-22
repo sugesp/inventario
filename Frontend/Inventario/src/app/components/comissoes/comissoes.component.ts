@@ -587,6 +587,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const dataGeracao = new Date();
     const locaisPorId = new Map(this.locaisDaComissaoEmEdicao.map((local) => [local.id, local]));
     const itensPorLocal = new Map<string, ItemInventariado[]>();
 
@@ -617,7 +618,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
     pdf.text(`Comissão ${this.comissaoEmEdicao.ano} | Presidente: ${this.comissaoEmEdicao.presidenteNome || '-'}`, margin, 20);
-    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, 25);
+    pdf.text(`Gerado em: ${dataGeracao.toLocaleString('pt-BR')}`, margin, 25);
     pdf.text(
       `Locais com inventário: ${grupos.length} | Registros coletados: ${itens.length} | Itens únicos: ${this.comissaoEmEdicao.quantidadeItensLocalizados} | Esperados: ${this.comissaoEmEdicao.quantidadeItensEsperados}`,
       margin,
@@ -700,7 +701,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       startY = finalY + (index < grupos.length - 1 ? 9 : 0);
     });
 
-    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}.pdf`);
+    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(dataGeracao)}.pdf`);
     this.toastr.success('Relatório da comissão gerado com sucesso.');
   }
 
@@ -1257,6 +1258,11 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString('pt-BR');
+  }
+
+  private formatFileDateTime(date: Date): string {
+    const pad = (value: number): string => value.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
   }
 
   private createEmptyLocalForm(): { nome: string; localSuperiorId: string | null; latitude: number | null; longitude: number | null; membroUsuarioIds: string[] } {
