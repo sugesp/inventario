@@ -878,7 +878,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     const options: SearchableSelectOption[] = [];
     const adicionarOptions = (superiorId: string | null, depth: number): void => {
       (locaisPorSuperior.get(superiorId) ?? []).forEach((local) => {
-        options.push({ value: local.id, label: local.nome, depth });
+        options.push({ value: local.id, label: this.getLocalHierarchyLabel(local), depth });
         adicionarOptions(local.id, depth + 1);
       });
     };
@@ -888,7 +888,19 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   getLocalHierarchyLabel(local: Local): string {
-    return local.localSuperiorNome ? `${local.localSuperiorNome} > ${local.nome}` : local.nome;
+    const locaisPorId = new Map(this.locaisDaComissaoEmEdicao.map((item) => [item.id, item]));
+    const caminho = [local.nome];
+    const visitados = new Set<string>([local.id]);
+    let localSuperiorId = local.localSuperiorId;
+
+    while (localSuperiorId && locaisPorId.has(localSuperiorId) && !visitados.has(localSuperiorId)) {
+      const localSuperior = locaisPorId.get(localSuperiorId)!;
+      caminho.unshift(localSuperior.nome);
+      visitados.add(localSuperiorId);
+      localSuperiorId = localSuperior.localSuperiorId;
+    }
+
+    return caminho.join(' > ');
   }
 
   getLocalDepth(local: Local): number {

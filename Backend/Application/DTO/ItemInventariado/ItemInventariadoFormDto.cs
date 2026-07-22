@@ -12,6 +12,13 @@ public class ItemInventariadoFormDto
     public string? EstadoConservacao { get; set; }
     public string? JustificativaInservivel { get; set; }
     public string? Observacao { get; set; }
+    public bool IsVeiculo { get; set; }
+    public string? Placa { get; set; }
+    public string? Chassi { get; set; }
+    public string? PlacaSeguranca { get; set; }
+    public string? Marca { get; set; }
+    public string? Modelo { get; set; }
+    public decimal? Odometro { get; set; }
     public DateTime? DataInventario { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }

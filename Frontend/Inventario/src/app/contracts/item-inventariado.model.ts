@@ -24,6 +24,13 @@ export interface ItemInventariado {
   estadoConservacao: string;
   justificativaInservivel: string;
   observacao: string;
+  isVeiculo: boolean;
+  placa: string;
+  chassi: string;
+  placaSeguranca: string;
+  marca: string;
+  modelo: string;
+  odometro?: number | null;
   dataInventario: string;
   latitude?: number | null;
   longitude?: number | null;

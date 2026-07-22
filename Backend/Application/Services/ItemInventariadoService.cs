@@ -412,6 +412,12 @@ public class ItemInventariadoService : IItemInventariadoService
     )
     {
         await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, null, cancellationToken);
+        var fotosValidas = fotos.Where(x => x.Length > 0).ToList();
+        var quantidadeFotosEsperada = dto.IsVeiculo ? 6 : 3;
+        if (fotosValidas.Count != quantidadeFotosEsperada)
+        {
+            throw new InvalidOperationException($"O inventário {(dto.IsVeiculo ? "do veículo" : "do item")} exige exatamente {quantidadeFotosEsperada} fotos.");
+        }
 
         var entity = new ItemInventariado
         {
@@ -427,13 +433,20 @@ public class ItemInventariadoService : IItemInventariadoService
                 ? dto.JustificativaInservivel!.Trim()
                 : string.Empty,
             Observacao = dto.Observacao?.Trim() ?? string.Empty,
+            IsVeiculo = dto.IsVeiculo,
+            Placa = dto.Placa?.Trim().ToUpperInvariant() ?? string.Empty,
+            Chassi = dto.Chassi?.Trim().ToUpperInvariant() ?? string.Empty,
+            PlacaSeguranca = dto.PlacaSeguranca?.Trim().ToUpperInvariant() ?? string.Empty,
+            Marca = dto.Marca?.Trim() ?? string.Empty,
+            Modelo = dto.Modelo?.Trim() ?? string.Empty,
+            Odometro = dto.Odometro,
             DataInventario = dto.DataInventario ?? DateTime.UtcNow,
             Latitude = dto.Latitude,
             Longitude = dto.Longitude,
             PrecisaoLocalizacao = dto.PrecisaoLocalizacao
         };
 
-        foreach (var foto in fotos.Where(x => x.Length > 0))
+        foreach (var foto in fotosValidas)
         {
             entity.Fotos.Add(await SaveFotoAsync(foto, cancellationToken));
         }
@@ -475,6 +488,13 @@ public class ItemInventariadoService : IItemInventariadoService
             ? dto.JustificativaInservivel!.Trim()
             : string.Empty;
         entity.Observacao = dto.Observacao?.Trim() ?? string.Empty;
+        entity.IsVeiculo = dto.IsVeiculo;
+        entity.Placa = dto.Placa?.Trim().ToUpperInvariant() ?? string.Empty;
+        entity.Chassi = dto.Chassi?.Trim().ToUpperInvariant() ?? string.Empty;
+        entity.PlacaSeguranca = dto.PlacaSeguranca?.Trim().ToUpperInvariant() ?? string.Empty;
+        entity.Marca = dto.Marca?.Trim() ?? string.Empty;
+        entity.Modelo = dto.Modelo?.Trim() ?? string.Empty;
+        entity.Odometro = dto.Odometro;
         entity.DataInventario = dto.DataInventario ?? entity.DataInventario;
         entity.Latitude = dto.Latitude;
         entity.Longitude = dto.Longitude;
@@ -573,9 +593,21 @@ public class ItemInventariadoService : IItemInventariadoService
         CancellationToken cancellationToken
     )
     {
-        if (string.IsNullOrWhiteSpace(dto.Descricao))
+        if (!dto.IsVeiculo && string.IsNullOrWhiteSpace(dto.Descricao))
         {
             throw new InvalidOperationException("A descrição do item é obrigatória.");
+        }
+
+        if (dto.IsVeiculo)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Placa))
+            {
+                throw new InvalidOperationException("A placa do veículo é obrigatória.");
+            }
+            if (dto.Odometro < 0)
+            {
+                throw new InvalidOperationException("O odômetro não pode ser negativo.");
+            }
         }
 
         if (string.IsNullOrWhiteSpace(dto.Status))
@@ -923,6 +955,13 @@ public class ItemInventariadoService : IItemInventariadoService
             EstadoConservacao = entity.EstadoConservacao,
             JustificativaInservivel = entity.JustificativaInservivel,
             Observacao = entity.Observacao,
+            IsVeiculo = entity.IsVeiculo,
+            Placa = entity.Placa,
+            Chassi = entity.Chassi,
+            PlacaSeguranca = entity.PlacaSeguranca,
+            Marca = entity.Marca,
+            Modelo = entity.Modelo,
+            Odometro = entity.Odometro,
             DataInventario = entity.DataInventario,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,

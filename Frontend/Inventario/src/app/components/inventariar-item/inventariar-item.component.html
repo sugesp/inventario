@@ -90,6 +90,10 @@
             [disabled]="readingCode || scannerStarting || processingPhoto">
             Preencher manualmente
           </button>
+          <button class="btn btn-outline-secondary capture-choice-button" type="button" (click)="startVehicleFlow()"
+            [disabled]="readingCode || scannerStarting || processingPhoto">
+            Preencher dados do veículo
+          </button>
         </div>
 
         <div class="scan-feedback" *ngIf="!canUseLiveScanner">
@@ -104,6 +108,94 @@
     </div>
 
     <div class="step-actions">
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isVehicleDetailsStep">
+    <div class="step-head">
+      <span class="step-number">3</span>
+      <div>
+        <h3>Dados do veículo</h3>
+        <p>A placa é a identificação mínima. Preencha os demais dados sempre que estiverem disponíveis.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">Local escolhido</span>
+        <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goToCaptureStep()">Voltar</button>
+    </div>
+
+    <div class="summary-card public-summary-card" *ngIf="consultaPublicaResumo">
+      <div>
+        <span class="selected-local-label">Resumo do E-Estado</span>
+        <strong>{{ consultaPublicaResumo.tipo || 'Veículo' }}</strong>
+        <span>{{ consultaPublicaResumo.descricao || 'Descrição não localizada.' }}</span>
+      </div>
+      <div><strong>Tombamento</strong><span>{{ consultaPublicaResumo.tombamento || '-' }}</span></div>
+      <div><strong>Tombamento antigo</strong><span>{{ consultaPublicaResumo.tombamentoAntigo || '-' }}</span></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Tombamento E-Estado <small class="text-muted">(opcional)</small></label>
+        <input class="form-control" [ngModel]="form.tombamentoNovo" (ngModelChange)="onTombamentoNovoChange($event)"
+          (blur)="onTombamentoNovoBlur()" placeholder="000.000.000" inputmode="numeric" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tombamento antigo <small class="text-muted">(opcional)</small></label>
+        <input class="form-control" [ngModel]="form.tombamentoAntigo"
+          (ngModelChange)="onTombamentoAntigoChange($event)" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Placa</label>
+        <input class="form-control text-uppercase" [(ngModel)]="form.placa" maxlength="10"
+          (ngModelChange)="persistState()" placeholder="ABC1D23" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Chassi <small class="text-muted">(se disponível)</small></label>
+        <input class="form-control text-uppercase" [(ngModel)]="form.chassi" maxlength="40"
+          (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Placa de segurança <small class="text-muted">(opcional)</small></label>
+        <input class="form-control text-uppercase" [(ngModel)]="form.placaSeguranca" maxlength="40"
+          (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Marca <small class="text-muted">(se disponível)</small></label>
+        <input class="form-control" [(ngModel)]="form.marca" maxlength="120" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Modelo <small class="text-muted">(se disponível)</small></label>
+        <input class="form-control" [(ngModel)]="form.modelo" maxlength="120" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Odômetro <small class="text-muted">(opcional)</small></label>
+        <input class="form-control" type="number" min="0" step="0.1" [(ngModel)]="form.odometro"
+          (ngModelChange)="persistState()" inputmode="decimal" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Descrição <small class="text-muted">(opcional)</small></label>
+        <input class="form-control" [(ngModel)]="form.descricao" maxlength="500" (ngModelChange)="persistState()" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observação</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="form.observacao"
+          (ngModelChange)="persistState()"></textarea>
+      </div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="consultaPublicaEmAndamento">Consultando dados públicos do bem...</div>
+    <div class="scan-feedback" *ngIf="!consultaPublicaEmAndamento && consultaPublicaMensagem">{{ consultaPublicaMensagem }}</div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="goToCaptureStep()">Etapa anterior</button>
+      <button class="btn btn-primary" type="button" (click)="goToClassificationStep()"
+        [disabled]="!form.placa.trim() || consultaPublicaEmAndamento">Continuar para classificação</button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>
   </section>
@@ -254,7 +346,7 @@
         <strong>{{ getLocalDisplayName(localSelecionado) }}</strong>
         <small>{{ form.descricao || 'Descrição ainda não informada.' }}</small>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'details'">Voltar aos
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = isVehicleFlow ? 'vehicleDetails' : 'details'">Voltar aos
         dados</button>
     </div>
 
@@ -277,7 +369,7 @@
     </div>
 
     <div class="step-actions">
-      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'details'">Etapa anterior</button>
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = isVehicleFlow ? 'vehicleDetails' : 'details'">Etapa anterior</button>
       <button class="btn btn-primary" type="button" (click)="goToConservationStep()"
         [disabled]="!form.status || (form.status === 'INSERVIVEL' && !form.justificativaInservivel.trim())">
         Continuar para conservação
@@ -321,6 +413,65 @@
       <button class="btn btn-primary" type="button" (click)="goToPhotoEtiquetaStep()"
         [disabled]="!form.estadoConservacao">
         Continuar para as fotos
+      </button>
+      <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
+    </div>
+  </section>
+
+  <section class="step-card" *ngIf="isVehiclePhotosStep">
+    <div class="step-head">
+      <span class="step-number">6</span>
+      <div>
+        <h3>Fotos do veículo</h3>
+        <p>Registre seis fotos nítidas do bem, cobrindo seus principais ângulos e identificações.</p>
+      </div>
+    </div>
+
+    <div class="selected-local-banner" *ngIf="localSelecionado">
+      <div>
+        <span class="selected-local-label">{{ vehiclePhotoCount }} de 6 fotos registradas</span>
+        <strong>{{ form.placa | uppercase }}</strong>
+        <small>{{ form.marca }} {{ form.modelo }}</small>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="activeStep = 'conservacao'">
+        Voltar à conservação
+      </button>
+    </div>
+
+    <div class="vehicle-photo-grid">
+      <div class="photo-step-card" *ngFor="let photo of vehiclePhotos; let index = index">
+        <div class="photo-step-status" [class.is-complete]="!!photo">
+          Foto {{ index + 1 }} de 6 — {{ photo ? 'registrada' : 'pendente' }}
+        </div>
+        <div class="photo-step-preview vehicle-photo-preview" *ngIf="photo; else semFotoVeiculo">
+          <img [src]="photo.previewUrl" [alt]="'Foto ' + (index + 1) + ' do veículo'" />
+        </div>
+        <ng-template #semFotoVeiculo>
+          <div class="photo-step-empty vehicle-photo-empty">Aguardando foto do veículo.</div>
+        </ng-template>
+        <input class="form-control" type="file" accept="image/*" capture="environment"
+          (change)="onVehiclePhotoSelected(index, $event)" [disabled]="processingPhoto" />
+        <button class="btn btn-outline-secondary" type="button" *ngIf="photo" (click)="removeVehiclePhoto(index)">
+          Remover foto
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div><strong>Classificação</strong><span>{{ classificacaoSelecionadaLabel || '-' }}</span></div>
+      <div><strong>Estado de conservação</strong><span>{{ conservacaoSelecionadaLabel || '-' }}</span></div>
+      <div><strong>Local selecionado</strong><span>{{ localSelecionado?.nome || '-' }}</span></div>
+    </div>
+
+    <div class="scan-feedback" *ngIf="saveBlockingReasons.length > 0">
+      Falta concluir: {{ saveBlockingReasons.join(' ') }}
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="activeStep = 'conservacao'">Etapa anterior</button>
+      <button class="btn btn-primary btn-filled" type="button" (click)="submit()"
+        [disabled]="saving || processingPhoto || geolocationLoading || !canSubmit">
+        {{ saving ? (geolocationLoading ? 'Obtendo localização...' : 'Salvando...') : 'Cadastrar veículo inventariado' }}
       </button>
       <button class="btn btn-secondary" type="button" (click)="resetFlow()">Zerar processo</button>
     </div>

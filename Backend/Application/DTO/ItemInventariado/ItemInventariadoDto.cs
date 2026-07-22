@@ -20,6 +20,13 @@ public class ItemInventariadoDto
     public string EstadoConservacao { get; set; } = string.Empty;
     public string JustificativaInservivel { get; set; } = string.Empty;
     public string Observacao { get; set; } = string.Empty;
+    public bool IsVeiculo { get; set; }
+    public string Placa { get; set; } = string.Empty;
+    public string Chassi { get; set; } = string.Empty;
+    public string PlacaSeguranca { get; set; } = string.Empty;
+    public string Marca { get; set; } = string.Empty;
+    public string Modelo { get; set; } = string.Empty;
+    public decimal? Odometro { get; set; }
     public DateTime DataInventario { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }

@@ -26,9 +26,9 @@ interface SelectedPhoto {
   previewUrl: string;
 }
 
-type InventoryStep = 'local' | 'capture' | 'manualLookup' | 'details' | 'classificacao' | 'conservacao' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
+type InventoryStep = 'local' | 'capture' | 'manualLookup' | 'details' | 'vehicleDetails' | 'classificacao' | 'conservacao' | 'vehiclePhotos' | 'photoEtiqueta' | 'photoFrontal' | 'photoTraseira';
 type PhotoTarget = 'etiqueta' | 'frontal' | 'traseira';
-type IdentificationMode = 'qr' | 'manual' | null;
+type IdentificationMode = 'qr' | 'manual' | 'vehicle' | null;
 
 interface ItemInventarioForm {
   tombamentoNovo: string;
@@ -38,6 +38,12 @@ interface ItemInventarioForm {
   estadoConservacao: string;
   justificativaInservivel: string;
   observacao: string;
+  placa: string;
+  chassi: string;
+  placaSeguranca: string;
+  marca: string;
+  modelo: string;
+  odometro: number | null;
 }
 
 interface PersistedInventoryState {
@@ -104,6 +110,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   etiquetaPhoto: SelectedPhoto | null = null;
   frontalPhoto: SelectedPhoto | null = null;
   traseiraPhoto: SelectedPhoto | null = null;
+  vehiclePhotos: Array<SelectedPhoto | null> = Array.from({ length: 6 }, () => null);
   codeReadMessage = '';
   scannerMessage = '';
   consultaPublicaEmAndamento = false;
@@ -142,6 +149,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.releasePhoto(this.etiquetaPhoto);
     this.releasePhoto(this.frontalPhoto);
     this.releasePhoto(this.traseiraPhoto);
+    this.vehiclePhotos.forEach((photo) => this.releasePhoto(photo));
   }
 
   get locaisDisponiveis(): Local[] {
@@ -256,6 +264,10 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.activeStep === 'details';
   }
 
+  get isVehicleDetailsStep(): boolean {
+    return this.activeStep === 'vehicleDetails';
+  }
+
   get isClassificationStep(): boolean {
     return this.activeStep === 'classificacao';
   }
@@ -268,6 +280,18 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.activeStep === 'photoEtiqueta';
   }
 
+  get isVehiclePhotosStep(): boolean {
+    return this.activeStep === 'vehiclePhotos';
+  }
+
+  get isVehicleFlow(): boolean {
+    return this.identificationMode === 'vehicle';
+  }
+
+  get vehiclePhotoCount(): number {
+    return this.vehiclePhotos.filter((photo) => !!photo).length;
+  }
+
   get isPhotoFrontalStep(): boolean {
     return this.activeStep === 'photoFrontal';
   }
@@ -278,13 +302,15 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get canSubmit(): boolean {
     return !!this.selectedLocalId
-      && !!this.form.descricao.trim()
+      && (this.isVehicleFlow
+        ? !!this.form.placa.trim()
+        : !!this.form.descricao.trim())
       && !!this.form.status.trim()
       && (this.form.status !== 'INSERVIVEL' || !!this.form.justificativaInservivel.trim())
       && !!this.form.estadoConservacao.trim()
-      && !!this.etiquetaPhoto
-      && !!this.frontalPhoto
-      && !!this.traseiraPhoto;
+      && (this.isVehicleFlow
+        ? this.vehiclePhotos.every((photo) => !!photo)
+        : !!this.etiquetaPhoto && !!this.frontalPhoto && !!this.traseiraPhoto);
   }
 
   get saveBlockingReasons(): string[] {
@@ -298,9 +324,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       reasons.push('Nenhuma comissão ativa está disponível para este inventário.');
     }
 
-    if (!this.form.descricao.trim()) {
+    if (!this.isVehicleFlow && !this.form.descricao.trim()) {
       reasons.push('Preencha a descrição do item.');
     }
+
+    if (this.isVehicleFlow && !this.form.placa.trim()) reasons.push('Preencha a placa do veículo.');
 
     if (!this.form.status.trim()) {
       reasons.push('Selecione a classificação do item.');
@@ -314,17 +342,21 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       reasons.push('Selecione o estado de conservação do item.');
     }
 
-    if (!this.etiquetaPhoto) {
+    if (this.isVehicleFlow && this.vehiclePhotos.some((photo) => !photo)) {
+      reasons.push(`Registre as 6 fotos do veículo (${this.vehiclePhotos.filter((photo) => !!photo).length}/6).`);
+    }
+
+    if (!this.isVehicleFlow && !this.etiquetaPhoto) {
       reasons.push(this.form.tombamentoNovo.trim()
         ? 'Registre a foto da etiqueta de tombamento.'
         : 'Registre a foto do número de série ou identificação.');
     }
 
-    if (!this.frontalPhoto) {
+    if (!this.isVehicleFlow && !this.frontalPhoto) {
       reasons.push('Registre a foto da parte frontal do item.');
     }
 
-    if (!this.traseiraPhoto) {
+    if (!this.isVehicleFlow && !this.traseiraPhoto) {
       reasons.push('Registre a foto da parte traseira do item.');
     }
 
@@ -463,6 +495,19 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.codeReadMessage = '';
     this.clearTombamentoBloqueadoNoLocal();
     this.activeStep = 'manualLookup';
+    this.persistState();
+  }
+
+  startVehicleFlow(): void {
+    if (!this.canAdvanceToScan) {
+      return;
+    }
+
+    this.clearConsultaPublica();
+    this.identificationMode = 'vehicle';
+    this.codeReadMessage = '';
+    this.clearTombamentoBloqueadoNoLocal();
+    this.activeStep = 'vehicleDetails';
     this.persistState();
   }
 
@@ -684,7 +729,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     }
 
     if (!await this.canContinueWithTombamento(this.form.tombamentoNovo)) {
-      this.activeStep = 'details';
+      this.activeStep = this.isVehicleFlow ? 'vehicleDetails' : 'details';
       this.persistState();
       return;
     }
@@ -702,6 +747,15 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     payload.append('estadoConservacao', this.form.estadoConservacao.trim());
     payload.append('justificativaInservivel', this.form.justificativaInservivel.trim());
     payload.append('observacao', this.form.observacao.trim());
+    payload.append('isVeiculo', this.isVehicleFlow.toString());
+    payload.append('placa', this.form.placa.trim());
+    payload.append('chassi', this.form.chassi.trim());
+    payload.append('placaSeguranca', this.form.placaSeguranca.trim());
+    payload.append('marca', this.form.marca.trim());
+    payload.append('modelo', this.form.modelo.trim());
+    if (this.form.odometro !== null) {
+      payload.append('odometro', this.form.odometro.toString());
+    }
     if (geolocation) {
       payload.append('latitude', geolocation.latitude.toString());
       payload.append('longitude', geolocation.longitude.toString());
@@ -709,9 +763,13 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
         payload.append('precisaoLocalizacao', geolocation.accuracy.toString());
       }
     }
-    payload.append('fotos', this.etiquetaPhoto!.file, this.etiquetaPhoto!.file.name);
-    payload.append('fotos', this.frontalPhoto!.file, this.frontalPhoto!.file.name);
-    payload.append('fotos', this.traseiraPhoto!.file, this.traseiraPhoto!.file.name);
+    if (this.isVehicleFlow) {
+      this.vehiclePhotos.forEach((photo) => payload.append('fotos', photo!.file, photo!.file.name));
+    } else {
+      payload.append('fotos', this.etiquetaPhoto!.file, this.etiquetaPhoto!.file.name);
+      payload.append('fotos', this.frontalPhoto!.file, this.frontalPhoto!.file.name);
+      payload.append('fotos', this.traseiraPhoto!.file, this.traseiraPhoto!.file.name);
+    }
 
     this.itemInventariadoService.create(payload).subscribe({
       next: () => {
@@ -740,9 +798,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.releasePhoto(this.etiquetaPhoto);
     this.releasePhoto(this.frontalPhoto);
     this.releasePhoto(this.traseiraPhoto);
+    this.vehiclePhotos.forEach((photo) => this.releasePhoto(photo));
     this.etiquetaPhoto = null;
     this.frontalPhoto = null;
     this.traseiraPhoto = null;
+    this.vehiclePhotos = Array.from({ length: 6 }, () => null);
     this.clearConsultaPublica();
     this.codeReadMessage = '';
     this.geolocationMessage = '';
@@ -795,7 +855,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.activeStep = 'photoEtiqueta';
+    this.activeStep = this.isVehicleFlow ? 'vehiclePhotos' : 'photoEtiqueta';
     this.persistState();
   }
 
@@ -817,6 +877,16 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.activeStep = 'classificacao';
     this.persistState();
+  }
+
+  async onVehiclePhotoSelected(index: number, event: Event): Promise<void> {
+    const photo = await this.assignStepPhoto(this.vehiclePhotos[index], event);
+    this.vehiclePhotos[index] = photo;
+  }
+
+  removeVehiclePhoto(index: number): void {
+    this.releasePhoto(this.vehiclePhotos[index]);
+    this.vehiclePhotos[index] = null;
   }
 
   goToPhotoFrontalStep(): void {
@@ -984,6 +1054,12 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       estadoConservacao: '',
       justificativaInservivel: '',
       observacao: '',
+      placa: '',
+      chassi: '',
+      placaSeguranca: '',
+      marca: '',
+      modelo: '',
+      odometro: null,
     };
   }
 
@@ -1526,6 +1602,12 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
         estadoConservacao: state.form?.estadoConservacao ?? '',
         justificativaInservivel: state.form?.justificativaInservivel ?? '',
         observacao: state.form?.observacao ?? '',
+        placa: state.form?.placa ?? '',
+        chassi: state.form?.chassi ?? '',
+        placaSeguranca: state.form?.placaSeguranca ?? '',
+        marca: state.form?.marca ?? '',
+        modelo: state.form?.modelo ?? '',
+        odometro: state.form?.odometro ?? null,
       };
       this.consultaPublicaMensagem = state.consultaPublicaMensagem ?? '';
       this.consultaPublicaResumo = state.consultaPublicaResumo ?? null;

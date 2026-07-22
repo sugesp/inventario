@@ -169,6 +169,12 @@ public class AppDbContext : DbContext
             entity.Property(x => x.EstadoConservacao).HasMaxLength(80).IsRequired();
             entity.Property(x => x.JustificativaInservivel).HasMaxLength(2000);
             entity.Property(x => x.Observacao).HasMaxLength(2000);
+            entity.Property(x => x.Placa).HasMaxLength(10);
+            entity.Property(x => x.Chassi).HasMaxLength(40);
+            entity.Property(x => x.PlacaSeguranca).HasMaxLength(40);
+            entity.Property(x => x.Marca).HasMaxLength(120);
+            entity.Property(x => x.Modelo).HasMaxLength(120);
+            entity.Property(x => x.Odometro).HasPrecision(12, 1);
             entity.Property(x => x.Latitude).HasPrecision(10, 8);
             entity.Property(x => x.Longitude).HasPrecision(11, 8);
             entity.Property(x => x.PrecisaoLocalizacao).HasPrecision(10, 2);

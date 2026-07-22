@@ -238,7 +238,7 @@
     <div class="detalhes-header">
       <div>
         <h3>Detalhes do item</h3>
-        <p>{{ selectedItemDetalhes.descricao || selectedItemDetalhes.tombamentoNovo || 'Item inventariado' }}</p>
+        <p>{{ selectedItemDetalhes.descricao || selectedItemDetalhes.placa || selectedItemDetalhes.tombamentoNovo || 'Item inventariado' }}</p>
       </div>
       <button class="btn-close" type="button" aria-label="Close" (click)="closeDetalhes()"></button>
     </div>
@@ -278,6 +278,34 @@
             <span>Responsável</span>
             <strong>{{ selectedItemDetalhes.usuarioNome || '-' }}</strong>
           </div>
+          <ng-container *ngIf="selectedItemDetalhes.isVeiculo">
+            <div>
+              <span>Placa</span>
+              <strong>{{ selectedItemDetalhes.placa || '-' }}</strong>
+            </div>
+            <div>
+              <span>Chassi</span>
+              <strong>{{ selectedItemDetalhes.chassi || '-' }}</strong>
+            </div>
+            <div>
+              <span>Placa de segurança</span>
+              <strong>{{ selectedItemDetalhes.placaSeguranca || '-' }}</strong>
+            </div>
+            <div>
+              <span>Marca</span>
+              <strong>{{ selectedItemDetalhes.marca || '-' }}</strong>
+            </div>
+            <div>
+              <span>Modelo</span>
+              <strong>{{ selectedItemDetalhes.modelo || '-' }}</strong>
+            </div>
+            <div>
+              <span>Odômetro</span>
+              <strong>{{ selectedItemDetalhes.odometro !== null && selectedItemDetalhes.odometro !== undefined
+                ? (selectedItemDetalhes.odometro | number:'1.0-1') + ' km'
+                : '-' }}</strong>
+            </div>
+          </ng-container>
         </div>
         <div class="detalhes-observacao">
           <span>Observação</span>

@@ -279,6 +279,20 @@
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
+.vehicle-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.vehicle-photo-preview img {
+  height: 190px;
+}
+
+.vehicle-photo-empty {
+  min-height: 190px;
+}
+
 .photo-step-status {
   display: inline-flex;
   width: fit-content;
