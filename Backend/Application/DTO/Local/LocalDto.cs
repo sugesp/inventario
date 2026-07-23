@@ -10,6 +10,7 @@ public class LocalDto
     public string? LocalSuperiorNome { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+    public bool Bloqueado { get; set; }
     public IReadOnlyCollection<LocalMembroDto> Membros { get; set; } = Array.Empty<LocalMembroDto>();
 }
 

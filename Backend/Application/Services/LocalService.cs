@@ -114,6 +114,26 @@ public class LocalService : ILocalService
         return await _context.SaveChangesAsync(cancellationToken) > 0;
     }
 
+    public async Task<LocalDto?> SetBloqueioAsync(
+        Guid id,
+        bool bloqueado,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.Locais.FirstOrDefaultAsync(
+            x => x.Id == id && x.DeletedAt == null,
+            cancellationToken
+        );
+        if (entity is null)
+        {
+            return null;
+        }
+
+        entity.Bloqueado = bloqueado;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return await GetByIdAsync(id, cancellationToken);
+    }
+
     private async Task<List<Guid>> ValidateAsync(LocalCreateUpdateDto dto, Guid? currentLocalId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(dto.Nome))
@@ -249,6 +269,7 @@ public class LocalService : ILocalService
             LocalSuperiorNome = entity.LocalSuperior?.Nome,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
+            Bloqueado = entity.Bloqueado,
             Membros = entity.Membros
                 .Where(x => x.DeletedAt == null)
                 .OrderBy(x => x.Usuario!.Nome)

@@ -7,6 +7,7 @@ public class Local : BaseEntity
     public Guid? LocalSuperiorId { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+    public bool Bloqueado { get; set; }
 
     public Comissao? Comissao { get; set; }
     public Local? LocalSuperior { get; set; }

@@ -82,6 +82,28 @@ public class LocaisController : ControllerBase
     }
 
     [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPut("{id:guid}/bloqueio")]
+    public async Task<ActionResult<LocalDto>> SetBloqueio(
+        Guid id,
+        [FromBody] LocalBloqueioDto dto,
+        CancellationToken cancellationToken)
+    {
+        var atual = await _service.GetByIdAsync(id, cancellationToken);
+        if (atual is null)
+        {
+            return NotFound();
+        }
+
+        if (!await CanManageComissaoAsync(atual.ComissaoId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var updated = await _service.SetBloqueioAsync(id, dto.Bloqueado, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {

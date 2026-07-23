@@ -7,6 +7,7 @@ export interface Local {
   localSuperiorNome?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  bloqueado: boolean;
   membros: LocalMembro[];
 }
 

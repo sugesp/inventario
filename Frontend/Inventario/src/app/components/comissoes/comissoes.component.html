@@ -269,13 +269,23 @@
                 </button>
                 <div class="team-copy">
                   <strong>{{ getLocalHierarchyLabel(local) }}</strong>
+                  <small *ngIf="local.bloqueado">Bloqueado temporariamente para inventário</small>
                   <small>Local superior: {{ local.localSuperiorNome || 'Nenhum (local raiz)' }}</small>
                   <small>Responsáveis: {{ getLocalMembrosLabel(local) }}</small>
                   <small>{{ getLocalGeolocalizacaoLabel(local) }}</small>
                 </div>
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
                   <button class="btn btn-sm btn-standard-action" type="button" (click)="startLocalEdit(local)">Editar</button>
-                  <button class="btn btn-sm btn-standard-danger" type="button" (click)="removeLocal(local)">Excluir</button>
+                  <button
+                    class="btn btn-sm"
+                    [class.btn-standard-danger]="!local.bloqueado"
+                    [class.btn-standard-action]="local.bloqueado"
+                    type="button"
+                    (click)="toggleLocalBloqueio(local)"
+                    [disabled]="changingLocalBlockIds.has(local.id)"
+                  >
+                    {{ changingLocalBlockIds.has(local.id) ? 'Salvando...' : (local.bloqueado ? 'Desbloquear' : 'Bloquear') }}
+                  </button>
                 </div>
               </div>
             </div>

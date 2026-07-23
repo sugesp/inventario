@@ -22,6 +22,10 @@ export class LocalService {
     return this.http.post<Local>(`${this.baseUrl}/${id}/update`, payload);
   }
 
+  setBloqueio(id: string, bloqueado: boolean): Observable<Local> {
+    return this.http.put<Local>(`${this.baseUrl}/${id}/bloqueio`, { bloqueado });
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

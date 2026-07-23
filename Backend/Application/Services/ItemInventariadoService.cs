@@ -711,6 +711,11 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("O local informado não pertence à comissão ativa.");
         }
 
+        if (local.Bloqueado)
+        {
+            throw new InvalidOperationException("O local informado está temporariamente bloqueado para inventário.");
+        }
+
         if (usuarioAdministrador)
         {
             return;
@@ -732,7 +737,7 @@ public class ItemInventariadoService : IItemInventariadoService
     {
         var locais = await _context.Locais
             .AsNoTracking()
-            .Where(x => x.DeletedAt == null)
+            .Where(x => x.DeletedAt == null && !x.Bloqueado)
             .Select(x => new
             {
                 x.Id,

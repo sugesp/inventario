@@ -154,7 +154,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   get locaisDisponiveis(): Local[] {
     const locaisDaComissao = this.activeComissao
-      ? this.locais.filter((item) => item.comissaoId === this.activeComissao?.id)
+      ? this.locais.filter((item) => item.comissaoId === this.activeComissao?.id && !item.bloqueado)
       : [];
 
     if (this.authService.isAdmin) {
@@ -429,6 +429,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.locais = [...data].sort((a, b) => a.nome.localeCompare(b.nome));
         this.loadingLocais = false;
+        this.ensureSelectedLocalIsAccessible();
         this.persistState();
       },
       error: () => {
@@ -444,6 +445,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.activeComissao = data;
         this.loadingComissao = false;
+        this.ensureSelectedLocalIsAccessible();
       },
       error: () => {
         this.activeComissao = null;
@@ -1615,5 +1617,24 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     } catch {
       window.sessionStorage.removeItem(InventariarItemComponent.STORAGE_KEY);
     }
+  }
+
+  private ensureSelectedLocalIsAccessible(): void {
+    if (!this.selectedLocalId || this.loadingLocais || this.loadingComissao) {
+      return;
+    }
+
+    if (this.localSelecionado) {
+      return;
+    }
+
+    this.closeScanner();
+    this.selectedLocalId = '';
+    this.activeStep = 'local';
+    this.identificationMode = null;
+    this.clearConsultaPublica();
+    this.codeReadMessage = '';
+    this.clearTombamentoBloqueadoNoLocal();
+    this.persistState();
   }
 }

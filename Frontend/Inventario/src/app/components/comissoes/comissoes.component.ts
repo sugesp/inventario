@@ -51,6 +51,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   saving = false;
   savingMembers = false;
   savingLocal = false;
+  readonly changingLocalBlockIds = new Set<string>();
   showModal = false;
   showAddMemberModal = false;
   showLocalModal = false;
@@ -490,26 +491,28 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     });
   }
 
-  removeLocal(item: Local): void {
-    if (!this.canManageCurrentComissao) {
-      this.toastr.error('Você não pode excluir locais desta comissão.');
+  toggleLocalBloqueio(item: Local): void {
+    if (!this.canManageCurrentComissao || this.changingLocalBlockIds.has(item.id)) {
       return;
     }
 
-    if (!confirm(`Deseja excluir o local "${item.nome}"?`)) {
-      return;
-    }
-
-    this.localService.delete(item.id).subscribe({
-      next: () => {
-        this.toastr.success('Local excluído com sucesso.');
-        if (this.editingLocalId === item.id) {
-          this.cancelLocalEdit();
+    const bloqueado = !item.bloqueado;
+    this.changingLocalBlockIds.add(item.id);
+    this.localService.setBloqueio(item.id, bloqueado).subscribe({
+      next: (updated) => {
+        const index = this.locais.findIndex((local) => local.id === updated.id);
+        if (index >= 0) {
+          this.locais[index] = updated;
         }
-        this.loadLocais();
+        this.syncComissaoCollections();
+        this.changingLocalBlockIds.delete(item.id);
+        this.toastr.success(bloqueado
+          ? 'Local bloqueado temporariamente para inventário.'
+          : 'Local desbloqueado para inventário.');
       },
       error: (error) => {
-        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir o local.');
+        this.changingLocalBlockIds.delete(item.id);
+        this.toastr.error(error?.error?.message ?? 'Não foi possível alterar o bloqueio do local.');
       },
     });
   }
