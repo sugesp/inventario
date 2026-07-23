@@ -47,6 +47,8 @@ export class ItensInventariadosComponent implements OnInit {
   selectedLocalFilter = '';
   selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
   selectedTombamentoFilter: 'todos' | 'sem-tombamento-eestado' | 'sem-tombamento-antigo' | 'sem-ambos-tombamentos' = 'todos';
+  pageNumber = 1;
+  readonly pageSize = 20;
   selectedItemDetalhes: ItemInventariado | null = null;
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
@@ -82,6 +84,7 @@ export class ItensInventariadosComponent implements OnInit {
     this.itemInventariadoService.getAll().subscribe({
       next: (data) => {
         this.itensInventariados = data;
+        this.ensureValidPage();
         this.loadingItens = false;
       },
       error: () => {
@@ -217,19 +220,69 @@ export class ItensInventariadosComponent implements OnInit {
     return this.filteredItensInventariados.filter((item) => this.hasGeolocalizacao(item));
   }
 
+  get paginatedItensInventariados(): ItemInventariado[] {
+    const startIndex = (this.pageNumber - 1) * this.pageSize;
+    return this.filteredItensInventariados.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredItensInventariados.length / this.pageSize);
+  }
+
+  get pageLabel(): string {
+    if (this.totalPages === 0) {
+      return 'Página 0 de 0';
+    }
+
+    return `Página ${this.pageNumber} de ${this.totalPages}`;
+  }
+
   clearFilters(): void {
     this.selectedComissaoFilter = '';
     this.selectedLocalFilter = '';
     this.selectedLancamentoFilter = 'todos';
     this.selectedTombamentoFilter = 'todos';
+    this.onFiltersChanged();
   }
 
   onComissaoFilterChange(): void {
     this.selectedLocalFilter = '';
+    this.onFiltersChanged();
+  }
+
+  onFiltersChanged(): void {
+    this.pageNumber = 1;
+  }
+
+  goToPreviousPage(): void {
+    if (this.pageNumber <= 1) {
+      return;
+    }
+
+    this.pageNumber -= 1;
+  }
+
+  goToNextPage(): void {
+    if (this.pageNumber >= this.totalPages) {
+      return;
+    }
+
+    this.pageNumber += 1;
   }
 
   getComissaoLabel(comissao: Comissao): string {
     return `Comissão ${comissao.ano} - ${comissao.status}`;
+  }
+
+  private ensureValidPage(): void {
+    if (this.totalPages === 0) {
+      this.pageNumber = 1;
+      return;
+    }
+
+    if (this.pageNumber > this.totalPages) {
+      this.pageNumber = this.totalPages;
+    }
   }
 
   hasGeolocalizacao(item: ItemInventariado): boolean {

@@ -122,6 +122,26 @@
   margin-bottom: 0;
 }
 
+.list-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.list-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-pagination-label,
+.list-pagination-summary {
+  color: #5b6f88;
+  font-size: 0.95rem;
+}
+
 .table thead th {
   white-space: nowrap;
   color: #3e5a75;
@@ -808,13 +828,19 @@
 
 @media (max-width: 767.98px) {
   .hero-header,
-  .step-actions {
+  .step-actions,
+  .list-pagination {
     flex-direction: column;
     align-items: stretch;
   }
 
   .filters-grid {
     grid-template-columns: 1fr;
+  }
+
+  .list-pagination-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .hero-card,

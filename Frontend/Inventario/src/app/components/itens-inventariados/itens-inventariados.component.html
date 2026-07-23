@@ -44,7 +44,7 @@
 
       <div>
         <label class="form-label">Filtrar por setor</label>
-        <select class="form-select" [(ngModel)]="selectedLocalFilter">
+        <select class="form-select" [(ngModel)]="selectedLocalFilter" (ngModelChange)="onFiltersChanged()">
           <option value="">Todos os setores</option>
           <option *ngFor="let local of localOptions" [value]="local">{{ local }}</option>
         </select>
@@ -52,7 +52,7 @@
 
       <div>
         <label class="form-label">Filtrar por E-Estado</label>
-        <select class="form-select" [(ngModel)]="selectedLancamentoFilter">
+        <select class="form-select" [(ngModel)]="selectedLancamentoFilter" (ngModelChange)="onFiltersChanged()">
           <option value="todos">Todos os itens</option>
           <option value="pendentes">Não lançados</option>
           <option value="lancados">Lançados</option>
@@ -61,7 +61,7 @@
 
       <div>
         <label class="form-label">Filtrar por tombamento</label>
-        <select class="form-select" [(ngModel)]="selectedTombamentoFilter">
+        <select class="form-select" [(ngModel)]="selectedTombamentoFilter" (ngModelChange)="onFiltersChanged()">
           <option value="todos">Todos os itens</option>
           <option value="sem-tombamento-eestado">Sem Tombamento (E-Estado)</option>
           <option value="sem-tombamento-antigo">Sem Tombamento Antigo</option>
@@ -110,7 +110,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of filteredItensInventariados">
+          <tr *ngFor="let item of paginatedItensInventariados">
             <td>{{ item.comissaoAno || '-' }}</td>
             <td>
               <div class="tombamento-cell">
@@ -180,6 +180,21 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="list-pagination" *ngIf="!loadingItens && filteredItensInventariados.length > 0">
+      <span class="list-pagination-summary">
+        Exibindo {{ paginatedItensInventariados.length }} de {{ filteredItensInventariados.length }} item(ns).
+      </span>
+      <div class="list-pagination-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber <= 1">
+          Anterior
+        </button>
+        <span class="list-pagination-label">{{ pageLabel }}</span>
+        <button class="btn btn-outline-secondary" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages || totalPages === 0">
+          Próxima
+        </button>
+      </div>
     </div>
   </section>
 </div>
