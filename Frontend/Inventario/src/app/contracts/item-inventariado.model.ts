@@ -5,6 +5,23 @@ export interface ItemInventarioFoto {
   caminhoRelativo: string;
 }
 
+export interface ItemInventariadoMovimentacaoLocal {
+  id: string;
+  itemInventariadoId: string;
+  comissaoId?: string | null;
+  comissaoAno?: number | null;
+  tombamento: string;
+  descricao: string;
+  localOrigemId: string;
+  localOrigemNome: string;
+  localDestinoId: string;
+  localDestinoNome: string;
+  movidoPorUsuarioId: string;
+  movidoPorUsuarioNome: string;
+  justificativa: string;
+  movidoEm: string;
+}
+
 export interface ItemInventariado {
   id: string;
   tombamentoNovo: string;

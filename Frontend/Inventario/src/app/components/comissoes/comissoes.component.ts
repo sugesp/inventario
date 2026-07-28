@@ -9,14 +9,14 @@ import { AuthService } from '../../auth/auth.service';
 import { UserSummary } from '../../auth/auth.model';
 import { Comissao, ComissaoPayload } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
-import { InconsistenciaInventario, ItemInventariado } from '../../contracts/item-inventariado.model';
+import { InconsistenciaInventario, ItemInventariado, ItemInventariadoMovimentacaoLocal } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
 import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
-type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'excluidos';
+type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'excluidos' | 'correcoes-local';
 
 interface LocalMapTile {
   url: string;
@@ -49,6 +49,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   loadingInconsistencias = false;
   loadingItensInventariados = false;
   loadingItensExcluidos = false;
+  loadingMovimentacoesLocal = false;
   saving = false;
   savingMembers = false;
   savingLocal = false;
@@ -61,6 +62,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   activeTab: ComissaoTab = 'resumo';
   itensInventariados: ItemInventariado[] = [];
   itensExcluidos: ItemInventariado[] = [];
+  movimentacoesLocal: ItemInventariadoMovimentacaoLocal[] = [];
   inconsistenciasInventario: InconsistenciaInventario[] = [];
   memberTerm = '';
   memberPageNumber = 1;
@@ -532,7 +534,27 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       this.loadInconsistenciasInventario();
     } else if (tab === 'excluidos') {
       this.loadItensExcluidosComissao();
+    } else if (tab === 'correcoes-local') {
+      this.loadMovimentacoesLocal();
     }
+  }
+
+  loadMovimentacoesLocal(): void {
+    if (!this.editingId) {
+      return;
+    }
+
+    this.loadingMovimentacoesLocal = true;
+    this.itemInventariadoService.getLocalMovements().subscribe({
+      next: (data) => {
+        this.movimentacoesLocal = data;
+        this.loadingMovimentacoesLocal = false;
+      },
+      error: () => {
+        this.loadingMovimentacoesLocal = false;
+        this.toastr.error('Não foi possível carregar o histórico de correções de local.');
+      },
+    });
   }
 
   loadItensExcluidosComissao(): void {
@@ -599,6 +621,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   get itensExcluidosDaComissao(): ItemInventariado[] {
     return this.itensExcluidos.filter((item) => item.comissaoId === this.editingId);
+  }
+
+  get movimentacoesLocalDaComissao(): ItemInventariadoMovimentacaoLocal[] {
+    return this.movimentacoesLocal.filter((item) => item.comissaoId === this.editingId);
   }
 
   get totalOcorrenciasInconsistencias(): number {

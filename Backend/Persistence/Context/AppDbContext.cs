@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<ComissaoMembro> ComissoesMembros { get; set; }
     public DbSet<ItemInventariado> ItensInventariados { get; set; }
     public DbSet<ItemInventarioFoto> ItensInventariadosFotos { get; set; }
+    public DbSet<ItemInventariadoMovimentacaoLocal> ItensInventariadosMovimentacoesLocal { get; set; }
     public DbSet<Levantamento> Levantamentos { get; set; }
     public DbSet<LevantamentoCompartilhamento> LevantamentosCompartilhamentos { get; set; }
     public DbSet<LevantamentoItem> LevantamentosItens { get; set; }
@@ -217,6 +218,28 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Fotos)
                 .HasForeignKey(x => x.ItemInventariadoId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ItemInventariadoMovimentacaoLocal>(entity =>
+        {
+            entity.ToTable("ItensInventariadosMovimentacoesLocal");
+            entity.Property(x => x.Justificativa).HasMaxLength(2000).IsRequired();
+            entity.HasOne(x => x.ItemInventariado)
+                .WithMany(x => x.MovimentacoesLocal)
+                .HasForeignKey(x => x.ItemInventariadoId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.LocalOrigem)
+                .WithMany()
+                .HasForeignKey(x => x.LocalOrigemId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.LocalDestino)
+                .WithMany()
+                .HasForeignKey(x => x.LocalDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.MovidoPorUsuario)
+                .WithMany()
+                .HasForeignKey(x => x.MovidoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Levantamento>(entity =>

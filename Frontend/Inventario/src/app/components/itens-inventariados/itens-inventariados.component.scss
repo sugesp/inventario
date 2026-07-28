@@ -259,6 +259,10 @@
   color: #c52a39 !important;
 }
 
+.btn-icon-move {
+  color: #2869a8 !important;
+}
+
 .acao-auditoria-card {
   max-width: 620px;
 }
@@ -269,6 +273,48 @@
   border-radius: 10px;
   background: #fff5f6;
   color: #8e2631;
+}
+
+.acao-confirmacao {
+  margin-bottom: 12px;
+  color: #243b57;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.mover-local-card {
+  max-width: 720px;
+}
+
+.movimentacao-resumo {
+  display: grid;
+  grid-template-columns: 1.4fr .8fr 1fr;
+  gap: 10px;
+
+  div {
+    padding: 12px;
+    border: 1px solid #d8e2ef;
+    border-radius: 10px;
+    background: #f8fbff;
+  }
+
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    margin-bottom: 5px;
+    color: #6b7e93;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: #21384f;
+    overflow-wrap: anywhere;
+  }
 }
 
 .acao-contador {

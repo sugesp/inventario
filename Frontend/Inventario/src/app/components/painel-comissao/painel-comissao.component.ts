@@ -229,20 +229,22 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get itensGpsValidos(): number {
-    return this.itens.filter((item) =>
-      item.latitude != null
-      && item.longitude != null
-      && item.precisaoLocalizacao != null
-      && item.precisaoLocalizacao <= 30
-    ).length;
+    return this.itensGeorreferenciadosUnicos.length;
   }
 
   get itensGpsDesconsiderados(): number {
-    return this.itens.filter((item) =>
-      item.latitude != null
-      && item.longitude != null
-      && (item.precisaoLocalizacao == null || item.precisaoLocalizacao > 30)
-    ).length;
+    const tombamentosComGpsValido = new Set(
+      this.itensGeorreferenciadosUnicos.map((item) => this.normalizarTombamento(item.tombamentoNovo))
+    );
+    return new Set(this.itens
+      .filter((item) =>
+        item.latitude != null
+        && item.longitude != null
+        && (item.precisaoLocalizacao == null || item.precisaoLocalizacao > 30)
+      )
+      .map((item) => this.normalizarTombamento(item.tombamentoNovo))
+      .filter((tombamento) => tombamento && !tombamentosComGpsValido.has(tombamento))
+    ).size;
   }
 
   get locaisConcluidos(): number {
@@ -295,8 +297,12 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     }).subscribe({
       next: (dados) => {
         this.comissao = dados.comissao;
-        this.itens = dados.itens;
-        this.locais = dados.locais;
+        this.itens = dados.comissao
+          ? dados.itens.filter((item) => item.comissaoId === dados.comissao?.id)
+          : [];
+        this.locais = dados.comissao
+          ? dados.locais.filter((local) => local.comissaoId === dados.comissao?.id)
+          : [];
         this.montarGraficos();
         this.atualizarMapa();
         this.animarKpis();
@@ -445,14 +451,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
 
   private agruparItensGeorreferenciados(): AgrupamentoMapa[] {
     const grupos: AgrupamentoMapa[] = [];
-    this.itens
-      .filter((item) =>
-        item.latitude != null
-        && item.longitude != null
-        && item.precisaoLocalizacao != null
-        && item.precisaoLocalizacao <= 30
-      )
-      .forEach((item) => {
+    this.itensGeorreferenciadosUnicos.forEach((item) => {
         const latitude = item.latitude as number;
         const longitude = item.longitude as number;
         const grupo = grupos.find((atual) =>
@@ -475,6 +474,25 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
         grupo.locais.add(item.localNome);
       });
     return grupos;
+  }
+
+  private get itensGeorreferenciadosUnicos(): ItemInventariado[] {
+    const itensPorTombamento = new Map<string, ItemInventariado>();
+    this.itens
+      .filter((item) =>
+        item.latitude != null
+        && item.longitude != null
+        && item.precisaoLocalizacao != null
+        && item.precisaoLocalizacao <= 30
+      )
+      .sort((a, b) => new Date(b.dataInventario).getTime() - new Date(a.dataInventario).getTime())
+      .forEach((item) => {
+        const tombamento = this.normalizarTombamento(item.tombamentoNovo);
+        if (tombamento && !itensPorTombamento.has(tombamento)) {
+          itensPorTombamento.set(tombamento, item);
+        }
+      });
+    return [...itensPorTombamento.values()];
   }
 
   private distanciaEmMetros(latA: number, lngA: number, latB: number, lngB: number): number {
@@ -575,7 +593,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       const data = new Date(hoje);
       data.setDate(hoje.getDate() - (29 - indice));
       return data;
-    });
+    }).filter((data) => data.getDay() !== 0 && data.getDay() !== 6);
     const quantidades = dias.map((dia) =>
       this.itens.filter((item) => this.mesmoDia(new Date(item.dataInventario), dia)).length
     );
@@ -597,7 +615,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
           fill: true,
         },
         {
-          label: 'Média móvel (7 dias)',
+          label: 'Média móvel (7 dias úteis)',
           data: mediaMovel,
           borderColor: '#f5c451',
           borderDash: [6, 5],
@@ -616,6 +634,11 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
 
   private normalizar(valor: string): string {
     return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  }
+
+  private normalizarTombamento(valor: string): string {
+    const digitos = valor?.replace(/\D/g, '') ?? '';
+    return digitos ? digitos.slice(0, 9).padStart(9, '0') : '';
   }
 
   private abreviar(valor: string, limite: number): string {

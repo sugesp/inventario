@@ -8,6 +8,8 @@ import { Comissao } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
 import { ItemInventariado, ItemInventarioFoto } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
+import { Local } from '../../contracts/local.model';
+import { LocalService } from '../../contracts/local.service';
 
 interface MapTile {
   url: string;
@@ -40,6 +42,7 @@ export class ItensInventariadosComponent implements OnInit {
 
   itensInventariados: ItemInventariado[] = [];
   comissoes: Comissao[] = [];
+  locais: Local[] = [];
 
   loadingItens = false;
   loadingComissoes = false;
@@ -59,6 +62,11 @@ export class ItensInventariadosComponent implements OnInit {
   tipoAcao: 'excluir' | 'reverter-eestado' | null = null;
   justificativaAcao = '';
   processandoAcao = false;
+  itemConfirmarLancamento: ItemInventariado | null = null;
+  itemMoverLocal: ItemInventariado | null = null;
+  localDestinoId = '';
+  justificativaMovimentacao = '';
+  processandoMovimentacao = false;
   mapOpen = false;
   mapTiles: MapTile[] = [];
   mapMarkers: MapMarker[] = [];
@@ -74,6 +82,7 @@ export class ItensInventariadosComponent implements OnInit {
     readonly authService: AuthService,
     private readonly comissaoService: ComissaoService,
     private readonly itemInventariadoService: ItemInventariadoService,
+    private readonly localService: LocalService,
     private readonly sanitizer: DomSanitizer,
     private readonly toastr: ToastrService
   ) { }
@@ -81,6 +90,18 @@ export class ItensInventariadosComponent implements OnInit {
   ngOnInit(): void {
     this.loadComissoes();
     this.loadItensInventariados();
+    this.loadLocais();
+  }
+
+  loadLocais(): void {
+    this.localService.getAll().subscribe({
+      next: (data) => {
+        this.locais = data;
+      },
+      error: () => {
+        this.locais = [];
+      },
+    });
   }
 
   loadItensInventariados(): void {
@@ -539,6 +560,41 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
+  openConfirmarLancamento(item: ItemInventariado): void {
+    this.itemConfirmarLancamento = item;
+  }
+
+  closeConfirmarLancamento(): void {
+    if (this.itemConfirmarLancamento && this.isUpdatingLancamento(this.itemConfirmarLancamento)) {
+      return;
+    }
+
+    this.itemConfirmarLancamento = null;
+  }
+
+  confirmarLancamentoEEstado(): void {
+    const item = this.itemConfirmarLancamento;
+    if (!item) {
+      return;
+    }
+
+    this.updatingLancamentoIds.add(item.id);
+    this.itemInventariadoService.marcarLancamentoEEstado(item.id, true).subscribe({
+      next: (updated) => {
+        this.updatingLancamentoIds.delete(item.id);
+        this.itensInventariados = this.itensInventariados.map((current) =>
+          current.id === updated.id ? updated : current
+        );
+        this.itemConfirmarLancamento = null;
+        this.toastr.success('Item marcado como lançado no E-Estado.');
+      },
+      error: (error) => {
+        this.updatingLancamentoIds.delete(item.id);
+        this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o lançamento no E-Estado.');
+      },
+    });
+  }
+
   openReverterEEstado(item: ItemInventariado): void {
     this.itemAcao = item;
     this.tipoAcao = 'reverter-eestado';
@@ -560,6 +616,61 @@ export class ItensInventariadosComponent implements OnInit {
     return !!usuarioId && this.comissoes.some((comissao) =>
       comissao.id === item.comissaoId && comissao.presidenteId === usuarioId
     );
+  }
+
+  openMoverLocal(item: ItemInventariado): void {
+    this.itemMoverLocal = item;
+    this.localDestinoId = '';
+    this.justificativaMovimentacao = '';
+  }
+
+  closeMoverLocal(): void {
+    if (this.processandoMovimentacao) {
+      return;
+    }
+
+    this.itemMoverLocal = null;
+    this.localDestinoId = '';
+    this.justificativaMovimentacao = '';
+  }
+
+  get locaisDestinoDisponiveis(): Local[] {
+    if (!this.itemMoverLocal?.comissaoId) {
+      return [];
+    }
+
+    return this.locais
+      .filter((local) =>
+        local.comissaoId === this.itemMoverLocal?.comissaoId
+        && local.id !== this.itemMoverLocal.localId
+      )
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+
+  confirmarMovimentacaoLocal(): void {
+    const justificativa = this.justificativaMovimentacao.trim();
+    if (!this.itemMoverLocal || !this.localDestinoId || justificativa.length < 3) {
+      this.toastr.warning('Selecione o local correto e informe uma justificativa.');
+      return;
+    }
+
+    this.processandoMovimentacao = true;
+    this.itemInventariadoService
+      .moveToLocal(this.itemMoverLocal.id, this.localDestinoId, justificativa)
+      .subscribe({
+        next: (updated) => {
+          this.itensInventariados = this.itensInventariados.map((item) =>
+            item.id === updated.id ? updated : item
+          );
+          this.processandoMovimentacao = false;
+          this.closeMoverLocal();
+          this.toastr.success('Item movido para o local correto com histórico registrado.');
+        },
+        error: (error) => {
+          this.processandoMovimentacao = false;
+          this.toastr.error(error?.error?.message ?? 'Não foi possível corrigir o local do item.');
+        },
+      });
   }
 
   closeAcaoModal(): void {

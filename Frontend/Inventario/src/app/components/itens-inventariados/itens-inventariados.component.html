@@ -168,7 +168,7 @@
                     class="btn btn-sm btn-icon-action btn-icon-success"
                     type="button"
                     [attr.aria-label]="item.lancadoEEstado ? 'Já foi lançado no E-Estado' : (isUpdatingLancamento(item) ? 'Marcando...' : 'Marcar lançado')"
-                    (click)="marcarLancamentoEEstado(item, true)"
+                    (click)="openConfirmarLancamento(item)"
                     [disabled]="item.lancadoEEstado || isUpdatingLancamento(item)"
                   >
                     <span *ngIf="isUpdatingLancamento(item)">...</span>
@@ -180,6 +180,11 @@
                   (click)="openReverterEEstado(item)" title="Reverter lançamento no E-Estado"
                   aria-label="Reverter lançamento no E-Estado">
                   <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                </button>
+                <button *ngIf="canExcluirItem(item)" class="btn btn-sm btn-icon-action btn-icon-move"
+                  type="button" (click)="openMoverLocal(item)" title="Corrigir local do item"
+                  aria-label="Corrigir local do item">
+                  <i class="fa-solid fa-right-left" aria-hidden="true"></i>
                 </button>
                 <button *ngIf="canExcluirItem(item)" class="btn btn-sm btn-icon-action btn-icon-danger"
                   type="button" (click)="openExcluirItem(item)" title="Excluir item inventariado"
@@ -238,6 +243,96 @@
         <button class="btn btn-danger btn-filled" type="submit"
           [disabled]="processandoAcao || justificativaAcao.trim().length < 3">
           {{ processandoAcao ? 'Salvando...' : (tipoAcao === 'excluir' ? 'Excluir item' : 'Confirmar reversão') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="fotos-backdrop" *ngIf="itemConfirmarLancamento"></div>
+<div class="fotos-modal" *ngIf="itemConfirmarLancamento" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closeConfirmarLancamento()">
+  <div class="fotos-card acao-auditoria-card" (click)="$event.stopPropagation()">
+    <div class="fotos-header">
+      <div>
+        <h3>Confirmar lançamento no E-Estado</h3>
+        <p>{{ itemConfirmarLancamento.descricao || itemConfirmarLancamento.tombamentoNovo || 'Item inventariado' }}</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeConfirmarLancamento()"
+        [disabled]="isUpdatingLancamento(itemConfirmarLancamento)"></button>
+    </div>
+    <div class="fotos-body">
+      <p class="acao-confirmacao">
+        Confirma que este item já foi lançado no E-Estado?
+      </p>
+      <p class="acao-alerta">
+        A reversão exigirá justificativa e poderá ser realizada somente pelo presidente da comissão ou por um administrador.
+      </p>
+    </div>
+    <div class="acao-auditoria-footer">
+      <button class="btn btn-secondary" type="button" (click)="closeConfirmarLancamento()"
+        [disabled]="isUpdatingLancamento(itemConfirmarLancamento)">Cancelar</button>
+      <button class="btn btn-success btn-filled" type="button" (click)="confirmarLancamentoEEstado()"
+        [disabled]="isUpdatingLancamento(itemConfirmarLancamento)">
+        {{ isUpdatingLancamento(itemConfirmarLancamento) ? 'Confirmando...' : 'Sim, marcar como lançado' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="fotos-backdrop" *ngIf="itemMoverLocal"></div>
+<div class="fotos-modal" *ngIf="itemMoverLocal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeMoverLocal()">
+  <div class="fotos-card acao-auditoria-card mover-local-card" (click)="$event.stopPropagation()">
+    <div class="fotos-header">
+      <div>
+        <h3>Corrigir local do item</h3>
+        <p>Movimentação auditável sem remover fotos ou dados do inventário.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeMoverLocal()"
+        [disabled]="processandoMovimentacao"></button>
+    </div>
+    <form (ngSubmit)="confirmarMovimentacaoLocal()">
+      <div class="fotos-body">
+        <div class="movimentacao-resumo">
+          <div>
+            <span>Item</span>
+            <strong>{{ itemMoverLocal.descricao || '-' }}</strong>
+          </div>
+          <div>
+            <span>Tombamento</span>
+            <strong>{{ itemMoverLocal.tombamentoNovo || itemMoverLocal.tombamentoAntigo || '-' }}</strong>
+          </div>
+          <div>
+            <span>Local atual</span>
+            <strong>{{ itemMoverLocal.localNome || '-' }}</strong>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label" for="localDestinoMovimentacao">Local correto</label>
+          <select id="localDestinoMovimentacao" class="form-select" name="localDestinoMovimentacao"
+            [(ngModel)]="localDestinoId" required>
+            <option value="" disabled>Selecione o local de destino</option>
+            <option *ngFor="let local of locaisDestinoDisponiveis" [value]="local.id">
+              {{ local.nome }}
+            </option>
+          </select>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label" for="justificativaMovimentacao">Justificativa da correção</label>
+          <textarea id="justificativaMovimentacao" class="form-control" name="justificativaMovimentacao"
+            [(ngModel)]="justificativaMovimentacao" rows="5" minlength="3" maxlength="2000" required
+            placeholder="Explique por que o item foi inventariado no local incorreto"></textarea>
+          <small class="acao-contador">{{ justificativaMovimentacao.length }}/2000</small>
+        </div>
+      </div>
+      <div class="acao-auditoria-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeMoverLocal()"
+          [disabled]="processandoMovimentacao">Cancelar</button>
+        <button class="btn btn-primary btn-filled" type="submit"
+          [disabled]="processandoMovimentacao || !localDestinoId || justificativaMovimentacao.trim().length < 3">
+          {{ processandoMovimentacao ? 'Movendo...' : 'Confirmar correção' }}
         </button>
       </div>
     </form>

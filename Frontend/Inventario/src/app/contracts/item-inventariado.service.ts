@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ConsultaPublicaBem, ConsultaTombamento, InconsistenciaInventario, ItemInventariado } from './item-inventariado.model';
+import { ConsultaPublicaBem, ConsultaTombamento, InconsistenciaInventario, ItemInventariado, ItemInventariadoMovimentacaoLocal } from './item-inventariado.model';
 
 @Injectable({ providedIn: 'root' })
 export class ItemInventariadoService {
@@ -16,6 +16,10 @@ export class ItemInventariadoService {
 
   getDeleted(): Observable<ItemInventariado[]> {
     return this.http.get<ItemInventariado[]>(`${this.baseUrl}/excluidos`);
+  }
+
+  getLocalMovements(): Observable<ItemInventariadoMovimentacaoLocal[]> {
+    return this.http.get<ItemInventariadoMovimentacaoLocal[]>(`${this.baseUrl}/movimentacoes-local`);
   }
 
   getInconsistencias(): Observable<InconsistenciaInventario[]> {
@@ -52,6 +56,13 @@ export class ItemInventariadoService {
   delete(itemId: string, justificativa: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${itemId}`, {
       body: { justificativa },
+    });
+  }
+
+  moveToLocal(itemId: string, localDestinoId: string, justificativa: string): Observable<ItemInventariado> {
+    return this.http.post<ItemInventariado>(`${this.baseUrl}/${itemId}/mover-local`, {
+      localDestinoId,
+      justificativa,
     });
   }
 

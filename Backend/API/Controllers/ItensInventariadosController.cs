@@ -41,6 +41,19 @@ public class ItensInventariadosController : ControllerBase
     }
 
     [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
+    [HttpGet("movimentacoes-local")]
+    public async Task<ActionResult<IEnumerable<ItemInventariadoMovimentacaoLocalDto>>> GetLocalMovements(
+        CancellationToken cancellationToken
+    )
+    {
+        return Ok(await _service.GetLocalMovementsAsync(
+            GetUsuarioId(),
+            User.IsInRole("Administrador") || User.IsInRole("ControleInterno"),
+            cancellationToken
+        ));
+    }
+
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemInventariadoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -174,6 +187,31 @@ public class ItensInventariadosController : ControllerBase
                 StatusCodes.Status500InternalServerError,
                 new { message = ex.InnerException?.Message ?? ex.Message }
             );
+        }
+    }
+
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPost("{id:guid}/mover-local")]
+    public async Task<ActionResult<ItemInventariadoDto>> MoveToLocal(
+        Guid id,
+        [FromBody] ItemInventariadoMoverLocalDto dto,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var updated = await _service.MoveToLocalAsync(
+                id,
+                dto,
+                GetUsuarioId(),
+                User.IsInRole("Administrador"),
+                cancellationToken
+            );
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 

@@ -15,6 +15,11 @@ public interface IItemInventariadoService
         bool usuarioAdministradorOuControleInterno,
         CancellationToken cancellationToken = default
     );
+    Task<IEnumerable<ItemInventariadoMovimentacaoLocalDto>> GetLocalMovementsAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    );
     Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<InconsistenciaInventarioDto>> GetInconsistenciasAsync(
         Guid usuarioAutenticadoId,
@@ -58,6 +63,13 @@ public interface IItemInventariadoService
     Task<bool> DeleteAsync(
         Guid id,
         string justificativa,
+        Guid usuarioId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    );
+    Task<ItemInventariadoDto?> MoveToLocalAsync(
+        Guid id,
+        ItemInventariadoMoverLocalDto dto,
         Guid usuarioId,
         bool usuarioAdministrador,
         CancellationToken cancellationToken = default

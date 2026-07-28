@@ -39,4 +39,5 @@ public class ItemInventariado : BaseEntity
     public Usuario? RevertidoEEstadoPorUsuario { get; set; }
     public Usuario? ExcluidoPorUsuario { get; set; }
     public ICollection<ItemInventarioFoto> Fotos { get; set; } = new List<ItemInventarioFoto>();
+    public ICollection<ItemInventariadoMovimentacaoLocal> MovimentacoesLocal { get; set; } = new List<ItemInventariadoMovimentacaoLocal>();
 }

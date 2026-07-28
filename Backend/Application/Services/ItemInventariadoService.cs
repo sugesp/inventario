@@ -102,6 +102,60 @@ public class ItemInventariadoService : IItemInventariadoService
         return items.Select(MapToDto);
     }
 
+    public async Task<IEnumerable<ItemInventariadoMovimentacaoLocalDto>> GetLocalMovementsAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.ItensInventariadosMovimentacoesLocal
+            .AsNoTracking()
+            .Where(x => x.DeletedAt == null)
+            .Include(x => x.ItemInventariado)
+                .ThenInclude(x => x!.Comissao)
+            .Include(x => x.LocalOrigem)
+            .Include(x => x.LocalDestino)
+            .Include(x => x.MovidoPorUsuario)
+            .AsQueryable();
+
+        if (!usuarioAdministradorOuControleInterno)
+        {
+            query = query.Where(x =>
+                x.ItemInventariado != null
+                && x.ItemInventariado.Comissao != null
+                && x.ItemInventariado.Comissao.DeletedAt == null
+                && x.ItemInventariado.Comissao.PresidenteId == usuarioAutenticadoId
+            );
+        }
+
+        return await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new ItemInventariadoMovimentacaoLocalDto
+            {
+                Id = x.Id,
+                ItemInventariadoId = x.ItemInventariadoId,
+                ComissaoId = x.ItemInventariado != null ? x.ItemInventariado.ComissaoId : null,
+                ComissaoAno = x.ItemInventariado != null && x.ItemInventariado.Comissao != null
+                    ? x.ItemInventariado.Comissao.Ano
+                    : null,
+                Tombamento = x.ItemInventariado != null
+                    ? (string.IsNullOrEmpty(x.ItemInventariado.TombamentoNovo)
+                        ? x.ItemInventariado.TombamentoAntigo
+                        : x.ItemInventariado.TombamentoNovo)
+                    : string.Empty,
+                Descricao = x.ItemInventariado != null ? x.ItemInventariado.Descricao : string.Empty,
+                LocalOrigemId = x.LocalOrigemId,
+                LocalOrigemNome = x.LocalOrigem != null ? x.LocalOrigem.Nome : string.Empty,
+                LocalDestinoId = x.LocalDestinoId,
+                LocalDestinoNome = x.LocalDestino != null ? x.LocalDestino.Nome : string.Empty,
+                MovidoPorUsuarioId = x.MovidoPorUsuarioId,
+                MovidoPorUsuarioNome = x.MovidoPorUsuario != null ? x.MovidoPorUsuario.Nome : string.Empty,
+                Justificativa = x.Justificativa,
+                MovidoEm = x.CreatedAt,
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await QueryBase()
@@ -589,6 +643,69 @@ public class ItemInventariadoService : IItemInventariadoService
         entity.ExcluidoPorUsuarioId = usuarioId;
 
         return await _context.SaveChangesAsync(cancellationToken) > 0;
+    }
+
+    public async Task<ItemInventariadoDto?> MoveToLocalAsync(
+        Guid id,
+        ItemInventariadoMoverLocalDto dto,
+        Guid usuarioId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var justificativa = ValidateJustificativa(dto.Justificativa);
+        var entity = await _context.ItensInventariados
+            .Include(x => x.Comissao)
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        if (entity is null)
+        {
+            return null;
+        }
+
+        if (!usuarioAdministrador && entity.Comissao?.PresidenteId != usuarioId)
+        {
+            throw new InvalidOperationException("Somente o presidente da comissão ou um administrador pode corrigir o local deste item.");
+        }
+
+        if (entity.LocalId == dto.LocalDestinoId)
+        {
+            throw new InvalidOperationException("Selecione um local diferente do local atual.");
+        }
+
+        var localDestino = await _context.Locais
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == dto.LocalDestinoId && x.DeletedAt == null, cancellationToken);
+        if (localDestino is null)
+        {
+            throw new InvalidOperationException("O local de destino não foi encontrado.");
+        }
+
+        if (!entity.ComissaoId.HasValue || localDestino.ComissaoId != entity.ComissaoId.Value)
+        {
+            throw new InvalidOperationException("O local de destino deve pertencer à mesma comissão do item.");
+        }
+
+        await EnsureTombamentoDisponivelNoLocalAsync(
+            entity.TombamentoNovo,
+            localDestino.Id,
+            entity.Id,
+            cancellationToken
+        );
+
+        _context.ItensInventariadosMovimentacoesLocal.Add(new ItemInventariadoMovimentacaoLocal
+        {
+            ItemInventariadoId = entity.Id,
+            LocalOrigemId = entity.LocalId,
+            LocalDestinoId = localDestino.Id,
+            MovidoPorUsuarioId = usuarioId,
+            Justificativa = justificativa,
+        });
+        entity.LocalId = localDestino.Id;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(entity.Id, cancellationToken);
     }
 
     public async Task<ItemInventariadoDto?> MarcarLancamentoEEstadoAsync(

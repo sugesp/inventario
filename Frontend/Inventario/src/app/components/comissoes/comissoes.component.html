@@ -104,6 +104,7 @@
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'excluidos'" (click)="setActiveTab('excluidos')">Itens excluídos</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'correcoes-local'" (click)="setActiveTab('correcoes-local')">Correções de local</button>
           </div>
         </div>
 
@@ -402,6 +403,57 @@
                     <td>{{ item.excluidoPorUsuarioNome || '-' }}</td>
                     <td>{{ item.excluidoEm | date:'dd/MM/yyyy HH:mm' }}</td>
                     <td class="motivo-exclusao">{{ item.motivoExclusao || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="activeTab === 'correcoes-local'">
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <label class="form-label mb-1">Correções de local</label>
+                <p class="section-card-hint mb-0">Histórico dos itens inventariados em local incorreto e posteriormente corrigidos.</p>
+              </div>
+              <button class="btn btn-primary" type="button" (click)="loadMovimentacoesLocal()"
+                [disabled]="loadingMovimentacoesLocal">
+                {{ loadingMovimentacoesLocal ? 'Atualizando...' : 'Atualizar' }}
+              </button>
+            </div>
+
+            <div class="inline-hint" *ngIf="loadingMovimentacoesLocal">
+              Carregando histórico de correções...
+            </div>
+            <div class="inline-hint"
+              *ngIf="!loadingMovimentacoesLocal && movimentacoesLocalDaComissao.length === 0">
+              Nenhuma correção de local foi registrada nesta comissão.
+            </div>
+
+            <div class="table-responsive"
+              *ngIf="!loadingMovimentacoesLocal && movimentacoesLocalDaComissao.length > 0">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Tombamento</th>
+                    <th>Descrição</th>
+                    <th>Local anterior</th>
+                    <th>Local correto</th>
+                    <th>Corrigido por</th>
+                    <th>Data</th>
+                    <th>Justificativa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let movimento of movimentacoesLocalDaComissao">
+                    <td>{{ movimento.tombamento || '-' }}</td>
+                    <td>{{ movimento.descricao || '-' }}</td>
+                    <td>{{ movimento.localOrigemNome || '-' }}</td>
+                    <td>{{ movimento.localDestinoNome || '-' }}</td>
+                    <td>{{ movimento.movidoPorUsuarioNome || '-' }}</td>
+                    <td>{{ movimento.movidoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="motivo-exclusao">{{ movimento.justificativa || '-' }}</td>
                   </tr>
                 </tbody>
               </table>
