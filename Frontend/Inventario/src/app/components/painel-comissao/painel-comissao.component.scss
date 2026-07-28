@@ -652,6 +652,24 @@
     color: #eaf2ff;
     box-shadow: 0 8px 22px rgba(0,0,0,.3);
   }
+
+  .mapa-contagem-wrapper {
+    border: 0;
+    background: transparent;
+  }
+
+  .mapa-contagem-wrapper span {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8);
+    white-space: nowrap;
+    pointer-events: none;
+  }
 }
 
 .ticker-icon {

@@ -24,6 +24,12 @@ interface AgrupamentoMapa {
   locais: Set<string>;
 }
 
+interface VisualizacaoMapa {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+}
+
 @Component({
   selector: 'app-painel-comissao',
   standalone: true,
@@ -38,6 +44,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   readonly anoAtual = new Date().getFullYear();
   readonly totalSecoes = 2;
   readonly chartLegendColor = '#d8e2f0';
+  private readonly mapaStorageKey = 'inventario.painel.mapa.visualizacao';
 
   agora = new Date();
   secaoAtiva = 0;
@@ -132,6 +139,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   private animationFrames: number[] = [];
   private mapa?: L.Map;
   private camadaAgrupamentos?: L.LayerGroup;
+  private visualizacaoMapaRestaurada = false;
 
   constructor(
     private readonly comissaoService: ComissaoService,
@@ -336,9 +344,13 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       return;
     }
 
+    const visualizacaoSalva = this.lerVisualizacaoMapa();
+    this.visualizacaoMapaRestaurada = visualizacaoSalva !== null;
     this.mapa = L.map(this.mapaElement.nativeElement, {
-      center: [-8.7612, -63.9004],
-      zoom: 12,
+      center: visualizacaoSalva
+        ? [visualizacaoSalva.latitude, visualizacaoSalva.longitude]
+        : [-8.7612, -63.9004],
+      zoom: visualizacaoSalva?.zoom ?? 12,
       zoomControl: true,
       attributionControl: true,
     });
@@ -347,6 +359,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       attribution: '&copy; OpenStreetMap',
     }).addTo(this.mapa);
     this.camadaAgrupamentos = L.layerGroup().addTo(this.mapa);
+    this.mapa.on('moveend zoomend', () => this.salvarVisualizacaoMapa());
     this.atualizarMapa();
   }
 
@@ -364,7 +377,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       limites.push(coordenada);
       const raio = Math.min(42, 10 + Math.sqrt(grupo.quantidade) * 5);
       L.circleMarker(coordenada, {
-        radius: raio,
+        radius: Math.max(raio, grupo.quantidade >= 100 ? 34 : 26),
         color: '#b9dcff',
         weight: 2,
         fillColor: grupo.quantidade > 20 ? '#e94560' : grupo.quantidade > 5 ? '#f5c451' : '#35c782',
@@ -375,10 +388,58 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
           { direction: 'top' }
         )
         .addTo(this.camadaAgrupamentos!);
+
+      L.marker(coordenada, {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: 'mapa-contagem-wrapper',
+          html: `<span>${grupo.quantidade} ${grupo.quantidade === 1 ? 'item' : 'itens'}</span>`,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+        }),
+      }).addTo(this.camadaAgrupamentos!);
     });
 
-    if (limites.length > 0) {
+    if (limites.length > 0 && !this.visualizacaoMapaRestaurada) {
       this.mapa.fitBounds(L.latLngBounds(limites), { padding: [55, 55], maxZoom: 18 });
+      this.visualizacaoMapaRestaurada = true;
+    }
+  }
+
+  private salvarVisualizacaoMapa(): void {
+    if (!this.mapa || typeof localStorage === 'undefined') {
+      return;
+    }
+
+    const centro = this.mapa.getCenter();
+    const visualizacao: VisualizacaoMapa = {
+      latitude: centro.lat,
+      longitude: centro.lng,
+      zoom: this.mapa.getZoom(),
+    };
+    localStorage.setItem(this.mapaStorageKey, JSON.stringify(visualizacao));
+  }
+
+  private lerVisualizacaoMapa(): VisualizacaoMapa | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    try {
+      const valor = localStorage.getItem(this.mapaStorageKey);
+      if (!valor) {
+        return null;
+      }
+
+      const visualizacao = JSON.parse(valor) as VisualizacaoMapa;
+      return Number.isFinite(visualizacao.latitude)
+        && Number.isFinite(visualizacao.longitude)
+        && Number.isFinite(visualizacao.zoom)
+        ? visualizacao
+        : null;
+    } catch {
+      return null;
     }
   }
 
