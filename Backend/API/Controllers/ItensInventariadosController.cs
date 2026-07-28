@@ -30,6 +30,17 @@ public class ItensInventariadosController : ControllerBase
     }
 
     [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
+    [HttpGet("excluidos")]
+    public async Task<ActionResult<IEnumerable<ItemInventariadoDto>>> GetDeleted(CancellationToken cancellationToken)
+    {
+        return Ok(await _service.GetDeletedAsync(
+            GetUsuarioId(),
+            User.IsInRole("Administrador") || User.IsInRole("ControleInterno"),
+            cancellationToken
+        ));
+    }
+
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemInventariadoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -115,8 +126,22 @@ public class ItensInventariadosController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        var updated = await _service.MarcarLancamentoEEstadoAsync(id, dto.Lancado, GetUsuarioId(), cancellationToken);
-        return updated is null ? NotFound() : Ok(updated);
+        try
+        {
+            var updated = await _service.MarcarLancamentoEEstadoAsync(
+                id,
+                dto.Lancado,
+                GetUsuarioId(),
+                dto.Justificativa,
+                User.IsInRole("Administrador"),
+                cancellationToken
+            );
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize(Roles = "Administrador,Inventario")]
@@ -152,7 +177,7 @@ public class ItensInventariadosController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Inventario")]
     [HttpPut("{id:guid}")]
     [HttpPost("{id:guid}/update")]
     [RequestSizeLimit(50_000_000)]
@@ -188,10 +213,27 @@ public class ItensInventariadosController : ControllerBase
 
     [Authorize(Roles = "Administrador")]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromBody] ItemInventariadoJustificativaDto dto,
+        CancellationToken cancellationToken
+    )
     {
-        var deleted = await _service.DeleteAsync(id, cancellationToken);
-        return deleted ? NoContent() : NotFound();
+        try
+        {
+            var deleted = await _service.DeleteAsync(
+                id,
+                dto.Justificativa,
+                GetUsuarioId(),
+                User.IsInRole("Administrador"),
+                cancellationToken
+            );
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     private Guid GetUsuarioId()

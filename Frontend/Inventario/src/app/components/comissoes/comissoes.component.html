@@ -103,6 +103,7 @@
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'excluidos'" (click)="setActiveTab('excluidos')">Itens excluídos</button>
           </div>
         </div>
 
@@ -355,6 +356,55 @@
                   </table>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="activeTab === 'excluidos'">
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <label class="form-label mb-1">Itens excluídos</label>
+                <p class="section-card-hint mb-0">Histórico auditável dos itens removidos desta comissão.</p>
+              </div>
+              <button class="btn btn-primary" type="button" (click)="loadItensExcluidosComissao()"
+                [disabled]="loadingItensExcluidos">
+                {{ loadingItensExcluidos ? 'Atualizando...' : 'Atualizar' }}
+              </button>
+            </div>
+
+            <div class="inline-hint" *ngIf="loadingItensExcluidos">
+              Carregando itens excluídos...
+            </div>
+            <div class="inline-hint" *ngIf="!loadingItensExcluidos && itensExcluidosDaComissao.length === 0">
+              Nenhum item foi excluído desta comissão.
+            </div>
+
+            <div class="table-responsive" *ngIf="!loadingItensExcluidos && itensExcluidosDaComissao.length > 0">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Tombamento</th>
+                    <th>Descrição</th>
+                    <th>Local</th>
+                    <th>Inventariado por</th>
+                    <th>Excluído por</th>
+                    <th>Data da exclusão</th>
+                    <th>Motivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of itensExcluidosDaComissao">
+                    <td>{{ item.tombamentoNovo || item.tombamentoAntigo || '-' }}</td>
+                    <td>{{ item.descricao || '-' }}</td>
+                    <td>{{ item.localNome || '-' }}</td>
+                    <td>{{ item.usuarioNome || '-' }}</td>
+                    <td>{{ item.excluidoPorUsuarioNome || '-' }}</td>
+                    <td>{{ item.excluidoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="motivo-exclusao">{{ item.motivoExclusao || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

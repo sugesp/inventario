@@ -251,6 +251,41 @@
   white-space: nowrap;
 }
 
+.btn-icon-warning {
+  color: #a86700 !important;
+}
+
+.btn-icon-danger {
+  color: #c52a39 !important;
+}
+
+.acao-auditoria-card {
+  max-width: 620px;
+}
+
+.acao-alerta {
+  padding: 12px 14px;
+  border: 1px solid #f0c4c9;
+  border-radius: 10px;
+  background: #fff5f6;
+  color: #8e2631;
+}
+
+.acao-contador {
+  display: block;
+  margin-top: 6px;
+  color: #718096;
+  text-align: right;
+}
+
+.acao-auditoria-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e1e7ef;
+}
+
 .action-tooltip {
   display: inline-flex;
 }

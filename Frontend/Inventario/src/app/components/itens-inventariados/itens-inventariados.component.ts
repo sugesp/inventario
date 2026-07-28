@@ -55,6 +55,10 @@ export class ItensInventariadosComponent implements OnInit {
   loadingFotos = false;
   fotoObjectUrls: Record<string, string> = {};
   updatingLancamentoIds = new Set<string>();
+  itemAcao: ItemInventariado | null = null;
+  tipoAcao: 'excluir' | 'reverter-eestado' | null = null;
+  justificativaAcao = '';
+  processandoAcao = false;
   mapOpen = false;
   mapTiles: MapTile[] = [];
   mapMarkers: MapMarker[] = [];
@@ -531,6 +535,83 @@ export class ItensInventariadosComponent implements OnInit {
       error: (error) => {
         this.updatingLancamentoIds.delete(item.id);
         this.toastr.error(error?.error?.message ?? 'Não foi possível atualizar o lançamento no E-Estado.');
+      },
+    });
+  }
+
+  openReverterEEstado(item: ItemInventariado): void {
+    this.itemAcao = item;
+    this.tipoAcao = 'reverter-eestado';
+    this.justificativaAcao = '';
+  }
+
+  openExcluirItem(item: ItemInventariado): void {
+    this.itemAcao = item;
+    this.tipoAcao = 'excluir';
+    this.justificativaAcao = '';
+  }
+
+  canExcluirItem(item: ItemInventariado): boolean {
+    if (this.authService.isAdmin) {
+      return true;
+    }
+
+    const usuarioId = this.authService.session?.userId;
+    return !!usuarioId && this.comissoes.some((comissao) =>
+      comissao.id === item.comissaoId && comissao.presidenteId === usuarioId
+    );
+  }
+
+  closeAcaoModal(): void {
+    if (this.processandoAcao) {
+      return;
+    }
+
+    this.itemAcao = null;
+    this.tipoAcao = null;
+    this.justificativaAcao = '';
+  }
+
+  confirmarAcao(): void {
+    const justificativa = this.justificativaAcao.trim();
+    if (!this.itemAcao || !this.tipoAcao || justificativa.length < 3) {
+      this.toastr.warning('Informe uma justificativa com pelo menos 3 caracteres.');
+      return;
+    }
+
+    this.processandoAcao = true;
+    if (this.tipoAcao === 'reverter-eestado') {
+      this.itemInventariadoService
+        .marcarLancamentoEEstado(this.itemAcao.id, false, justificativa)
+        .subscribe({
+          next: (updated) => {
+            this.itensInventariados = this.itensInventariados.map((item) =>
+              item.id === updated.id ? updated : item
+            );
+            this.processandoAcao = false;
+            this.closeAcaoModal();
+            this.toastr.success('Lançamento no E-Estado revertido com justificativa registrada.');
+          },
+          error: (error) => {
+            this.processandoAcao = false;
+            this.toastr.error(error?.error?.message ?? 'Não foi possível reverter o lançamento no E-Estado.');
+          },
+        });
+      return;
+    }
+
+    this.itemInventariadoService.delete(this.itemAcao.id, justificativa).subscribe({
+      next: () => {
+        const itemId = this.itemAcao?.id;
+        this.itensInventariados = this.itensInventariados.filter((item) => item.id !== itemId);
+        this.ensureValidPage();
+        this.processandoAcao = false;
+        this.closeAcaoModal();
+        this.toastr.success('Item excluído com justificativa registrada.');
+      },
+      error: (error) => {
+        this.processandoAcao = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível excluir o item inventariado.');
       },
     });
   }

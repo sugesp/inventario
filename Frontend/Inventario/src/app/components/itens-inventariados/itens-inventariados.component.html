@@ -175,6 +175,17 @@
                     <i *ngIf="!isUpdatingLancamento(item)" class="fa-solid fa-check" aria-hidden="true"></i>
                   </button>
                 </span>
+                <button *ngIf="canExcluirItem(item) && item.lancadoEEstado"
+                  class="btn btn-sm btn-icon-action btn-icon-warning" type="button"
+                  (click)="openReverterEEstado(item)" title="Reverter lançamento no E-Estado"
+                  aria-label="Reverter lançamento no E-Estado">
+                  <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                </button>
+                <button *ngIf="canExcluirItem(item)" class="btn btn-sm btn-icon-action btn-icon-danger"
+                  type="button" (click)="openExcluirItem(item)" title="Excluir item inventariado"
+                  aria-label="Excluir item inventariado">
+                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -197,6 +208,40 @@
       </div>
     </div>
   </section>
+</div>
+
+<div class="fotos-backdrop" *ngIf="itemAcao"></div>
+<div class="fotos-modal" *ngIf="itemAcao" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeAcaoModal()">
+  <div class="fotos-card acao-auditoria-card" (click)="$event.stopPropagation()">
+    <div class="fotos-header">
+      <div>
+        <h3>{{ tipoAcao === 'excluir' ? 'Excluir item inventariado' : 'Reverter lançamento no E-Estado' }}</h3>
+        <p>{{ itemAcao.descricao || itemAcao.tombamentoNovo || 'Item inventariado' }}</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeAcaoModal()"
+        [disabled]="processandoAcao"></button>
+    </div>
+    <form (ngSubmit)="confirmarAcao()">
+      <div class="fotos-body">
+        <p class="acao-alerta" *ngIf="tipoAcao === 'excluir'">
+          O item deixará de aparecer nas listagens e relatórios, mas será preservado no histórico da comissão.
+        </p>
+        <label class="form-label" for="justificativaAcao">Justificativa do motivo</label>
+        <textarea id="justificativaAcao" class="form-control" name="justificativaAcao"
+          [(ngModel)]="justificativaAcao" rows="5" minlength="3" maxlength="2000" required
+          placeholder="Descreva o motivo desta operação"></textarea>
+        <small class="acao-contador">{{ justificativaAcao.length }}/2000</small>
+      </div>
+      <div class="acao-auditoria-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeAcaoModal()"
+          [disabled]="processandoAcao">Cancelar</button>
+        <button class="btn btn-danger btn-filled" type="submit"
+          [disabled]="processandoAcao || justificativaAcao.trim().length < 3">
+          {{ processandoAcao ? 'Salvando...' : (tipoAcao === 'excluir' ? 'Excluir item' : 'Confirmar reversão') }}
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div class="mapa-backdrop" *ngIf="mapOpen"></div>

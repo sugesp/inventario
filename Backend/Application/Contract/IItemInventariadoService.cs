@@ -10,6 +10,11 @@ public interface IItemInventariadoService
         bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     );
+    Task<IEnumerable<ItemInventariadoDto>> GetDeletedAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    );
     Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<InconsistenciaInventarioDto>> GetInconsistenciasAsync(
         Guid usuarioAutenticadoId,
@@ -46,7 +51,15 @@ public interface IItemInventariadoService
         Guid id,
         bool lancado,
         Guid usuarioId,
+        string? justificativa,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     );
-    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(
+        Guid id,
+        string justificativa,
+        Guid usuarioId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    );
 }

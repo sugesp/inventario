@@ -39,6 +39,14 @@ export interface ItemInventariado {
   lancadoEEstadoPorUsuarioId?: string | null;
   lancadoEEstadoPorUsuarioNome?: string | null;
   lancadoEEstadoEm?: string | null;
+  motivoUltimaReversaoEEstado: string;
+  revertidoEEstadoPorUsuarioId?: string | null;
+  revertidoEEstadoPorUsuarioNome?: string | null;
+  revertidoEEstadoEm?: string | null;
+  motivoExclusao: string;
+  excluidoPorUsuarioId?: string | null;
+  excluidoPorUsuarioNome?: string | null;
+  excluidoEm?: string | null;
   fotos: ItemInventarioFoto[];
 }
 

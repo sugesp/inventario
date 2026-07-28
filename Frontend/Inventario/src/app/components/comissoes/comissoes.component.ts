@@ -16,7 +16,7 @@ import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
 import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
-type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias';
+type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'excluidos';
 
 interface LocalMapTile {
   url: string;
@@ -48,6 +48,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   loadingComissao = false;
   loadingInconsistencias = false;
   loadingItensInventariados = false;
+  loadingItensExcluidos = false;
   saving = false;
   savingMembers = false;
   savingLocal = false;
@@ -59,6 +60,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   editingLocalId: string | null = null;
   activeTab: ComissaoTab = 'resumo';
   itensInventariados: ItemInventariado[] = [];
+  itensExcluidos: ItemInventariado[] = [];
   inconsistenciasInventario: InconsistenciaInventario[] = [];
   memberTerm = '';
   memberPageNumber = 1;
@@ -528,7 +530,27 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       this.loadInconsistenciasInventario();
     } else if (tab === 'inconsistencias') {
       this.loadInconsistenciasInventario();
+    } else if (tab === 'excluidos') {
+      this.loadItensExcluidosComissao();
     }
+  }
+
+  loadItensExcluidosComissao(): void {
+    if (!this.editingId) {
+      return;
+    }
+
+    this.loadingItensExcluidos = true;
+    this.itemInventariadoService.getDeleted().subscribe({
+      next: (data) => {
+        this.itensExcluidos = data;
+        this.loadingItensExcluidos = false;
+      },
+      error: () => {
+        this.loadingItensExcluidos = false;
+        this.toastr.error('Não foi possível carregar os itens excluídos desta comissão.');
+      },
+    });
   }
 
   loadItensInventariadosComissao(): void {
@@ -573,6 +595,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   get itensInventariadosDaComissao(): ItemInventariado[] {
     return this.itensInventariados.filter((item) => item.comissaoId === this.editingId);
+  }
+
+  get itensExcluidosDaComissao(): ItemInventariado[] {
+    return this.itensExcluidos.filter((item) => item.comissaoId === this.editingId);
   }
 
   get totalOcorrenciasInconsistencias(): number {

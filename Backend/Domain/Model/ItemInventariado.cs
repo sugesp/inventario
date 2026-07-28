@@ -26,10 +26,17 @@ public class ItemInventariado : BaseEntity
     public bool LancadoEEstado { get; set; }
     public Guid? LancadoEEstadoPorUsuarioId { get; set; }
     public DateTime? LancadoEEstadoEm { get; set; }
+    public string MotivoUltimaReversaoEEstado { get; set; } = string.Empty;
+    public Guid? RevertidoEEstadoPorUsuarioId { get; set; }
+    public DateTime? RevertidoEEstadoEm { get; set; }
+    public string MotivoExclusao { get; set; } = string.Empty;
+    public Guid? ExcluidoPorUsuarioId { get; set; }
 
     public Local? Local { get; set; }
     public Usuario? Usuario { get; set; }
     public Comissao? Comissao { get; set; }
     public Usuario? LancadoEEstadoPorUsuario { get; set; }
+    public Usuario? RevertidoEEstadoPorUsuario { get; set; }
+    public Usuario? ExcluidoPorUsuario { get; set; }
     public ICollection<ItemInventarioFoto> Fotos { get; set; } = new List<ItemInventarioFoto>();
 }

@@ -35,5 +35,13 @@ public class ItemInventariadoDto
     public Guid? LancadoEEstadoPorUsuarioId { get; set; }
     public string? LancadoEEstadoPorUsuarioNome { get; set; }
     public DateTime? LancadoEEstadoEm { get; set; }
+    public string MotivoUltimaReversaoEEstado { get; set; } = string.Empty;
+    public Guid? RevertidoEEstadoPorUsuarioId { get; set; }
+    public string? RevertidoEEstadoPorUsuarioNome { get; set; }
+    public DateTime? RevertidoEEstadoEm { get; set; }
+    public string MotivoExclusao { get; set; } = string.Empty;
+    public Guid? ExcluidoPorUsuarioId { get; set; }
+    public string? ExcluidoPorUsuarioNome { get; set; }
+    public DateTime? ExcluidoEm { get; set; }
     public IReadOnlyCollection<ItemInventarioFotoDto> Fotos { get; set; } = Array.Empty<ItemInventarioFotoDto>();
 }

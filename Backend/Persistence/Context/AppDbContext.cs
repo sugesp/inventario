@@ -178,9 +178,19 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Latitude).HasPrecision(10, 8);
             entity.Property(x => x.Longitude).HasPrecision(11, 8);
             entity.Property(x => x.PrecisaoLocalizacao).HasPrecision(10, 2);
+            entity.Property(x => x.MotivoUltimaReversaoEEstado).HasMaxLength(2000);
+            entity.Property(x => x.MotivoExclusao).HasMaxLength(2000);
             entity.HasOne(x => x.LancadoEEstadoPorUsuario)
                 .WithMany()
                 .HasForeignKey(x => x.LancadoEEstadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.RevertidoEEstadoPorUsuario)
+                .WithMany()
+                .HasForeignKey(x => x.RevertidoEEstadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.ExcluidoPorUsuario)
+                .WithMany()
+                .HasForeignKey(x => x.ExcluidoPorUsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.Local)
                 .WithMany(x => x.ItensInventariados)

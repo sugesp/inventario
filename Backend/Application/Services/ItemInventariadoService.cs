@@ -66,6 +66,42 @@ public class ItemInventariadoService : IItemInventariadoService
         return items.Select(MapToDto);
     }
 
+    public async Task<IEnumerable<ItemInventariadoDto>> GetDeletedAsync(
+        Guid usuarioAutenticadoId,
+        bool usuarioAdministradorOuControleInterno,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.ItensInventariados
+            .AsNoTracking()
+            .Where(x => x.DeletedAt != null)
+            .Include(x => x.Local)
+                .ThenInclude(x => x!.Membros.Where(m => m.DeletedAt == null))
+                    .ThenInclude(x => x.Usuario)
+            .Include(x => x.Usuario)
+            .Include(x => x.LancadoEEstadoPorUsuario)
+            .Include(x => x.RevertidoEEstadoPorUsuario)
+            .Include(x => x.ExcluidoPorUsuario)
+            .Include(x => x.Comissao)
+            .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
+            .AsQueryable();
+
+        if (!usuarioAdministradorOuControleInterno)
+        {
+            query = query.Where(x =>
+                x.Comissao != null
+                && x.Comissao.DeletedAt == null
+                && x.Comissao.PresidenteId == usuarioAutenticadoId
+            );
+        }
+
+        var items = await query
+            .OrderByDescending(x => x.DeletedAt)
+            .ToListAsync(cancellationToken);
+
+        return items.Select(MapToDto);
+    }
+
     public async Task<ItemInventariadoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await QueryBase()
@@ -524,10 +560,17 @@ public class ItemInventariadoService : IItemInventariadoService
         return await GetByIdAsync(entity.Id, cancellationToken);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(
+        Guid id,
+        string justificativa,
+        Guid usuarioId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
     {
+        var motivo = ValidateJustificativa(justificativa);
         var entity = await _context.ItensInventariados
-            .Include(x => x.Fotos)
+            .Include(x => x.Comissao)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (entity is null)
@@ -535,13 +578,15 @@ public class ItemInventariadoService : IItemInventariadoService
             return false;
         }
 
+        if (!usuarioAdministrador && entity.Comissao?.PresidenteId != usuarioId)
+        {
+            throw new InvalidOperationException("Somente o presidente da comissão ou um administrador pode excluir este item.");
+        }
+
         entity.DeletedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
-
-        foreach (var foto in entity.Fotos)
-        {
-            _fileStorageService.Delete(foto.CaminhoRelativo);
-        }
+        entity.MotivoExclusao = motivo;
+        entity.ExcluidoPorUsuarioId = usuarioId;
 
         return await _context.SaveChangesAsync(cancellationToken) > 0;
     }
@@ -550,15 +595,35 @@ public class ItemInventariadoService : IItemInventariadoService
         Guid id,
         bool lancado,
         Guid usuarioId,
+        string? justificativa,
+        bool usuarioAdministrador,
         CancellationToken cancellationToken = default
     )
     {
         var entity = await _context.ItensInventariados
+            .Include(x => x.Comissao)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (entity is null)
         {
             return null;
+        }
+
+        if (!lancado)
+        {
+            if (!usuarioAdministrador && entity.Comissao?.PresidenteId != usuarioId)
+            {
+                throw new InvalidOperationException("Somente o presidente da comissão ou um administrador pode reverter o lançamento no E-Estado.");
+            }
+
+            if (!entity.LancadoEEstado)
+            {
+                throw new InvalidOperationException("Este item não está marcado como lançado no E-Estado.");
+            }
+
+            entity.MotivoUltimaReversaoEEstado = ValidateJustificativa(justificativa);
+            entity.RevertidoEEstadoPorUsuarioId = usuarioId;
+            entity.RevertidoEEstadoEm = DateTime.UtcNow;
         }
 
         entity.LancadoEEstado = lancado;
@@ -580,6 +645,8 @@ public class ItemInventariadoService : IItemInventariadoService
                     .ThenInclude(x => x.Usuario)
             .Include(x => x.Usuario)
             .Include(x => x.LancadoEEstadoPorUsuario)
+            .Include(x => x.RevertidoEEstadoPorUsuario)
+            .Include(x => x.ExcluidoPorUsuario)
             .Include(x => x.Comissao)
             .Include(x => x.Fotos.Where(f => f.DeletedAt == null));
     }
@@ -975,6 +1042,14 @@ public class ItemInventariadoService : IItemInventariadoService
             LancadoEEstadoPorUsuarioId = entity.LancadoEEstadoPorUsuarioId,
             LancadoEEstadoPorUsuarioNome = entity.LancadoEEstadoPorUsuario?.Nome,
             LancadoEEstadoEm = entity.LancadoEEstadoEm,
+            MotivoUltimaReversaoEEstado = entity.MotivoUltimaReversaoEEstado,
+            RevertidoEEstadoPorUsuarioId = entity.RevertidoEEstadoPorUsuarioId,
+            RevertidoEEstadoPorUsuarioNome = entity.RevertidoEEstadoPorUsuario?.Nome,
+            RevertidoEEstadoEm = entity.RevertidoEEstadoEm,
+            MotivoExclusao = entity.MotivoExclusao,
+            ExcluidoPorUsuarioId = entity.ExcluidoPorUsuarioId,
+            ExcluidoPorUsuarioNome = entity.ExcluidoPorUsuario?.Nome,
+            ExcluidoEm = entity.DeletedAt,
             Fotos = entity.Fotos
                 .Where(x => x.DeletedAt == null)
                 .OrderBy(x => x.CreatedAt)
@@ -987,6 +1062,22 @@ public class ItemInventariadoService : IItemInventariadoService
                 })
                 .ToArray()
         };
+    }
+
+    private static string ValidateJustificativa(string? justificativa)
+    {
+        var motivo = justificativa?.Trim() ?? string.Empty;
+        if (motivo.Length < 3)
+        {
+            throw new InvalidOperationException("Informe uma justificativa com pelo menos 3 caracteres.");
+        }
+
+        if (motivo.Length > 2000)
+        {
+            throw new InvalidOperationException("A justificativa deve ter no máximo 2000 caracteres.");
+        }
+
+        return motivo;
     }
 
     private static string ExtractTipo(string html)

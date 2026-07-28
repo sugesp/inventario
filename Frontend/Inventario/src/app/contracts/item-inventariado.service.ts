@@ -14,6 +14,10 @@ export class ItemInventariadoService {
     return this.http.get<ItemInventariado[]>(this.baseUrl);
   }
 
+  getDeleted(): Observable<ItemInventariado[]> {
+    return this.http.get<ItemInventariado[]>(`${this.baseUrl}/excluidos`);
+  }
+
   getInconsistencias(): Observable<InconsistenciaInventario[]> {
     return this.http.get<InconsistenciaInventario[]>(`${this.baseUrl}/inconsistencias`);
   }
@@ -38,8 +42,17 @@ export class ItemInventariadoService {
     });
   }
 
-  marcarLancamentoEEstado(itemId: string, lancado: boolean): Observable<ItemInventariado> {
-    return this.http.post<ItemInventariado>(`${this.baseUrl}/${itemId}/lancamento-eestado`, { lancado });
+  marcarLancamentoEEstado(itemId: string, lancado: boolean, justificativa?: string): Observable<ItemInventariado> {
+    return this.http.post<ItemInventariado>(`${this.baseUrl}/${itemId}/lancamento-eestado`, {
+      lancado,
+      justificativa,
+    });
+  }
+
+  delete(itemId: string, justificativa: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${itemId}`, {
+      body: { justificativa },
+    });
   }
 
   create(payload: FormData): Observable<ItemInventariado> {
