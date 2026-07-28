@@ -1,0 +1,173 @@
+<main class="painel-tv">
+  <header class="painel-header">
+    <div class="identidade">
+      <img src="assets/brasao.png" alt="Brasão do Estado de Rondônia" />
+      <span class="identidade-divisor"></span>
+      <div>
+        <span class="sistema">SGPA · Gestão Patrimonial</span>
+        <h1>Comissão de Inventário <strong>{{ anoComissao }}</strong></h1>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="comissao-status" [class.inativa]="comissao?.status !== 'Ativa'">
+        <span class="status-dot"></span>
+        Comissão {{ comissao?.status ?? 'indisponível' }}
+      </div>
+      <time [attr.datetime]="agora.toISOString()">{{ agora | date: 'HH:mm:ss' }}</time>
+    </div>
+  </header>
+
+  <section class="painel-conteudo" *ngIf="!carregando; else loadingTemplate">
+    <div class="pagina pagina-indicadores" [class.ativa]="secaoAtiva === 0">
+      <div class="painel-unificado">
+      <div class="secao-titulo">
+        <div>
+          <span class="eyebrow">Acompanhamento em tempo real</span>
+          <h2>Avanço do inventário patrimonial</h2>
+        </div>
+        <div class="titulo-indicadores">
+          <span class="indicador-hoje"><i class="fa-solid fa-calendar-day"></i>
+            <strong>{{ itensInventariadosHoje | number: '1.0-0' }}</strong> inventariados hoje
+          </span>
+          <span class="atualizacao" [class.atualizando]="atualizando">
+            <i></i>{{ atualizando ? 'Atualizando dados' : 'Atualização automática ativa' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <article class="kpi-card kpi-destaque">
+          <span class="kpi-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+          <div class="kpi-conteudo">
+            <span class="kpi-label">Itens inventariados</span>
+            <strong>{{ itensExibidos | number: '1.0-0' }} <small>/ {{ metaItens | number: '1.0-0' }}</small></strong>
+            <span class="kpi-apoio">{{ comissao?.quantidadeItensRestantes ?? 0 | number: '1.0-0' }} itens restantes</span>
+          </div>
+        </article>
+
+        <article class="kpi-card kpi-progresso">
+          <div class="gauge" [style.--progresso]="percentualProgresso">
+            <div>
+              <strong>{{ percentualProgresso | number: '1.0-1' }}%</strong>
+              <span>concluído</span>
+            </div>
+          </div>
+          <span class="kpi-label">Progresso geral</span>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon"><i class="fa-solid fa-building-circle-check"></i></span>
+          <div class="kpi-conteudo">
+            <span class="kpi-label">Locais inventariados</span>
+            <strong>{{ locaisExibidos }} <small>/ {{ locais.length }}</small></strong>
+            <span class="kpi-apoio">unidades com registros</span>
+          </div>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+          <div class="kpi-conteudo">
+            <span class="kpi-label">Lançados no E-Estado</span>
+            <strong>{{ eEstadoExibidos | number: '1.0-0' }}</strong>
+            <span class="kpi-apoio">{{ itens.length ? (itensLancadosEEstado / itens.length * 100 | number: '1.0-0') : 0 }}% dos itens registrados</span>
+          </div>
+        </article>
+
+        <article class="kpi-card">
+          <span class="kpi-icon"><i class="fa-solid fa-user-group"></i></span>
+          <div class="kpi-conteudo">
+            <span class="kpi-label">Membros da comissão</span>
+            <strong>{{ membrosExibidos }}</strong>
+            <span class="kpi-apoio">equipe ativa</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="graficos-grid">
+        <article class="grafico-card">
+          <div class="grafico-cabecalho">
+            <div><span>Desempenho</span><h3>Progresso por local</h3></div>
+            <span class="badge">Top 10</span>
+          </div>
+          <div class="grafico-area">
+            <canvas baseChart type="bar" [data]="progressoPorLocal" [options]="barHorizontalOptions"></canvas>
+          </div>
+        </article>
+
+        <article class="grafico-card">
+          <div class="grafico-cabecalho">
+            <div><span>Qualidade patrimonial</span><h3>Estado de conservação</h3></div>
+            <span class="badge">{{ itens.length | number: '1.0-0' }} itens</span>
+          </div>
+          <div class="grafico-area">
+            <canvas baseChart type="doughnut" [data]="estadoConservacao" [options]="doughnutOptions"></canvas>
+          </div>
+        </article>
+
+        <article class="grafico-card">
+          <div class="grafico-cabecalho">
+            <div><span>Produtividade · últimos 30 dias</span><h3>Inventário por dia</h3></div>
+          </div>
+          <div class="grafico-area">
+            <canvas baseChart type="line" [data]="inventarioPorDia" [options]="lineOptions"></canvas>
+          </div>
+        </article>
+      </div>
+      </div>
+    </div>
+
+    <div class="pagina pagina-mapa" [class.ativa]="secaoAtiva === 1">
+      <div class="mapa-cabecalho">
+        <div>
+          <span class="eyebrow">Distribuição geográfica</span>
+          <h2>Concentração dos itens inventariados</h2>
+          <p>Agrupamentos em perímetros de 30 metros · somente coordenadas com precisão de até 30 m</p>
+        </div>
+        <div class="mapa-resumo">
+          <span><strong>{{ itensGpsValidos | number: '1.0-0' }}</strong> itens no mapa</span>
+          <span class="mapa-descartados"><strong>{{ itensGpsDesconsiderados | number: '1.0-0' }}</strong> fora da precisão</span>
+        </div>
+      </div>
+      <div class="mapa-card">
+        <div #mapaInventario class="mapa" aria-label="Mapa de concentração dos itens inventariados"></div>
+        <div class="mapa-legenda">
+          <span><i class="baixo"></i> Até 5 itens</span>
+          <span><i class="medio"></i> 6 a 20 itens</span>
+          <span><i class="alto"></i> Mais de 20 itens</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <ng-template #loadingTemplate>
+    <section class="painel-conteudo skeleton-wrapper" aria-label="Carregando painel">
+      <div class="skeleton-title skeleton"></div>
+      <div class="skeleton-kpis">
+        <div class="skeleton skeleton-card" *ngFor="let card of [1, 2, 3, 4, 5]"></div>
+      </div>
+      <div class="skeleton-charts">
+        <div class="skeleton skeleton-chart" *ngFor="let chart of [1, 2, 3]"></div>
+      </div>
+    </section>
+  </ng-template>
+
+  <footer class="painel-footer">
+    <span class="ticker-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+    <div class="ticker-viewport">
+      <div class="ticker-text"><span>{{ textoTicker }}</span><span aria-hidden="true">{{ textoTicker }}</span></div>
+    </div>
+    <div class="controles">
+      <button type="button" (click)="voltarSecao()" title="Página anterior (seta esquerda)"
+        aria-label="Voltar para a página anterior"><i class="fa-solid fa-backward-step"></i></button>
+      <button type="button" class="controle-principal" (click)="alternarRotacao()"
+        [title]="rotacaoPausada ? 'Continuar rotação (espaço)' : 'Pausar rotação (espaço)'"
+        [attr.aria-label]="rotacaoPausada ? 'Continuar rotação automática' : 'Pausar rotação automática'">
+        <i class="fa-solid" [class.fa-play]="rotacaoPausada" [class.fa-pause]="!rotacaoPausada"></i>
+      </button>
+      <button type="button" (click)="avancarSecao()" title="Próxima página (seta direita)"
+        aria-label="Avançar para a próxima página"><i class="fa-solid fa-forward-step"></i></button>
+      <div class="paginacao"><span [class.ativa]="secaoAtiva === 0"></span><span [class.ativa]="secaoAtiva === 1"></span></div>
+    </div>
+  </footer>
+</main>

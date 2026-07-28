@@ -18,11 +18,15 @@ public class ItensInventariadosController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno,PainelTV")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ItemInventariadoDto>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAllAsync(GetUsuarioId(), User.IsInRole("Administrador") || User.IsInRole("ControleInterno"), cancellationToken));
+        return Ok(await _service.GetAllAsync(
+            GetUsuarioId(),
+            User.IsInRole("Administrador") || User.IsInRole("ControleInterno") || User.IsInRole("PainelTV"),
+            cancellationToken
+        ));
     }
 
     [Authorize(Roles = "Administrador,Inventario,ControleInterno")]

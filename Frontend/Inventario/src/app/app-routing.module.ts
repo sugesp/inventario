@@ -9,6 +9,7 @@ import { GtiTecnicoGuard } from './auth/gti-tecnico.guard';
 import { InventarioGuard } from './auth/contratos.guard';
 import { InventarioConsultaGuard } from './auth/inventario-consulta.guard';
 import { LevantamentoGuard } from './auth/levantamento.guard';
+import { PainelGuard } from './auth/painel.guard';
 import { AuthComponent } from './components/auth/auth.component';
 import { ComissoesComponent } from './components/comissoes/comissoes.component';
 import { ConsultaTombamentoComponent } from './components/consulta-tombamento/consulta-tombamento.component';
@@ -47,6 +48,13 @@ const routes: Routes = [
   { path: 'laudos-tecnicos', component: LaudosTecnicosComponent, canActivate: [GtiLaudosGuard], data: { title: 'Laudos Técnicos' } },
   { path: 'transferencias', component: TransferenciasComponent, canActivate: [GtiGestorGuard], data: { title: 'Transferências' } },
   { path: 'transferencias/:id', component: TransferirItensComponent, canActivate: [GtiGestorGuard], data: { title: 'Editar transferência' } },
+  {
+    path: 'painel',
+    canActivate: [PainelGuard],
+    loadComponent: () => import('./components/painel-comissao/painel-comissao.component')
+      .then((component) => component.PainelComissaoComponent),
+    data: { title: 'Painel da Comissão' },
+  },
   { path: '**', component: NotFoundComponent, data: { title: 'Pagina nao encontrada' } },
 ];
 

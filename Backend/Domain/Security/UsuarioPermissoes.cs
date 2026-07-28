@@ -6,6 +6,7 @@ public static class UsuarioPermissoes
 {
     public const string Administrador = "Administrador";
     public const string Inventario = "Inventario";
+    public const string PainelTv = "PainelTV";
     public const string Levantamento = "Levantamento";
     public const string ControleInterno = "ControleInterno";
     public const string GtiTecnico = "GTI.Tecnico";
@@ -15,6 +16,7 @@ public static class UsuarioPermissoes
     {
         Administrador,
         Inventario,
+        PainelTv,
         Levantamento,
         ControleInterno,
         GtiTecnico,
@@ -23,7 +25,7 @@ public static class UsuarioPermissoes
 
     public static readonly IReadOnlyList<string> Administracao = new[] { Administrador };
     public static readonly IReadOnlyList<string> CadastroGestao = new[] { Administrador, Inventario };
-    public static readonly IReadOnlyList<string> ConsultaInventario = new[] { Administrador, Inventario, ControleInterno };
+    public static readonly IReadOnlyList<string> ConsultaInventario = new[] { Administrador, Inventario, PainelTv, ControleInterno };
     public static readonly IReadOnlyList<string> GestorUnidade = new[] { Administrador, GtiGestor };
     public static readonly IReadOnlyList<string> Operador = new[] { Administrador, Inventario, Levantamento, GtiTecnico };
     public static readonly IReadOnlyList<string> RevisorAprovador = new[] { Administrador, GtiGestor };
@@ -87,6 +89,7 @@ public static class UsuarioPermissoes
         {
             _ when string.Equals(normalized, Administrador, StringComparison.OrdinalIgnoreCase) => Administrador,
             _ when string.Equals(normalized, Inventario, StringComparison.OrdinalIgnoreCase) => Inventario,
+            _ when string.Equals(normalized, PainelTv, StringComparison.OrdinalIgnoreCase) => PainelTv,
             _ when string.Equals(normalized, Levantamento, StringComparison.OrdinalIgnoreCase) => Levantamento,
             _ when string.Equals(normalized, ControleInterno, StringComparison.OrdinalIgnoreCase) => ControleInterno,
             _ when string.Equals(normalized, "Controle Interno", StringComparison.OrdinalIgnoreCase) => ControleInterno,

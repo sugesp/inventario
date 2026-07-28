@@ -1,4 +1,4 @@
-export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'Levantamento', 'ControleInterno', 'GTI.Tecnico', 'GTI.Gestor'] as const;
+export const USER_PERMISSIONS = ['Administrador', 'Inventario', 'PainelTV', 'Levantamento', 'ControleInterno', 'GTI.Tecnico', 'GTI.Gestor'] as const;
 
 export type UserPermission = typeof USER_PERMISSIONS[number];
 
@@ -18,6 +18,11 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
     value: 'Inventario',
     label: 'Inventário',
     description: 'Acessa o módulo de inventário; membros de comissão podem inventariar e presidentes editam sua comissão.',
+  },
+  {
+    value: 'PainelTV',
+    label: 'Painel da Comissão (TV)',
+    description: 'Acessa exclusivamente o painel de acompanhamento da comissão de inventário.',
   },
   {
     value: 'Levantamento',
@@ -44,7 +49,7 @@ export const USER_PERMISSION_OPTIONS: UserPermissionOption[] = [
 export const PERMISSION_GROUPS = {
   administracao: ['Administrador'],
   cadastroGestao: ['Administrador', 'Inventario'],
-  consultaInventario: ['Administrador', 'Inventario', 'ControleInterno'],
+  consultaInventario: ['Administrador', 'Inventario', 'PainelTV', 'ControleInterno'],
   gestorUnidade: ['Administrador', 'GTI.Gestor'],
   solicitante: ['Administrador', 'Inventario', 'Levantamento'],
   operador: ['Administrador', 'Inventario', 'Levantamento', 'GTI.Tecnico'],

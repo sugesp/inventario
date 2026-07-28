@@ -74,7 +74,11 @@ export class AppComponent {
   }
 
   get showShellLayout(): boolean {
-    return this.authService.isAuthenticated && !this.isAuthRoute;
+    return this.authService.isAuthenticated && !this.isAuthRoute && !this.isFullscreenRoute;
+  }
+
+  get isFullscreenRoute(): boolean {
+    return this.isCurrentRoute(['/painel']);
   }
 
   get canShowInventoryGroup(): boolean {

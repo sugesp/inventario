@@ -109,7 +109,7 @@
 </div>
 
 <ng-template #authLayout>
-  <section class="content-wrapper auth-wrapper">
+  <section [class.content-wrapper]="!isFullscreenRoute" [class.auth-wrapper]="!isFullscreenRoute">
     <router-outlet></router-outlet>
   </section>
 </ng-template>

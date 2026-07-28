@@ -40,6 +40,11 @@ export class AuthService {
     return this.hasPermission('Administrador');
   }
 
+  get isPainelTvOnly(): boolean {
+    const permissoes = this.session?.permissoes ?? [];
+    return permissoes.length === 1 && permissoes[0] === 'PainelTV';
+  }
+
   get canManageInventario(): boolean {
     return this.isAdmin || this.hasPermission('Inventario');
   }

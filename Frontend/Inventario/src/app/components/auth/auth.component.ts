@@ -39,7 +39,7 @@ export class AuthComponent {
     private readonly toastr: ToastrService
   ) {
     if (this.authService.isAuthenticated) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate([this.authService.isPainelTvOnly ? '/painel' : '/dashboard']);
     }
   }
 
@@ -73,7 +73,7 @@ export class AuthComponent {
             ? 'Login realizado. Você precisa alterar a senha padrão para continuar.'
             : 'Login realizado com sucesso.'
         );
-        this.router.navigate(['/dashboard']);
+        this.router.navigate([this.authService.isPainelTvOnly ? '/painel' : '/dashboard']);
       },
       error: (error) => {
         this.loading = false;
