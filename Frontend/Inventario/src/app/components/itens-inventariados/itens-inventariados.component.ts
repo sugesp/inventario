@@ -204,12 +204,47 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
-  get localOptions(): string[] {
-    return [...new Set(this.itensAcessiveis
-      .filter((item) => !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter)
-      .map((item) => item.localNome)
-      .filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b));
+  get setorFilterOptions(): SearchableSelectOption[] {
+    const comissaoIdsAcessiveis = new Set(
+      this.comissoes
+        .filter((comissao) => !this.selectedComissaoFilter || comissao.id === this.selectedComissaoFilter)
+        .map((comissao) => comissao.id)
+    );
+    const locaisDisponiveis = this.locais.filter((local) => comissaoIdsAcessiveis.has(local.comissaoId));
+    const locaisPorComissao = new Map<string, Local[]>();
+    locaisDisponiveis.forEach((local) => {
+      const locais = locaisPorComissao.get(local.comissaoId) ?? [];
+      locais.push(local);
+      locaisPorComissao.set(local.comissaoId, locais);
+    });
+
+    const options: SearchableSelectOption[] = [];
+    locaisPorComissao.forEach((locais) => {
+      const ids = new Set(locais.map((local) => local.id));
+      const locaisPorSuperior = new Map<string | null, Local[]>();
+      locais.forEach((local) => {
+        const superiorId = local.localSuperiorId && ids.has(local.localSuperiorId)
+          ? local.localSuperiorId
+          : null;
+        const subordinados = locaisPorSuperior.get(superiorId) ?? [];
+        subordinados.push(local);
+        locaisPorSuperior.set(superiorId, subordinados);
+      });
+      locaisPorSuperior.forEach((itens) => itens.sort((a, b) => a.nome.localeCompare(b.nome)));
+
+      const adicionarOptions = (superiorId: string | null, depth: number): void => {
+        (locaisPorSuperior.get(superiorId) ?? []).forEach((local) => {
+          options.push({
+            value: local.id,
+            label: this.getLocalHierarchyLabel(local),
+            depth,
+          });
+          adicionarOptions(local.id, depth + 1);
+        });
+      };
+      adicionarOptions(null, 0);
+    });
+    return options;
   }
 
   get itensAcessiveis(): ItemInventariado[] {
@@ -225,7 +260,8 @@ export class ItensInventariadosComponent implements OnInit {
   get filteredItensInventariados(): ItemInventariado[] {
     return this.itensAcessiveis.filter((item) => {
       const matchesComissao = !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter;
-      const matchesLocal = !this.selectedLocalFilter || item.localNome === this.selectedLocalFilter;
+      const matchesLocal = !this.selectedLocalFilter
+        || this.localPertenceAoSetor(item.localId, this.selectedLocalFilter);
       const matchesLancamento =
         this.selectedLancamentoFilter === 'todos'
         || (this.selectedLancamentoFilter === 'lancados' && item.lancadoEEstado)
@@ -240,6 +276,22 @@ export class ItensInventariadosComponent implements OnInit {
 
       return matchesComissao && matchesLocal && matchesLancamento && matchesTombamento;
     });
+  }
+
+  private localPertenceAoSetor(localId: string, setorId: string): boolean {
+    const locaisPorId = new Map(this.locais.map((local) => [local.id, local]));
+    const visitados = new Set<string>();
+    let atualId: string | null | undefined = localId;
+
+    while (atualId && !visitados.has(atualId)) {
+      if (atualId === setorId) {
+        return true;
+      }
+      visitados.add(atualId);
+      atualId = locaisPorId.get(atualId)?.localSuperiorId;
+    }
+
+    return false;
   }
 
   get itensGeolocalizados(): ItemInventariado[] {

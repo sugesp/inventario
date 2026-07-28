@@ -44,10 +44,15 @@
 
       <div>
         <label class="form-label">Filtrar por setor</label>
-        <select class="form-select" [(ngModel)]="selectedLocalFilter" (ngModelChange)="onFiltersChanged()">
-          <option value="">Todos os setores</option>
-          <option *ngFor="let local of localOptions" [value]="local">{{ local }}</option>
-        </select>
+        <app-searchable-select
+          name="filtroSetor"
+          [(ngModel)]="selectedLocalFilter"
+          (ngModelChange)="onFiltersChanged()"
+          [options]="setorFilterOptions"
+          [emptyOptionLabel]="'Todos os setores'"
+          placeholder="Todos os setores"
+          searchPlaceholder="Pesquisar setor por nome ou hierarquia"
+        ></app-searchable-select>
       </div>
 
       <div>
