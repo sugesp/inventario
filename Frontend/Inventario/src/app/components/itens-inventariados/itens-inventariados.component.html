@@ -310,13 +310,15 @@
 
         <div class="mt-3">
           <label class="form-label" for="localDestinoMovimentacao">Local correto</label>
-          <select id="localDestinoMovimentacao" class="form-select" name="localDestinoMovimentacao"
-            [(ngModel)]="localDestinoId" required>
-            <option value="" disabled>Selecione o local de destino</option>
-            <option *ngFor="let local of locaisDestinoDisponiveis" [value]="local.id">
-              {{ local.nome }}
-            </option>
-          </select>
+          <app-searchable-select
+            id="localDestinoMovimentacao"
+            name="localDestinoMovimentacao"
+            [(ngModel)]="localDestinoId"
+            [options]="locaisDestinoOptions"
+            placeholder="Selecione o local de destino"
+            searchPlaceholder="Pesquisar local por nome ou hierarquia"
+            [required]="true"
+          ></app-searchable-select>
         </div>
 
         <div class="mt-3">

@@ -10,6 +10,7 @@ import { ItemInventariado, ItemInventarioFoto } from '../../contracts/item-inven
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
+import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
 interface MapTile {
   url: string;
@@ -645,6 +646,62 @@ export class ItensInventariadosComponent implements OnInit {
         && local.id !== this.itemMoverLocal.localId
       )
       .sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+
+  get locaisDestinoOptions(): SearchableSelectOption[] {
+    if (!this.itemMoverLocal?.comissaoId) {
+      return [];
+    }
+
+    const locaisDaComissao = this.locais.filter(
+      (local) => local.comissaoId === this.itemMoverLocal?.comissaoId
+    );
+    const idsDaComissao = new Set(locaisDaComissao.map((local) => local.id));
+    const locaisPorSuperior = new Map<string | null, Local[]>();
+
+    locaisDaComissao.forEach((local) => {
+      const superiorId = local.localSuperiorId && idsDaComissao.has(local.localSuperiorId)
+        ? local.localSuperiorId
+        : null;
+      const subordinados = locaisPorSuperior.get(superiorId) ?? [];
+      subordinados.push(local);
+      locaisPorSuperior.set(superiorId, subordinados);
+    });
+    locaisPorSuperior.forEach((locais) => locais.sort((a, b) => a.nome.localeCompare(b.nome)));
+
+    const options: SearchableSelectOption[] = [];
+    const adicionarOptions = (superiorId: string | null, depth: number): void => {
+      (locaisPorSuperior.get(superiorId) ?? []).forEach((local) => {
+        const localAtual = local.id === this.itemMoverLocal?.localId;
+        if (!localAtual) {
+          options.push({
+            value: local.id,
+            label: this.getLocalHierarchyLabel(local),
+            depth,
+          });
+        }
+        adicionarOptions(local.id, localAtual ? depth : depth + 1);
+      });
+    };
+    adicionarOptions(null, 0);
+    return options;
+  }
+
+  private getLocalHierarchyLabel(local: Local): string {
+    const locaisDaComissao = this.locais.filter((item) => item.comissaoId === local.comissaoId);
+    const locaisPorId = new Map(locaisDaComissao.map((item) => [item.id, item]));
+    const caminho = [local.nome];
+    const visitados = new Set<string>([local.id]);
+    let superiorId = local.localSuperiorId;
+
+    while (superiorId && locaisPorId.has(superiorId) && !visitados.has(superiorId)) {
+      const superior = locaisPorId.get(superiorId)!;
+      caminho.unshift(superior.nome);
+      visitados.add(superiorId);
+      superiorId = superior.localSuperiorId;
+    }
+
+    return caminho.join(' > ');
   }
 
   confirmarMovimentacaoLocal(): void {
