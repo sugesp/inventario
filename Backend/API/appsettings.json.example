@@ -9,7 +9,8 @@
     "Secret": "troque-esta-chave-jwt-por-uma-sequencia-segura-com-32-caracteres",
     "Issuer": "Inventario.API",
     "Audience": "Inventario.App",
-    "ExpiresMinutes": 480
+    "ExpiresMinutes": 480,
+    "PainelTvExpiresMinutes": 43200
   },
   "Audit": {
     "LogsPath": "logs/audit"

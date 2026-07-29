@@ -17,6 +17,8 @@ namespace Application.Services;
 public class AuthService : IAuthService
 {
     private const string DefaultPassword = "12345678";
+    private const int DefaultTokenExpirationMinutes = 480;
+    private const int DefaultPainelTvTokenExpirationMinutes = 43200;
     private const string SystemAdminCpf = "00000000000";
     private const string StatusPendente = "Pendente";
     private const string StatusAtivo = "Ativo";
@@ -418,9 +420,18 @@ public class AuthService : IAuthService
         var secret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
         var issuer = jwtSection["Issuer"] ?? "Inventario.API";
         var audience = jwtSection["Audience"] ?? "Inventario.App";
-        var expiresMinutes = int.TryParse(jwtSection["ExpiresMinutes"], out var value) ? value : 480;
-        var expiresAt = DateTime.UtcNow.AddMinutes(expiresMinutes);
         var permissoes = UsuarioPermissoes.Deserialize(usuario.PermissoesJson);
+        var isPainelTvOnly = permissoes.Count == 1 && permissoes.Contains(UsuarioPermissoes.PainelTv);
+        var expirationSetting = isPainelTvOnly
+            ? jwtSection["PainelTvExpiresMinutes"]
+            : jwtSection["ExpiresMinutes"];
+        var defaultExpirationMinutes = isPainelTvOnly
+            ? DefaultPainelTvTokenExpirationMinutes
+            : DefaultTokenExpirationMinutes;
+        var expiresMinutes = int.TryParse(expirationSetting, out var value) && value > 0
+            ? value
+            : defaultExpirationMinutes;
+        var expiresAt = DateTime.UtcNow.AddMinutes(expiresMinutes);
 
         var claims = new List<Claim>
         {
