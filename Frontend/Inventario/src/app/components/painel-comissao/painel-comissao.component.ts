@@ -215,6 +215,10 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     return this.comissao?.quantidadeItensLocalizados ?? this.itens.length;
   }
 
+  get itensSemTombamentoEEstado(): number {
+    return this.itens.filter((item) => !this.normalizarTombamento(item.tombamentoNovo)).length;
+  }
+
   get locaisInventariados(): number {
     return new Set(this.itens.map((item) => item.localId).filter(Boolean)).size;
   }
@@ -621,7 +625,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   private animarKpis(): void {
     this.animationFrames.forEach((frame) => cancelAnimationFrame(frame));
     this.animationFrames = [
-      this.animarNumero(this.itensExibidos, this.quantidadeLocalizados, (valor) => (this.itensExibidos = valor)),
+      this.animarNumero(this.itensExibidos, this.itens.length, (valor) => (this.itensExibidos = valor)),
       this.animarNumero(this.locaisExibidos, this.locaisInventariados, (valor) => (this.locaisExibidos = valor)),
       this.animarNumero(this.eEstadoExibidos, this.itensLancadosEEstado, (valor) => (this.eEstadoExibidos = valor)),
       this.animarNumero(this.membrosExibidos, this.membrosAtivos, (valor) => (this.membrosExibidos = valor)),
@@ -676,7 +680,11 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   private montarEstadoConservacao(): void {
     const estados = ['Bom', 'Regular', 'Inservível'];
     const valores = estados.map((estado) =>
-      this.itens.filter((item) => this.normalizar(item.estadoConservacao) === this.normalizar(estado)).length
+      this.itens.filter((item) =>
+        estado === 'Inservível'
+          ? this.normalizar(item.status) === this.normalizar(estado)
+          : this.normalizar(item.estadoConservacao) === this.normalizar(estado)
+      ).length
     );
 
     this.estadoConservacao = {

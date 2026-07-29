@@ -42,7 +42,7 @@
           <div class="kpi-conteudo">
             <span class="kpi-label">Itens inventariados</span>
             <strong>{{ itensExibidos | number: '1.0-0' }} <small>/ {{ metaItens | number: '1.0-0' }}</small></strong>
-            <span class="kpi-apoio">{{ comissao?.quantidadeItensRestantes ?? 0 | number: '1.0-0' }} itens restantes</span>
+            <span class="kpi-apoio">Sendo {{ itensSemTombamentoEEstado | number: '1.0-0' }} sem tombamento no E-Estado</span>
           </div>
         </article>
 
