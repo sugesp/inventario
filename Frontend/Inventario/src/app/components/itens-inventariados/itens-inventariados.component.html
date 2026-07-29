@@ -34,6 +34,13 @@
     </div>
 
     <div class="filters-grid" *ngIf="!loadingItens && itensAcessiveis.length > 0">
+      <div class="filter-search">
+        <label class="form-label" for="buscaItensInventariados">Buscar na listagem</label>
+        <input id="buscaItensInventariados" class="form-control" type="search"
+          [(ngModel)]="searchFilter" (ngModelChange)="onFiltersChanged()"
+          placeholder="Tombamento, descrição, responsável, local, veículo...">
+      </div>
+
       <div>
         <label class="form-label">Filtrar por comissão</label>
         <select class="form-select" [(ngModel)]="selectedComissaoFilter" (ngModelChange)="onComissaoFilterChange()">
@@ -76,7 +83,7 @@
 
       <div class="filters-actions">
         <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()"
-          [disabled]="!selectedComissaoFilter && !selectedLocalFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'">
+          [disabled]="!searchFilter && !selectedComissaoFilter && !selectedLocalFilter && selectedLancamentoFilter === 'todos' && selectedTombamentoFilter === 'todos'">
           Limpar filtros
         </button>
       </div>

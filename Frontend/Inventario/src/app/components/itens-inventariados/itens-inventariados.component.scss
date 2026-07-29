@@ -106,6 +106,10 @@
   margin-bottom: 18px;
 }
 
+.filter-search {
+  grid-column: 1 / -1;
+}
+
 .filters-actions {
   display: flex;
   align-items: flex-end;

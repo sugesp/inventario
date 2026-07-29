@@ -49,6 +49,7 @@ export class ItensInventariadosComponent implements OnInit {
   loadingComissoes = false;
   selectedComissaoFilter = '';
   selectedLocalFilter = '';
+  searchFilter = '';
   selectedLancamentoFilter: 'todos' | 'lancados' | 'pendentes' = 'todos';
   selectedTombamentoFilter: 'todos' | 'sem-tombamento-eestado' | 'sem-tombamento-antigo' | 'sem-ambos-tombamentos' = 'todos';
   pageNumber = 1;
@@ -262,6 +263,7 @@ export class ItensInventariadosComponent implements OnInit {
       const matchesComissao = !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter;
       const matchesLocal = !this.selectedLocalFilter
         || this.localPertenceAoSetor(item.localId, this.selectedLocalFilter);
+      const matchesSearch = this.matchesSearchFilter(item);
       const matchesLancamento =
         this.selectedLancamentoFilter === 'todos'
         || (this.selectedLancamentoFilter === 'lancados' && item.lancadoEEstado)
@@ -274,8 +276,56 @@ export class ItensInventariadosComponent implements OnInit {
         || (this.selectedTombamentoFilter === 'sem-tombamento-antigo' && !hasTombamentoAntigo)
         || (this.selectedTombamentoFilter === 'sem-ambos-tombamentos' && !hasTombamentoNovo && !hasTombamentoAntigo);
 
-      return matchesComissao && matchesLocal && matchesLancamento && matchesTombamento;
+      return matchesComissao && matchesLocal && matchesSearch && matchesLancamento && matchesTombamento;
     });
+  }
+
+  private matchesSearchFilter(item: ItemInventariado): boolean {
+    const searchTerms = this.normalizeSearchValue(this.searchFilter)
+      .split(' ')
+      .filter((term) => term.length > 0);
+    if (searchTerms.length === 0) {
+      return true;
+    }
+
+    const tombamentosSemPontuacao = [
+      item.tombamentoNovo,
+      item.tombamentoAntigo,
+    ]
+      .map((tombamento) => tombamento?.replace(/\D/g, '') ?? '')
+      .join(' ');
+    const searchableValue = this.normalizeSearchValue([
+      item.tombamentoNovo,
+      item.tombamentoAntigo,
+      tombamentosSemPontuacao,
+      item.descricao,
+      item.localNome,
+      ...(item.localMembrosNomes ?? []),
+      item.usuarioNome,
+      item.comissaoAno,
+      item.comissaoStatus,
+      item.status,
+      item.estadoConservacao,
+      item.observacao,
+      item.justificativaInservivel,
+      item.placa,
+      item.chassi,
+      item.placaSeguranca,
+      item.marca,
+      item.modelo,
+      item.lancadoEEstado ? 'lançado e-estado' : 'pendente não lançado e-estado',
+    ].join(' '));
+
+    return searchTerms.every((term) => searchableValue.includes(term));
+  }
+
+  private normalizeSearchValue(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
   }
 
   private localPertenceAoSetor(localId: string, setorId: string): boolean {
@@ -318,6 +368,7 @@ export class ItensInventariadosComponent implements OnInit {
   clearFilters(): void {
     this.selectedComissaoFilter = '';
     this.selectedLocalFilter = '';
+    this.searchFilter = '';
     this.selectedLancamentoFilter = 'todos';
     this.selectedTombamentoFilter = 'todos';
     this.onFiltersChanged();
