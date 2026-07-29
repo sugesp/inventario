@@ -122,11 +122,11 @@
         <div>
           <span class="eyebrow">Distribuição geográfica</span>
           <h2>Concentração dos itens inventariados</h2>
-          <p>Agrupamentos em perímetros de 30 metros · somente coordenadas com precisão de até 30 m</p>
+          <p>Agrupamento por local cadastrado · coordenadas herdadas da unidade superior quando necessário</p>
         </div>
         <div class="mapa-resumo">
           <span><strong>{{ itensGpsValidos | number: '1.0-0' }}</strong> itens no mapa</span>
-          <span class="mapa-descartados"><strong>{{ itensGpsDesconsiderados | number: '1.0-0' }}</strong> fora da precisão</span>
+          <span class="mapa-descartados"><strong>{{ itensGpsDesconsiderados | number: '1.0-0' }}</strong> locais representados</span>
         </div>
       </div>
       <div class="mapa-card">

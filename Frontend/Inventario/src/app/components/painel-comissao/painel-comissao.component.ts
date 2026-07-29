@@ -229,21 +229,12 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get itensGpsValidos(): number {
-    return this.itensGeorreferenciadosUnicos.length;
+    return this.agruparItensPorLocal().reduce((total, grupo) => total + grupo.quantidade, 0);
   }
 
   get itensGpsDesconsiderados(): number {
-    const tombamentosComGpsValido = new Set(
-      this.itensGeorreferenciadosUnicos.map((item) => this.normalizarTombamento(item.tombamentoNovo))
-    );
-    return new Set(this.itens
-      .filter((item) =>
-        item.latitude != null
-        && item.longitude != null
-        && (item.precisaoLocalizacao == null || item.precisaoLocalizacao > 30)
-      )
-      .map((item) => this.normalizarTombamento(item.tombamentoNovo))
-      .filter((tombamento) => tombamento && !tombamentosComGpsValido.has(tombamento))
+    return new Set(
+      this.agruparItensPorLocal().flatMap((grupo) => [...grupo.locais])
     ).size;
   }
 
@@ -365,7 +356,11 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       attribution: '&copy; OpenStreetMap',
     }).addTo(this.mapa);
     this.camadaAgrupamentos = L.layerGroup().addTo(this.mapa);
-    this.mapa.on('moveend zoomend', () => this.salvarVisualizacaoMapa());
+    this.mapa.on('moveend', () => this.salvarVisualizacaoMapa());
+    this.mapa.on('zoomend', () => {
+      this.salvarVisualizacaoMapa();
+      this.atualizarMapa();
+    });
     this.atualizarMapa();
   }
 
@@ -375,15 +370,27 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     this.camadaAgrupamentos.clearLayers();
-    const agrupamentos = this.agruparItensGeorreferenciados();
+    const agrupamentos = this.agruparItensPorLocal();
+    const agrupamentosPosicionados = this.distribuirAgrupamentosNoMapa(agrupamentos);
     const limites: L.LatLngExpression[] = [];
 
-    agrupamentos.forEach((grupo) => {
-      const coordenada: L.LatLngExpression = [grupo.latitude, grupo.longitude];
-      limites.push(coordenada);
-      const raio = Math.min(42, 10 + Math.sqrt(grupo.quantidade) * 5);
+    agrupamentosPosicionados.forEach(({ grupo, coordenada, deslocado }) => {
+      const coordenadaOriginal: L.LatLngExpression = [grupo.latitude, grupo.longitude];
+      limites.push(coordenadaOriginal);
+      const raio = this.calcularRaioMarcador(grupo.quantidade);
+
+      if (deslocado) {
+        L.polyline([coordenadaOriginal, coordenada], {
+          color: '#8fb8df',
+          weight: 1.5,
+          opacity: .75,
+          dashArray: '4 5',
+          interactive: false,
+        }).addTo(this.camadaAgrupamentos!);
+      }
+
       L.circleMarker(coordenada, {
-        radius: Math.max(raio, grupo.quantidade >= 100 ? 34 : 26),
+        radius: raio,
         color: '#b9dcff',
         weight: 2,
         fillColor: grupo.quantidade > 20 ? '#e94560' : grupo.quantidade > 5 ? '#f5c451' : '#35c782',
@@ -411,6 +418,52 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       this.mapa.fitBounds(L.latLngBounds(limites), { padding: [55, 55], maxZoom: 18 });
       this.visualizacaoMapaRestaurada = true;
     }
+  }
+
+  private distribuirAgrupamentosNoMapa(
+    agrupamentos: AgrupamentoMapa[]
+  ): Array<{ grupo: AgrupamentoMapa; coordenada: L.LatLng; deslocado: boolean }> {
+    if (!this.mapa) {
+      return [];
+    }
+
+    const posicionados: Array<{ ponto: L.Point; raio: number }> = [];
+    return [...agrupamentos]
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .map((grupo) => {
+        const pontoOriginal = this.mapa!.latLngToLayerPoint([grupo.latitude, grupo.longitude]);
+        const raio = this.calcularRaioMarcador(grupo.quantidade);
+        let ponto = pontoOriginal;
+
+        for (let tentativa = 0; tentativa < 120; tentativa += 1) {
+          const colide = posicionados.some((posicionado) =>
+            ponto.distanceTo(posicionado.ponto) < raio + posicionado.raio + 8
+          );
+          if (!colide) {
+            break;
+          }
+
+          const anel = Math.floor(tentativa / 12) + 1;
+          const angulo = (tentativa % 12) * Math.PI / 6 + anel * .35;
+          const distancia = anel * 24;
+          ponto = L.point(
+            pontoOriginal.x + Math.cos(angulo) * distancia,
+            pontoOriginal.y + Math.sin(angulo) * distancia
+          );
+        }
+
+        posicionados.push({ ponto, raio });
+        return {
+          grupo,
+          coordenada: this.mapa!.layerPointToLatLng(ponto),
+          deslocado: ponto.distanceTo(pontoOriginal) > 1,
+        };
+      });
+  }
+
+  private calcularRaioMarcador(quantidade: number): number {
+    const raio = Math.min(42, 10 + Math.sqrt(quantidade) * 5);
+    return Math.max(raio, quantidade >= 100 ? 34 : 26);
   }
 
   private salvarVisualizacaoMapa(): void {
@@ -449,59 +502,68 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     }
   }
 
-  private agruparItensGeorreferenciados(): AgrupamentoMapa[] {
-    const grupos: AgrupamentoMapa[] = [];
-    this.itensGeorreferenciadosUnicos.forEach((item) => {
-        const latitude = item.latitude as number;
-        const longitude = item.longitude as number;
-        const grupo = grupos.find((atual) =>
-          this.distanciaEmMetros(latitude, longitude, atual.latitude, atual.longitude) <= 30
-        );
+  private agruparItensPorLocal(): AgrupamentoMapa[] {
+    const locaisPorId = new Map(this.locais.map((local) => [local.id, local]));
+    const itensPorLocal = new Map<string, ItemInventariado[]>();
+    this.itens.forEach((item) => {
+      const itens = itensPorLocal.get(item.localId) ?? [];
+      itens.push(item);
+      itensPorLocal.set(item.localId, itens);
+    });
 
-        if (!grupo) {
-          grupos.push({
-            latitude,
-            longitude,
-            quantidade: 1,
-            locais: new Set([item.localNome]),
-          });
-          return;
-        }
+    const coordenadaFallback = [...itensPorLocal.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([localId]) => this.resolverCoordenadaLocal(localId, locaisPorId))
+      .find((coordenada) => coordenada !== null) ?? null;
+    const gruposPorCoordenada = new Map<string, AgrupamentoMapa>();
 
-        grupo.latitude = (grupo.latitude * grupo.quantidade + latitude) / (grupo.quantidade + 1);
-        grupo.longitude = (grupo.longitude * grupo.quantidade + longitude) / (grupo.quantidade + 1);
-        grupo.quantidade += 1;
-        grupo.locais.add(item.localNome);
+    itensPorLocal.forEach((itens, localId) => {
+      const coordenada = this.resolverCoordenadaLocal(localId, locaisPorId) ?? coordenadaFallback;
+      if (!coordenada) {
+        return;
+      }
+
+      const localNome = locaisPorId.get(localId)?.nome ?? itens[0]?.localNome ?? 'Local não informado';
+      const chave = `${coordenada.latitude.toFixed(7)},${coordenada.longitude.toFixed(7)}`;
+      const grupo = gruposPorCoordenada.get(chave);
+      if (grupo) {
+        grupo.quantidade += itens.length;
+        grupo.locais.add(localNome);
+        return;
+      }
+
+      gruposPorCoordenada.set(chave, {
+        latitude: coordenada.latitude,
+        longitude: coordenada.longitude,
+        quantidade: itens.length,
+        locais: new Set([localNome]),
       });
-    return grupos;
+    });
+
+    return [...gruposPorCoordenada.values()];
   }
 
-  private get itensGeorreferenciadosUnicos(): ItemInventariado[] {
-    const itensPorTombamento = new Map<string, ItemInventariado>();
-    this.itens
-      .filter((item) =>
-        item.latitude != null
-        && item.longitude != null
-        && item.precisaoLocalizacao != null
-        && item.precisaoLocalizacao <= 30
-      )
-      .sort((a, b) => new Date(b.dataInventario).getTime() - new Date(a.dataInventario).getTime())
-      .forEach((item) => {
-        const tombamento = this.normalizarTombamento(item.tombamentoNovo);
-        if (tombamento && !itensPorTombamento.has(tombamento)) {
-          itensPorTombamento.set(tombamento, item);
-        }
-      });
-    return [...itensPorTombamento.values()];
-  }
+  private resolverCoordenadaLocal(
+    localId: string,
+    locaisPorId: Map<string, Local>
+  ): { latitude: number; longitude: number } | null {
+    const visitados = new Set<string>();
+    let local: Local | undefined = locaisPorId.get(localId);
 
-  private distanciaEmMetros(latA: number, lngA: number, latB: number, lngB: number): number {
-    const radianos = (valor: number): number => valor * Math.PI / 180;
-    const deltaLat = radianos(latB - latA);
-    const deltaLng = radianos(lngB - lngA);
-    const calculo = Math.sin(deltaLat / 2) ** 2
-      + Math.cos(radianos(latA)) * Math.cos(radianos(latB)) * Math.sin(deltaLng / 2) ** 2;
-    return 6371000 * 2 * Math.atan2(Math.sqrt(calculo), Math.sqrt(1 - calculo));
+    while (local && !visitados.has(local.id)) {
+      visitados.add(local.id);
+      if (
+        local.latitude != null
+        && local.longitude != null
+        && Number.isFinite(local.latitude)
+        && Number.isFinite(local.longitude)
+      ) {
+        return { latitude: local.latitude, longitude: local.longitude };
+      }
+      local = local.localSuperiorId ? locaisPorId.get(local.localSuperiorId) : undefined;
+    }
+
+    return null;
   }
 
   private escaparHtml(valor: string): string {
