@@ -251,6 +251,7 @@ public class ItensInventariadosController : ControllerBase
 
     [Authorize(Roles = "Administrador")]
     [HttpDelete("{id:guid}")]
+    [HttpPost("{id:guid}/excluir")]
     public async Task<IActionResult> Delete(
         Guid id,
         [FromBody] ItemInventariadoJustificativaDto dto,

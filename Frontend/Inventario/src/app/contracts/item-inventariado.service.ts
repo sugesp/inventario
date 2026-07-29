@@ -54,8 +54,8 @@ export class ItemInventariadoService {
   }
 
   delete(itemId: string, justificativa: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${itemId}`, {
-      body: { justificativa },
+    return this.http.post<void>(`${this.baseUrl}/${itemId}/excluir`, {
+      justificativa,
     });
   }
 
