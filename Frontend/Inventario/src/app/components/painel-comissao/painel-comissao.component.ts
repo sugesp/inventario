@@ -511,14 +511,11 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
       itensPorLocal.set(item.localId, itens);
     });
 
-    const coordenadaFallback = [...itensPorLocal.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
-      .map(([localId]) => this.resolverCoordenadaLocal(localId, locaisPorId))
-      .find((coordenada) => coordenada !== null) ?? null;
     const gruposPorCoordenada = new Map<string, AgrupamentoMapa>();
 
     itensPorLocal.forEach((itens, localId) => {
-      const coordenada = this.resolverCoordenadaLocal(localId, locaisPorId) ?? coordenadaFallback;
+      const coordenada = this.resolverCoordenadaLocal(localId, locaisPorId)
+        ?? this.resolverCoordenadaPredominanteDosItens(itens);
       if (!coordenada) {
         return;
       }
@@ -564,6 +561,52 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     return null;
+  }
+
+  private resolverCoordenadaPredominanteDosItens(
+    itens: ItemInventariado[]
+  ): { latitude: number; longitude: number } | null {
+    const agrupamentos: Array<{ latitude: number; longitude: number; quantidade: number }> = [];
+
+    itens
+      .filter((item) =>
+        item.latitude != null
+        && item.longitude != null
+        && Number.isFinite(item.latitude)
+        && Number.isFinite(item.longitude)
+        && item.precisaoLocalizacao != null
+        && item.precisaoLocalizacao <= 30
+      )
+      .forEach((item) => {
+        const latitude = item.latitude as number;
+        const longitude = item.longitude as number;
+        const grupo = agrupamentos.find((atual) =>
+          this.distanciaEmMetros(latitude, longitude, atual.latitude, atual.longitude) <= 30
+        );
+
+        if (!grupo) {
+          agrupamentos.push({ latitude, longitude, quantidade: 1 });
+          return;
+        }
+
+        grupo.latitude = (grupo.latitude * grupo.quantidade + latitude) / (grupo.quantidade + 1);
+        grupo.longitude = (grupo.longitude * grupo.quantidade + longitude) / (grupo.quantidade + 1);
+        grupo.quantidade += 1;
+      });
+
+    const predominante = agrupamentos.sort((a, b) => b.quantidade - a.quantidade)[0];
+    return predominante
+      ? { latitude: predominante.latitude, longitude: predominante.longitude }
+      : null;
+  }
+
+  private distanciaEmMetros(latA: number, lngA: number, latB: number, lngB: number): number {
+    const radianos = (valor: number): number => valor * Math.PI / 180;
+    const deltaLat = radianos(latB - latA);
+    const deltaLng = radianos(lngB - lngA);
+    const calculo = Math.sin(deltaLat / 2) ** 2
+      + Math.cos(radianos(latA)) * Math.cos(radianos(latB)) * Math.sin(deltaLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(calculo), Math.sqrt(1 - calculo));
   }
 
   private escaparHtml(valor: string): string {
