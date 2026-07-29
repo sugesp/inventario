@@ -68,6 +68,7 @@ export interface ItemInventariado {
 }
 
 export interface InconsistenciaInventario {
+  tipo: 'TombamentoDuplicado' | 'FotoAusente';
   tombamento: string;
   descricao: string;
   comissaoId?: string | null;
@@ -91,6 +92,7 @@ export interface InconsistenciaInventarioOcorrencia {
   estadoConservacao: string;
   dataInventario: string;
   observacao: string;
+  fotosAusentes: string[];
 }
 
 export interface ConsultaPublicaBem {

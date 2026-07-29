@@ -2,6 +2,7 @@ namespace Application.DTO.ItemInventariado;
 
 public class InconsistenciaInventarioDto
 {
+    public string Tipo { get; set; } = string.Empty;
     public string Tombamento { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public Guid? ComissaoId { get; set; }
@@ -26,4 +27,5 @@ public class InconsistenciaInventarioOcorrenciaDto
     public string EstadoConservacao { get; set; } = string.Empty;
     public DateTime DataInventario { get; set; }
     public string Observacao { get; set; } = string.Empty;
+    public IReadOnlyCollection<string> FotosAusentes { get; set; } = Array.Empty<string>();
 }

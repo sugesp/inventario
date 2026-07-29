@@ -171,7 +171,7 @@ public class ItemInventariadoService : IItemInventariadoService
     )
     {
         var query = QueryBase()
-            .Where(x => x.ComissaoId != null && !string.IsNullOrWhiteSpace(x.TombamentoNovo));
+            .Where(x => x.ComissaoId != null);
 
         if (!usuarioAdministradorOuControleInterno)
         {
@@ -185,7 +185,8 @@ public class ItemInventariadoService : IItemInventariadoService
 
         var items = await query.ToListAsync(cancellationToken);
 
-        return items
+        var tombamentosDuplicados = items
+            .Where(x => !string.IsNullOrWhiteSpace(x.TombamentoNovo))
             .Select(x => new
             {
                 Item = x,
@@ -206,6 +207,7 @@ public class ItemInventariadoService : IItemInventariadoService
             .ThenBy(group => group.TombamentoNormalizado)
             .Select(group => new InconsistenciaInventarioDto
             {
+                Tipo = "TombamentoDuplicado",
                 Tombamento = group.TombamentoNormalizado,
                 Descricao = group.Items
                     .OrderByDescending(x => x.DataInventario)
@@ -218,29 +220,70 @@ public class ItemInventariadoService : IItemInventariadoService
                 Ocorrencias = group.Items
                     .OrderByDescending(x => x.DataInventario)
                     .ThenBy(x => x.Local?.Nome)
-                    .Select(x => new InconsistenciaInventarioOcorrenciaDto
-                    {
-                        ItemInventariadoId = x.Id,
-                        TombamentoNovo = x.TombamentoNovo,
-                        TombamentoAntigo = x.TombamentoAntigo,
-                        Descricao = x.Descricao,
-                        LocalId = x.LocalId,
-                        LocalNome = x.Local?.Nome ?? string.Empty,
-                        LocalMembrosNomes = x.Local?.Membros
-                            .Where(m => m.DeletedAt == null && m.Usuario != null)
-                            .OrderBy(m => m.Usuario!.Nome)
-                            .Select(m => m.Usuario!.Nome)
-                            .ToArray() ?? Array.Empty<string>(),
-                        UsuarioId = x.UsuarioId,
-                        UsuarioNome = x.Usuario?.Nome ?? string.Empty,
-                        Status = x.Status,
-                        EstadoConservacao = x.EstadoConservacao,
-                        DataInventario = x.DataInventario,
-                        Observacao = x.Observacao
-                    })
+                    .Select(MapInconsistenciaOcorrencia)
                     .ToArray()
             })
             .ToList();
+
+        var fotosAusentes = items
+            .Select(item => new
+            {
+                Item = item,
+                FotosAusentes = item.Fotos
+                    .Where(foto => !_fileStorageService.Exists(foto.CaminhoRelativo))
+                    .Select(foto => foto.NomeOriginal)
+                    .ToArray()
+            })
+            .Where(x => x.FotosAusentes.Length > 0)
+            .Select(x =>
+            {
+                var ocorrencia = MapInconsistenciaOcorrencia(x.Item);
+                ocorrencia.FotosAusentes = x.FotosAusentes;
+                return new InconsistenciaInventarioDto
+                {
+                    Tipo = "FotoAusente",
+                    Tombamento = string.IsNullOrWhiteSpace(x.Item.TombamentoNovo)
+                        ? x.Item.TombamentoAntigo
+                        : x.Item.TombamentoNovo,
+                    Descricao = x.Item.Descricao,
+                    ComissaoId = x.Item.ComissaoId,
+                    ComissaoAno = x.Item.Comissao?.Ano,
+                    QuantidadeOcorrencias = x.FotosAusentes.Length,
+                    QuantidadeLocais = 1,
+                    Ocorrencias = new[] { ocorrencia }
+                };
+            });
+
+        return tombamentosDuplicados
+            .Concat(fotosAusentes)
+            .OrderByDescending(x => x.ComissaoAno)
+            .ThenBy(x => x.Tipo)
+            .ThenBy(x => x.Tombamento)
+            .ToList();
+    }
+
+    private static InconsistenciaInventarioOcorrenciaDto MapInconsistenciaOcorrencia(ItemInventariado item)
+    {
+        return new InconsistenciaInventarioOcorrenciaDto
+        {
+            ItemInventariadoId = item.Id,
+            TombamentoNovo = item.TombamentoNovo,
+            TombamentoAntigo = item.TombamentoAntigo,
+            Descricao = item.Descricao,
+            LocalId = item.LocalId,
+            LocalNome = item.Local?.Nome ?? string.Empty,
+            LocalMembrosNomes = item.Local?.Membros
+                .Where(m => m.DeletedAt == null && m.Usuario != null)
+                .OrderBy(m => m.Usuario!.Nome)
+                .Select(m => m.Usuario!.Nome)
+                .ToArray() ?? Array.Empty<string>(),
+            UsuarioId = item.UsuarioId,
+            UsuarioNome = item.Usuario?.Nome ?? string.Empty,
+            Status = item.Status,
+            EstadoConservacao = item.EstadoConservacao,
+            DataInventario = item.DataInventario,
+            Observacao = item.Observacao
+        };
     }
 
     public async Task<ConsultaPublicaBemDto?> ConsultarResumoPublicoAsync(string tombamento, CancellationToken cancellationToken = default)

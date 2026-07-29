@@ -303,7 +303,7 @@
             <div class="section-card-header">
               <div>
                 <label class="form-label mb-1">Inconsistências</label>
-                <p class="section-card-hint mb-0">Itens encontrados em mais de um local nesta comissão.</p>
+                <p class="section-card-hint mb-0">Tombamentos encontrados em mais de um local e arquivos de fotos ausentes.</p>
               </div>
               <button class="btn btn-primary" type="button" (click)="loadInconsistenciasInventario()" [disabled]="loadingInconsistencias">
                 {{ loadingInconsistencias ? 'Atualizando...' : 'Atualizar' }}
@@ -319,7 +319,7 @@
             </div>
 
             <div class="inconsistencia-summary" *ngIf="!loadingInconsistencias && inconsistenciasDaComissao.length > 0">
-              <span>{{ inconsistenciasDaComissao.length }} tombamento(s) inconsistente(s)</span>
+              <span>{{ inconsistenciasDaComissao.length }} inconsistência(s)</span>
               <span>{{ totalOcorrenciasInconsistencias }} ocorrência(s) para revisar</span>
             </div>
 
@@ -327,11 +327,12 @@
               <div class="inconsistencia-item" *ngFor="let inconsistencia of inconsistenciasDaComissao">
                 <div class="inconsistencia-head">
                   <div>
-                    <strong>{{ inconsistencia.tombamento || 'Sem tombamento' }}</strong>
+                    <strong>{{ inconsistencia.tipo === 'FotoAusente' ? 'Foto ausente' : 'Tombamento duplicado' }} · {{ inconsistencia.tombamento || 'Sem tombamento' }}</strong>
                     <small>{{ inconsistencia.descricao || 'Descrição não informada' }}</small>
-                    <small>Locais envolvidos: {{ getInconsistenciaLocaisLabel(inconsistencia) }}</small>
+                    <small>{{ inconsistencia.tipo === 'FotoAusente' ? 'Local' : 'Locais envolvidos' }}: {{ getInconsistenciaLocaisLabel(inconsistencia) }}</small>
                   </div>
-                  <span>{{ inconsistencia.quantidadeLocais }} locais</span>
+                  <span *ngIf="inconsistencia.tipo === 'TombamentoDuplicado'">{{ inconsistencia.quantidadeLocais }} locais</span>
+                  <span *ngIf="inconsistencia.tipo === 'FotoAusente'">{{ inconsistencia.quantidadeOcorrencias }} foto(s) ausente(s)</span>
                 </div>
 
                 <div class="table-responsive">
@@ -351,7 +352,12 @@
                         <td>{{ ocorrencia.usuarioNome || '-' }}</td>
                         <td>{{ ocorrencia.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
                         <td>{{ ocorrencia.status || '-' }}</td>
-                        <td>{{ ocorrencia.estadoConservacao || '-' }}</td>
+                        <td>
+                          {{ ocorrencia.estadoConservacao || '-' }}
+                          <small *ngIf="ocorrencia.fotosAusentes.length">
+                            Arquivos ausentes: {{ ocorrencia.fotosAusentes.join(', ') }}
+                          </small>
+                        </td>
                       </tr>
                     </tbody>
                   </table>

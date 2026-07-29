@@ -78,6 +78,23 @@ public class FileStorageService : IFileStorageService
         }
     }
 
+    public bool Exists(string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return File.Exists(ResolveAbsolutePath(relativePath));
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     private string ResolveAbsolutePath(string relativePath)
     {
         var normalizedPath = SanitizeRelativePath(relativePath);

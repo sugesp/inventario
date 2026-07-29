@@ -14,5 +14,6 @@ public interface IFileStorageService
         string? downloadFileName = null,
         CancellationToken cancellationToken = default
     );
+    bool Exists(string relativePath);
     void Delete(string relativePath);
 }
