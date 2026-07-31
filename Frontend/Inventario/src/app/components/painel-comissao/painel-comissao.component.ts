@@ -374,7 +374,7 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     this.camadaAgrupamentos.clearLayers();
-    const agrupamentos = this.agruparItensPorLocal();
+    const agrupamentos = this.agruparAgrupamentosPorZoom(this.agruparItensPorLocal());
     const agrupamentosPosicionados = this.distribuirAgrupamentosNoMapa(agrupamentos);
     const limites: L.LatLngExpression[] = [];
 
@@ -463,6 +463,56 @@ export class PainelComissaoComponent implements OnInit, AfterViewInit, OnDestroy
           deslocado: ponto.distanceTo(pontoOriginal) > 1,
         };
       });
+  }
+
+  private agruparAgrupamentosPorZoom(agrupamentos: AgrupamentoMapa[]): AgrupamentoMapa[] {
+    if (!this.mapa || this.mapa.getZoom() >= 14) {
+      return agrupamentos;
+    }
+
+    const distanciaAgrupamento = this.mapa.getZoom() <= 11 ? 100 : 80;
+    const grupos = agrupamentos.map((grupo) => ({
+      ...grupo,
+      locais: new Set(grupo.locais),
+    }));
+
+    for (let indice = 0; indice < grupos.length; indice += 1) {
+      const grupoAtual = grupos[indice];
+      let houveAgrupamento = true;
+
+      while (houveAgrupamento) {
+        houveAgrupamento = false;
+        const pontoAtual = this.mapa.latLngToLayerPoint([grupoAtual.latitude, grupoAtual.longitude]);
+
+        for (let candidato = indice + 1; candidato < grupos.length; candidato += 1) {
+          const outroGrupo = grupos[candidato];
+          const pontoCandidato = this.mapa.latLngToLayerPoint([
+            outroGrupo.latitude,
+            outroGrupo.longitude,
+          ]);
+          if (pontoAtual.distanceTo(pontoCandidato) > distanciaAgrupamento) {
+            continue;
+          }
+
+          const quantidadeTotal = grupoAtual.quantidade + outroGrupo.quantidade;
+          grupoAtual.latitude = (
+            grupoAtual.latitude * grupoAtual.quantidade
+            + outroGrupo.latitude * outroGrupo.quantidade
+          ) / quantidadeTotal;
+          grupoAtual.longitude = (
+            grupoAtual.longitude * grupoAtual.quantidade
+            + outroGrupo.longitude * outroGrupo.quantidade
+          ) / quantidadeTotal;
+          grupoAtual.quantidade = quantidadeTotal;
+          outroGrupo.locais.forEach((local) => grupoAtual.locais.add(local));
+          grupos.splice(candidato, 1);
+          houveAgrupamento = true;
+          break;
+        }
+      }
+    }
+
+    return grupos;
   }
 
   private calcularRaioMarcador(quantidade: number): number {
