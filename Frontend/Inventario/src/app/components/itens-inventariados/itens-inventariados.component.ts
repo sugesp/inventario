@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
@@ -38,12 +38,17 @@ interface MapDragState {
   templateUrl: './itens-inventariados.component.html',
   styleUrl: './itens-inventariados.component.scss',
 })
-export class ItensInventariadosComponent implements OnInit {
+export class ItensInventariadosComponent implements OnInit, OnDestroy {
   @ViewChild('mapViewport') mapViewport?: ElementRef<HTMLElement>;
 
   itensInventariados: ItemInventariado[] = [];
+  itensAcessiveis: ItemInventariado[] = [];
+  filteredItensInventariados: ItemInventariado[] = [];
+  paginatedItensInventariados: ItemInventariado[] = [];
+  itensGeolocalizados: ItemInventariado[] = [];
   comissoes: Comissao[] = [];
   locais: Local[] = [];
+  setorFilterOptions: SearchableSelectOption[] = [];
 
   loadingItens = false;
   loadingComissoes = false;
@@ -79,6 +84,9 @@ export class ItensInventariadosComponent implements OnInit {
   private mapViewportWidth = 640;
   private mapViewportHeight = 640;
   private mapDragState: MapDragState | null = null;
+  private readonly searchableValues = new Map<string, string>();
+  private locaisPorId = new Map<string, Local>();
+  private searchDebounceHandle?: ReturnType<typeof setTimeout>;
 
   constructor(
     readonly authService: AuthService,
@@ -95,10 +103,20 @@ export class ItensInventariadosComponent implements OnInit {
     this.loadLocais();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceHandle) {
+      clearTimeout(this.searchDebounceHandle);
+    }
+    this.releaseFotoObjectUrls();
+  }
+
   loadLocais(): void {
     this.localService.getAll().subscribe({
       next: (data) => {
         this.locais = data;
+        this.locaisPorId = new Map(data.map((local) => [local.id, local]));
+        this.refreshSetorFilterOptions();
+        this.applyFilters();
       },
       error: () => {
         this.locais = [];
@@ -111,7 +129,8 @@ export class ItensInventariadosComponent implements OnInit {
     this.itemInventariadoService.getAll().subscribe({
       next: (data) => {
         this.itensInventariados = data;
-        this.ensureValidPage();
+        this.rebuildSearchableValues();
+        this.applyFilters();
         this.loadingItens = false;
       },
       error: () => {
@@ -134,6 +153,8 @@ export class ItensInventariadosComponent implements OnInit {
             || item.membros.some((membro) => membro.usuarioId === usuarioId)
           )
           .sort((a, b) => b.ano - a.ano);
+        this.refreshSetorFilterOptions();
+        this.applyFilters();
         this.loadingComissoes = false;
       },
       error: () => {
@@ -205,7 +226,7 @@ export class ItensInventariadosComponent implements OnInit {
     });
   }
 
-  get setorFilterOptions(): SearchableSelectOption[] {
+  private refreshSetorFilterOptions(): void {
     const comissaoIdsAcessiveis = new Set(
       this.comissoes
         .filter((comissao) => !this.selectedComissaoFilter || comissao.id === this.selectedComissaoFilter)
@@ -245,21 +266,18 @@ export class ItensInventariadosComponent implements OnInit {
       };
       adicionarOptions(null, 0);
     });
-    return options;
+    this.setorFilterOptions = options;
   }
 
-  get itensAcessiveis(): ItemInventariado[] {
+  private applyFilters(): void {
     const comissaoIdsAcessiveis = new Set(this.comissoes.map((item) => item.id));
 
-    return this.itensInventariados.filter((item) =>
+    this.itensAcessiveis = this.itensInventariados.filter((item) =>
       this.authService.isAdmin
       || this.authService.hasPermission('ControleInterno')
       || (!!item.comissaoId && comissaoIdsAcessiveis.has(item.comissaoId))
     );
-  }
-
-  get filteredItensInventariados(): ItemInventariado[] {
-    return this.itensAcessiveis.filter((item) => {
+    this.filteredItensInventariados = this.itensAcessiveis.filter((item) => {
       const matchesComissao = !this.selectedComissaoFilter || item.comissaoId === this.selectedComissaoFilter;
       const matchesLocal = !this.selectedLocalFilter
         || this.localPertenceAoSetor(item.localId, this.selectedLocalFilter);
@@ -278,6 +296,9 @@ export class ItensInventariadosComponent implements OnInit {
 
       return matchesComissao && matchesLocal && matchesSearch && matchesLancamento && matchesTombamento;
     });
+    this.itensGeolocalizados = this.filteredItensInventariados.filter((item) => this.hasGeolocalizacao(item));
+    this.ensureValidPage();
+    this.refreshPaginatedItems();
   }
 
   private matchesSearchFilter(item: ItemInventariado): boolean {
@@ -288,35 +309,39 @@ export class ItensInventariadosComponent implements OnInit {
       return true;
     }
 
-    const tombamentosSemPontuacao = [
-      item.tombamentoNovo,
-      item.tombamentoAntigo,
-    ]
-      .map((tombamento) => tombamento?.replace(/\D/g, '') ?? '')
-      .join(' ');
-    const searchableValue = this.normalizeSearchValue([
-      item.tombamentoNovo,
-      item.tombamentoAntigo,
-      tombamentosSemPontuacao,
-      item.descricao,
-      item.localNome,
-      ...(item.localMembrosNomes ?? []),
-      item.usuarioNome,
-      item.comissaoAno,
-      item.comissaoStatus,
-      item.status,
-      item.estadoConservacao,
-      item.observacao,
-      item.justificativaInservivel,
-      item.placa,
-      item.chassi,
-      item.placaSeguranca,
-      item.marca,
-      item.modelo,
-      item.lancadoEEstado ? 'lançado e-estado' : 'pendente não lançado e-estado',
-    ].join(' '));
+    const searchableValue = this.searchableValues.get(item.id) ?? '';
 
     return searchTerms.every((term) => searchableValue.includes(term));
+  }
+
+  private rebuildSearchableValues(): void {
+    this.searchableValues.clear();
+    this.itensInventariados.forEach((item) => {
+      const tombamentosSemPontuacao = [item.tombamentoNovo, item.tombamentoAntigo]
+        .map((tombamento) => tombamento?.replace(/\D/g, '') ?? '')
+        .join(' ');
+      this.searchableValues.set(item.id, this.normalizeSearchValue([
+        item.tombamentoNovo,
+        item.tombamentoAntigo,
+        tombamentosSemPontuacao,
+        item.descricao,
+        item.localNome,
+        ...(item.localMembrosNomes ?? []),
+        item.usuarioNome,
+        item.comissaoAno,
+        item.comissaoStatus,
+        item.status,
+        item.estadoConservacao,
+        item.observacao,
+        item.justificativaInservivel,
+        item.placa,
+        item.chassi,
+        item.placaSeguranca,
+        item.marca,
+        item.modelo,
+        item.lancadoEEstado ? 'lançado e-estado' : 'pendente não lançado e-estado',
+      ].join(' ')));
+    });
   }
 
   private normalizeSearchValue(value: unknown): string {
@@ -329,7 +354,6 @@ export class ItensInventariadosComponent implements OnInit {
   }
 
   private localPertenceAoSetor(localId: string, setorId: string): boolean {
-    const locaisPorId = new Map(this.locais.map((local) => [local.id, local]));
     const visitados = new Set<string>();
     let atualId: string | null | undefined = localId;
 
@@ -338,19 +362,15 @@ export class ItensInventariadosComponent implements OnInit {
         return true;
       }
       visitados.add(atualId);
-      atualId = locaisPorId.get(atualId)?.localSuperiorId;
+      atualId = this.locaisPorId.get(atualId)?.localSuperiorId;
     }
 
     return false;
   }
 
-  get itensGeolocalizados(): ItemInventariado[] {
-    return this.filteredItensInventariados.filter((item) => this.hasGeolocalizacao(item));
-  }
-
-  get paginatedItensInventariados(): ItemInventariado[] {
+  private refreshPaginatedItems(): void {
     const startIndex = (this.pageNumber - 1) * this.pageSize;
-    return this.filteredItensInventariados.slice(startIndex, startIndex + this.pageSize);
+    this.paginatedItensInventariados = this.filteredItensInventariados.slice(startIndex, startIndex + this.pageSize);
   }
 
   get totalPages(): number {
@@ -371,16 +391,25 @@ export class ItensInventariadosComponent implements OnInit {
     this.searchFilter = '';
     this.selectedLancamentoFilter = 'todos';
     this.selectedTombamentoFilter = 'todos';
+    this.refreshSetorFilterOptions();
     this.onFiltersChanged();
   }
 
   onComissaoFilterChange(): void {
     this.selectedLocalFilter = '';
+    this.refreshSetorFilterOptions();
     this.onFiltersChanged();
   }
 
   onFiltersChanged(): void {
     this.pageNumber = 1;
+    if (this.searchDebounceHandle) {
+      clearTimeout(this.searchDebounceHandle);
+    }
+    this.searchDebounceHandle = setTimeout(() => {
+      this.searchDebounceHandle = undefined;
+      this.applyFilters();
+    }, 180);
   }
 
   goToPreviousPage(): void {
@@ -389,6 +418,7 @@ export class ItensInventariadosComponent implements OnInit {
     }
 
     this.pageNumber -= 1;
+    this.refreshPaginatedItems();
   }
 
   goToNextPage(): void {
@@ -397,6 +427,7 @@ export class ItensInventariadosComponent implements OnInit {
     }
 
     this.pageNumber += 1;
+    this.refreshPaginatedItems();
   }
 
   getComissaoLabel(comissao: Comissao): string {
@@ -655,6 +686,8 @@ export class ItensInventariadosComponent implements OnInit {
         this.itensInventariados = this.itensInventariados.map((current) =>
           current.id === updated.id ? updated : current
         );
+        this.rebuildSearchableValues();
+        this.applyFilters();
         this.toastr.success(lancado ? 'Item marcado como lançado no E-Estado.' : 'Lançamento do E-Estado removido.');
       },
       error: (error) => {
@@ -689,6 +722,8 @@ export class ItensInventariadosComponent implements OnInit {
         this.itensInventariados = this.itensInventariados.map((current) =>
           current.id === updated.id ? updated : current
         );
+        this.rebuildSearchableValues();
+        this.applyFilters();
         this.itemConfirmarLancamento = null;
         this.toastr.success('Item marcado como lançado no E-Estado.');
       },
@@ -822,6 +857,8 @@ export class ItensInventariadosComponent implements OnInit {
           this.itensInventariados = this.itensInventariados.map((item) =>
             item.id === updated.id ? updated : item
           );
+          this.rebuildSearchableValues();
+          this.applyFilters();
           this.processandoMovimentacao = false;
           this.closeMoverLocal();
           this.toastr.success('Item movido para o local correto com histórico registrado.');
@@ -859,6 +896,8 @@ export class ItensInventariadosComponent implements OnInit {
             this.itensInventariados = this.itensInventariados.map((item) =>
               item.id === updated.id ? updated : item
             );
+            this.rebuildSearchableValues();
+            this.applyFilters();
             this.processandoAcao = false;
             this.closeAcaoModal();
             this.toastr.success('Lançamento no E-Estado revertido com justificativa registrada.');
@@ -875,7 +914,8 @@ export class ItensInventariadosComponent implements OnInit {
       next: () => {
         const itemId = this.itemAcao?.id;
         this.itensInventariados = this.itensInventariados.filter((item) => item.id !== itemId);
-        this.ensureValidPage();
+        this.rebuildSearchableValues();
+        this.applyFilters();
         this.processandoAcao = false;
         this.closeAcaoModal();
         this.toastr.success('Item excluído com justificativa registrada.');

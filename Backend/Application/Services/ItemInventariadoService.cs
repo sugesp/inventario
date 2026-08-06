@@ -74,6 +74,7 @@ public class ItemInventariadoService : IItemInventariadoService
     {
         var query = _context.ItensInventariados
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(x => x.DeletedAt != null)
             .Include(x => x.Local)
                 .ThenInclude(x => x!.Membros.Where(m => m.DeletedAt == null))
@@ -799,6 +800,7 @@ public class ItemInventariadoService : IItemInventariadoService
     {
         return _context.ItensInventariados
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(x => x.DeletedAt == null)
             .Include(x => x.Local)
                 .ThenInclude(x => x!.Membros.Where(m => m.DeletedAt == null))
