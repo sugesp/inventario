@@ -483,6 +483,58 @@
   </section>
 </ng-template>
 
+<div class="modal-backdrop-custom" *ngIf="showRelatorioModal"></div>
+<div class="modal-custom" *ngIf="showRelatorioModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="fecharRelatorioModal()">
+  <div class="modal-card modal-card-report" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <h4>Gerar relatório da comissão</h4>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="fecharRelatorioModal()"></button>
+    </div>
+
+    <div class="modal-body-custom">
+      <p class="section-card-hint">Escolha quais locais devem fazer parte do relatório.</p>
+
+      <div class="report-type-options">
+        <label class="report-type-option" [class.active]="relatorioTipo === 'geral'">
+          <input type="radio" name="relatorioTipo" value="geral" [(ngModel)]="relatorioTipo" />
+          <span>
+            <strong>Relatório geral</strong>
+            <small>Inclui todos os locais, iniciando cada um em uma nova página.</small>
+          </span>
+        </label>
+
+        <label class="report-type-option" [class.active]="relatorioTipo === 'local'">
+          <input type="radio" name="relatorioTipo" value="local" [(ngModel)]="relatorioTipo" />
+          <span>
+            <strong>Local específico</strong>
+            <small>Inclui somente os itens inventariados no local selecionado.</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="mt-3" *ngIf="relatorioTipo === 'local'">
+        <label class="form-label" for="relatorioLocal">Local</label>
+        <select class="form-select" id="relatorioLocal" name="relatorioLocal" [(ngModel)]="relatorioLocalId">
+          <option value="" disabled>Selecione um local</option>
+          <option *ngFor="let local of locaisDaComissaoEmEdicao" [value]="local.id">{{ local.nome }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary" type="button" (click)="fecharRelatorioModal()">Cancelar</button>
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="confirmarRelatorioComissao()"
+        [disabled]="relatorioTipo === 'local' && !relatorioLocalId"
+      >
+        Gerar relatório
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop-custom" *ngIf="showModal"></div>
 <div class="modal-custom" *ngIf="showModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeModal()">
   <div class="modal-card modal-card-large" (click)="$event.stopPropagation()">

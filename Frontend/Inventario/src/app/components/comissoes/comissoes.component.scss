@@ -23,6 +23,48 @@
   box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
 }
 
+.modal-card-report {
+  width: min(620px, 100%);
+}
+
+.report-type-options {
+  display: grid;
+  gap: 10px;
+}
+
+.report-type-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid #d8e2ef;
+  border-radius: 12px;
+  background: #fbfdff;
+  cursor: pointer;
+}
+
+.report-type-option.active {
+  border-color: #79a4cf;
+  background: #edf5fc;
+}
+
+.report-type-option input {
+  margin-top: 4px;
+}
+
+.report-type-option span {
+  display: grid;
+  gap: 3px;
+}
+
+.report-type-option strong {
+  color: #21384f;
+}
+
+.report-type-option small {
+  color: #66788a;
+}
+
 .modal-header-custom {
   display: flex;
   justify-content: space-between;

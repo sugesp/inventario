@@ -17,6 +17,7 @@ import { PageParams } from '../../shared/pagination.model';
 import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
 type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'excluidos' | 'correcoes-local';
+type RelatorioComissaoTipo = 'geral' | 'local';
 
 interface LocalMapTile {
   url: string;
@@ -57,6 +58,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   showModal = false;
   showAddMemberModal = false;
   showLocalModal = false;
+  showRelatorioModal = false;
   editingId: string | null = null;
   editingLocalId: string | null = null;
   activeTab: ComissaoTab = 'resumo';
@@ -64,6 +66,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   itensExcluidos: ItemInventariado[] = [];
   movimentacoesLocal: ItemInventariadoMovimentacaoLocal[] = [];
   inconsistenciasInventario: InconsistenciaInventario[] = [];
+  relatorioTipo: RelatorioComissaoTipo = 'geral';
+  relatorioLocalId = '';
   memberTerm = '';
   memberPageNumber = 1;
   readonly memberPageSize = 10;
@@ -636,9 +640,35 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const itens = this.itensInventariadosDaComissao;
-    if (itens.length === 0) {
+    if (this.itensInventariadosDaComissao.length === 0) {
       this.toastr.info('Esta comissão ainda não possui itens inventariados para o relatório.');
+      return;
+    }
+
+    this.relatorioTipo = 'geral';
+    this.relatorioLocalId = '';
+    this.showRelatorioModal = true;
+  }
+
+  fecharRelatorioModal(): void {
+    this.showRelatorioModal = false;
+  }
+
+  confirmarRelatorioComissao(): void {
+    if (!this.comissaoEmEdicao) {
+      return;
+    }
+
+    if (this.relatorioTipo === 'local' && !this.relatorioLocalId) {
+      this.toastr.warning('Selecione o local que deseja incluir no relatório.');
+      return;
+    }
+
+    const itens = this.relatorioTipo === 'local'
+      ? this.itensInventariadosDaComissao.filter((item) => item.localId === this.relatorioLocalId)
+      : this.itensInventariadosDaComissao;
+    if (itens.length === 0) {
+      this.toastr.info('O local selecionado ainda não possui itens inventariados para o relatório.');
       return;
     }
 
@@ -682,7 +712,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
     let startY = 37;
     grupos.forEach((grupo, index) => {
-      if (startY > pageHeight - 28) {
+      if (index > 0) {
         pdf.addPage();
         startY = 14;
       }
@@ -753,11 +783,26 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       });
 
       const finalY = (pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? startY;
-      startY = finalY + (index < grupos.length - 1 ? 9 : 0);
+      startY = finalY;
     });
 
-    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(dataGeracao)}.pdf`);
+    const localSelecionado = this.relatorioTipo === 'local'
+      ? this.locaisDaComissaoEmEdicao.find((local) => local.id === this.relatorioLocalId)
+      : null;
+    const sufixoLocal = localSelecionado ? `-${this.formatFileName(localSelecionado.nome)}` : '';
+
+    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}${sufixoLocal}-${this.formatFileDateTime(dataGeracao)}.pdf`);
+    this.fecharRelatorioModal();
     this.toastr.success('Relatório da comissão gerado com sucesso.');
+  }
+
+  private formatFileName(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
   }
 
   getInconsistenciaLocaisLabel(inconsistencia: InconsistenciaInventario): string {
