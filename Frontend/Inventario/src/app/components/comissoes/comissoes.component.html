@@ -513,11 +513,15 @@
       </div>
 
       <div class="mt-3" *ngIf="relatorioTipo === 'local'">
-        <label class="form-label" for="relatorioLocal">Local</label>
-        <select class="form-select" id="relatorioLocal" name="relatorioLocal" [(ngModel)]="relatorioLocalId">
-          <option value="" disabled>Selecione um local</option>
-          <option *ngFor="let local of locaisDaComissaoEmEdicao" [value]="local.id">{{ local.nome }}</option>
-        </select>
+        <label class="form-label">Local</label>
+        <app-searchable-select
+          name="relatorioLocal"
+          [(ngModel)]="relatorioLocalId"
+          [options]="relatorioLocalOptions"
+          placeholder="Selecione um local"
+          searchPlaceholder="Pesquisar local"
+          [required]="true"
+        ></app-searchable-select>
       </div>
     </div>
 

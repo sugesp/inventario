@@ -635,6 +635,12 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.inconsistenciasDaComissao.reduce((total, item) => total + item.quantidadeOcorrencias, 0);
   }
 
+  get relatorioLocalOptions(): SearchableSelectOption[] {
+    return this.locaisDaComissaoEmEdicao
+      .map((local) => ({ value: local.id, label: this.getLocalHierarchyLabel(local) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
   gerarRelatorioComissao(): void {
     if (!this.comissaoEmEdicao) {
       return;
