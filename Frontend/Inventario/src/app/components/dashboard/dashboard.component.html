@@ -1,102 +1,42 @@
 <div class="dashboard-grid">
-  <section class="hero-card">
-    <span class="eyebrow">{{ dashboardScope }}</span>
-    <div class="hero-content">
+  <section class="welcome-card">
+    <div>
+      <span class="eyebrow">{{ dashboardScope }}</span>
+      <h2>Olá, {{ firstName }}.</h2>
+      <p>Escolha uma das rotinas disponíveis para o seu perfil.</p>
+    </div>
+    <span class="welcome-icon" aria-hidden="true"><i class="fa-solid fa-shapes"></i></span>
+  </section>
+
+  <section class="shortcut-section">
+    <div class="section-heading">
       <div>
-        <h2 class="hero-title">Dashboard SGPA</h2>
-        <p class="hero-text">Sistema de Gestão Patrimonial</p>
+        <span class="eyebrow">Acessos rápidos</span>
+        <h3>O que você deseja fazer?</h3>
       </div>
-      <button type="button" class="btn btn-outline-primary" (click)="loadDashboardStats()" [disabled]="loadingStats">
-        Atualizar painel
-      </button>
-    </div>
-  </section>
-
-  <div class="scan-feedback" *ngIf="loadingStats">Carregando indicadores...</div>
-
-  <section class="summary-grid" *ngIf="summaryCards.length">
-    <a
-      *ngFor="let card of summaryCards"
-      class="summary-card"
-      [routerLink]="card.route || null"
-      [class.summary-card-link]="card.route"
-    >
-      <span class="summary-icon"><i class="fa-solid" [ngClass]="card.icon"></i></span>
-      <span class="stats-label">{{ card.label }}</span>
-      <strong class="stats-value">{{ card.value }}</strong>
-      <span class="summary-meta">{{ card.meta }}</span>
-    </a>
-  </section>
-
-  <section class="stats-section" *ngIf="authService.canAccessInventarioConsultas">
-    <div class="section-heading">
-      <span class="eyebrow">Inventário por comissão</span>
-      <h3>Itens inventariados</h3>
-    </div>
-
-    <div class="stats-grid" *ngIf="itensPorComissao.length; else emptyInventario">
-      <article class="stats-card stats-card-highlight" *ngFor="let card of itensPorComissao">
-        <span class="stats-label">{{ card.label }}</span>
-        <strong class="stats-value">{{ card.value }}</strong>
-        <span class="summary-meta">{{ card.meta }}</span>
-      </article>
-    </div>
-
-    <ng-template #emptyInventario>
-      <div class="empty-stats">Nenhum item inventariado encontrado.</div>
-    </ng-template>
-  </section>
-
-  <section class="info-grid">
-    <article class="info-card" *ngIf="authService.canManageLevantamentos">
-      <span class="info-label">Levantamentos</span>
-      <strong class="info-value">{{ totalItensLevantamento }}</strong>
-      <p class="info-text">tombamento(s) confirmado(s) em {{ levantamentos.length }} levantamento(s).</p>
-    </article>
-
-    <article class="info-card" *ngIf="authService.canAccessInventarioConsultas">
-      <span class="info-label">E-Estado</span>
-      <strong class="info-value">{{ itensLancadosEEstado }} / {{ totalInventariados }}</strong>
-      <p class="info-text">item(ns) inventariado(s) marcado(s) como lançado(s).</p>
-    </article>
-
-    <article class="info-card" *ngIf="authService.canAccessGtiGestor">
-      <span class="info-label">Transferências por status</span>
-      <div class="mini-list" *ngIf="transferenciasPorStatus.length; else emptyTransferencias">
-        <span *ngFor="let card of transferenciasPorStatus">
-          <strong>{{ card.value }}</strong> {{ card.label }}
-        </span>
-      </div>
-      <ng-template #emptyTransferencias>
-        <p class="info-text">Nenhuma transferência encontrada.</p>
-      </ng-template>
-    </article>
-
-    <article class="info-card" *ngIf="authService.canAccessLaudos">
-      <span class="info-label">Laudos por classificação</span>
-      <div class="mini-list" *ngIf="laudosPorClassificacao.length; else emptyLaudos">
-        <span *ngFor="let card of laudosPorClassificacao">
-          <strong>{{ card.value }}</strong> {{ card.label }}
-        </span>
-      </div>
-      <ng-template #emptyLaudos>
-        <p class="info-text">Nenhum laudo encontrado.</p>
-      </ng-template>
-    </article>
-  </section>
-
-  <section class="shortcut-section" *ngIf="visibleShortcuts.length">
-    <div class="section-heading">
-      <span class="eyebrow">Acesso rápido</span>
-      <h3>Rotinas disponíveis</h3>
+      <small><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Acessos conforme seu perfil</small>
     </div>
 
     <div class="shortcut-grid">
-      <a class="shortcut-card" *ngFor="let shortcut of visibleShortcuts" [routerLink]="shortcut.route">
-        <span class="shortcut-icon"><i class="fa-solid" [ngClass]="shortcut.icon"></i></span>
-        <strong class="shortcut-title">{{ shortcut.title }}</strong>
-        <p class="shortcut-text">{{ shortcut.description }}</p>
+      <a class="shortcut-link shortcut-link-highlight" routerLink="/painel" *ngIf="canAccessPainel">
+        <span class="shortcut-icon"><i class="fa-solid fa-chart-line"></i></span>
+        <span>
+          <strong>Painel da comissão</strong>
+          <small>Abra a visão de acompanhamento do inventário em tela cheia.</small>
+        </span>
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </a>
+
+      <a class="shortcut-link" routerLink="/inventariar" *ngIf="authService.canManageInventario">
+        <span class="shortcut-icon"><i class="fa-solid fa-box-archive"></i></span>
+        <span>
+          <strong>Inventariar item</strong>
+          <small>Faça a conferência, classificação e o registro fotográfico de um bem.</small>
+        </span>
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
       </a>
     </div>
   </section>
+
+  <p class="access-loading" *ngIf="checkingPainelAccess"><i class="fa-solid fa-circle-notch fa-spin"></i></p>
 </div>
