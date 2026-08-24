@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, forkJoin, map, of, takeUntil } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import { ToastrService } from 'ngx-toastr';
@@ -9,7 +9,7 @@ import { AuthService } from '../../auth/auth.service';
 import { UserSummary } from '../../auth/auth.model';
 import { Comissao, ComissaoPayload } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
-import { InconsistenciaInventario, ItemInventariado, ItemInventariadoMovimentacaoLocal } from '../../contracts/item-inventariado.model';
+import { InconsistenciaInventario, ItemInventariado, ItemInventariadoMovimentacaoLocal, ItemInventarioFoto } from '../../contracts/item-inventariado.model';
 import { ItemInventariadoService } from '../../contracts/item-inventariado.service';
 import { Local } from '../../contracts/local.model';
 import { LocalService } from '../../contracts/local.service';
@@ -66,6 +66,11 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   itensExcluidos: ItemInventariado[] = [];
   movimentacoesLocal: ItemInventariadoMovimentacaoLocal[] = [];
   inconsistenciasInventario: InconsistenciaInventario[] = [];
+  selectedItemDetalhes: ItemInventariado | null = null;
+  selectedItemFotos: ItemInventariado | null = null;
+  selectedFoto: ItemInventarioFoto | null = null;
+  loadingFotos = false;
+  fotoObjectUrls: Record<string, string> = {};
   relatorioTipo: RelatorioComissaoTipo = 'geral';
   relatorioLocalId = '';
   memberTerm = '';
@@ -151,6 +156,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.releaseFotoObjectUrls();
     this.destroy$.next();
     this.destroy$.complete();
     this.memberSearchChanged$.complete();
@@ -536,6 +542,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       this.loadInconsistenciasInventario();
     } else if (tab === 'inconsistencias') {
       this.loadInconsistenciasInventario();
+      this.loadItensInventariadosComissao();
     } else if (tab === 'excluidos') {
       this.loadItensExcluidosComissao();
     } else if (tab === 'correcoes-local') {
@@ -633,6 +640,84 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   get totalOcorrenciasInconsistencias(): number {
     return this.inconsistenciasDaComissao.reduce((total, item) => total + item.quantidadeOcorrencias, 0);
+  }
+
+  getItemInventariado(itemId: string): ItemInventariado | undefined {
+    return this.itensInventariados.find((item) => item.id === itemId);
+  }
+
+  openDetalhesInconsistencia(itemId: string): void {
+    const item = this.getItemInventariado(itemId);
+    if (!item) {
+      this.toastr.warning('Não foi possível localizar os detalhes deste item. Atualize a lista e tente novamente.');
+      return;
+    }
+
+    this.selectedItemDetalhes = item;
+  }
+
+  closeDetalhesInconsistencia(): void {
+    this.selectedItemDetalhes = null;
+  }
+
+  openFotosInconsistencia(itemId: string): void {
+    const item = this.getItemInventariado(itemId);
+    if (!item) {
+      this.toastr.warning('Não foi possível localizar as fotos deste item. Atualize a lista e tente novamente.');
+      return;
+    }
+
+    this.selectedItemFotos = item;
+    this.loadFotosInconsistencia(item);
+  }
+
+  closeFotosInconsistencia(): void {
+    this.selectedItemFotos = null;
+    this.selectedFoto = null;
+    this.loadingFotos = false;
+    this.releaseFotoObjectUrls();
+  }
+
+  selectFotoInconsistencia(foto: ItemInventarioFoto): void {
+    this.selectedFoto = foto;
+  }
+
+  getFotoUrlInconsistencia(foto: ItemInventarioFoto): string {
+    return this.fotoObjectUrls[foto.id] || '';
+  }
+
+  private loadFotosInconsistencia(item: ItemInventariado): void {
+    this.releaseFotoObjectUrls();
+    this.selectedFoto = item.fotos[0] ?? null;
+    this.loadingFotos = item.fotos.length > 0;
+
+    if (!item.fotos.length) {
+      return;
+    }
+
+    forkJoin(item.fotos.map((foto) =>
+      this.itemInventariadoService.getFoto(item.id, foto.id).pipe(
+        map((blob) => ({ fotoId: foto.id, url: URL.createObjectURL(blob), failed: false })),
+        catchError(() => of({ fotoId: foto.id, url: '', failed: true }))
+      )
+    )).pipe(takeUntil(this.destroy$)).subscribe((results) => {
+      this.loadingFotos = false;
+      this.fotoObjectUrls = results.reduce<Record<string, string>>((urls, result) => {
+        if (result.url) {
+          urls[result.fotoId] = result.url;
+        }
+        return urls;
+      }, {});
+
+      if (results.some((result) => result.failed)) {
+        this.toastr.warning('Algumas fotos não puderam ser carregadas.');
+      }
+    });
+  }
+
+  private releaseFotoObjectUrls(): void {
+    Object.values(this.fotoObjectUrls).forEach((url) => URL.revokeObjectURL(url));
+    this.fotoObjectUrls = {};
   }
 
   get relatorioLocalOptions(): SearchableSelectOption[] {

@@ -344,6 +344,7 @@
                         <th>Data</th>
                         <th>Classificação</th>
                         <th>Conservação</th>
+                        <th class="text-end">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -357,6 +358,22 @@
                           <small *ngIf="ocorrencia.fotosAusentes.length">
                             Arquivos ausentes: {{ ocorrencia.fotosAusentes.join(', ') }}
                           </small>
+                        </td>
+                        <td class="text-end">
+                          <div class="inconsistencia-actions">
+                            <button class="btn btn-sm btn-icon-action" type="button"
+                              (click)="openDetalhesInconsistencia(ocorrencia.itemInventariadoId)"
+                              title="Detalhes" aria-label="Detalhes">
+                              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn btn-sm btn-icon-action" type="button"
+                              (click)="openFotosInconsistencia(ocorrencia.itemInventariadoId)"
+                              [disabled]="!getItemInventariado(ocorrencia.itemInventariadoId)?.fotos?.length"
+                              [title]="getItemInventariado(ocorrencia.itemInventariadoId)?.fotos?.length ? 'Ver fotos' : 'Sem fotos'"
+                              [attr.aria-label]="getItemInventariado(ocorrencia.itemInventariadoId)?.fotos?.length ? 'Ver fotos' : 'Sem fotos'">
+                              <i class="fa-solid fa-images" aria-hidden="true"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -535,6 +552,62 @@
       >
         Gerar relatório
       </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="selectedItemDetalhes"></div>
+<div class="modal-custom" *ngIf="selectedItemDetalhes" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closeDetalhesInconsistencia()">
+  <div class="modal-card modal-card-details" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div>
+        <h4>Detalhes do item</h4>
+        <small>{{ selectedItemDetalhes.descricao || selectedItemDetalhes.tombamentoNovo || 'Item inventariado' }}</small>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeDetalhesInconsistencia()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="item-details-grid">
+        <div><span>Tombamento E-Estado</span><strong>{{ selectedItemDetalhes.tombamentoNovo || '-' }}</strong></div>
+        <div><span>Tombamento antigo</span><strong>{{ selectedItemDetalhes.tombamentoAntigo || '-' }}</strong></div>
+        <div><span>Local</span><strong>{{ selectedItemDetalhes.localNome || '-' }}</strong></div>
+        <div><span>Inventariado por</span><strong>{{ selectedItemDetalhes.usuarioNome || '-' }}</strong></div>
+        <div><span>Classificação</span><strong>{{ selectedItemDetalhes.status || '-' }}</strong></div>
+        <div><span>Conservação</span><strong>{{ selectedItemDetalhes.estadoConservacao || '-' }}</strong></div>
+        <div><span>Data</span><strong>{{ selectedItemDetalhes.dataInventario | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+        <div><span>Fotos</span><strong>{{ selectedItemDetalhes.fotos.length }}</strong></div>
+      </div>
+      <div class="item-details-observation">
+        <span>Observação</span>
+        <p>{{ selectedItemDetalhes.observacao || 'Sem observações registradas.' }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="selectedItemFotos"></div>
+<div class="modal-custom" *ngIf="selectedItemFotos" appCloseOnOutsideClick
+  (appCloseOnOutsideClick)="closeFotosInconsistencia()">
+  <div class="modal-card modal-card-photos" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom">
+      <div>
+        <h4>Fotos do item</h4>
+        <small>{{ selectedItemFotos.descricao || selectedItemFotos.tombamentoNovo || 'Item inventariado' }}</small>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeFotosInconsistencia()"></button>
+    </div>
+    <div class="modal-body-custom">
+      <div class="inline-hint" *ngIf="loadingFotos">Carregando fotos do item...</div>
+      <div class="inconsistencia-foto-principal" *ngIf="selectedFoto">
+        <img [src]="getFotoUrlInconsistencia(selectedFoto)" [alt]="selectedFoto.nomeOriginal || 'Foto do item'" />
+      </div>
+      <div class="inconsistencia-fotos-grid">
+        <button type="button" *ngFor="let foto of selectedItemFotos.fotos"
+          [class.active]="selectedFoto?.id === foto.id" (click)="selectFotoInconsistencia(foto)">
+          <img [src]="getFotoUrlInconsistencia(foto)" [alt]="foto.nomeOriginal || 'Miniatura da foto'" />
+        </button>
+      </div>
     </div>
   </div>
 </div>
