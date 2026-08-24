@@ -305,9 +305,17 @@
                 <label class="form-label mb-1">Inconsistências</label>
                 <p class="section-card-hint mb-0">Tombamentos encontrados em mais de um local e arquivos de fotos ausentes.</p>
               </div>
-              <button class="btn btn-primary" type="button" (click)="loadInconsistenciasInventario()" [disabled]="loadingInconsistencias">
-                {{ loadingInconsistencias ? 'Atualizando...' : 'Atualizar' }}
-              </button>
+              <div class="section-card-actions">
+                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioInconsistencias()"
+                  [disabled]="loadingInconsistencias || generatingInconsistenciasPdf || inconsistenciasDaComissao.length === 0">
+                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                  {{ generatingInconsistenciasPdf ? 'Gerando PDF...' : 'Relatório PDF' }}
+                </button>
+                <button class="btn btn-primary" type="button" (click)="loadInconsistenciasInventario()"
+                  [disabled]="loadingInconsistencias || generatingInconsistenciasPdf">
+                  {{ loadingInconsistencias ? 'Atualizando...' : 'Atualizar' }}
+                </button>
+              </div>
             </div>
 
             <div class="inline-hint" *ngIf="loadingInconsistencias">

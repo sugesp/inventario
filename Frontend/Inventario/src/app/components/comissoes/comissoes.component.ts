@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, catchError, debounceTime, distinctUntilChanged, forkJoin, map, of, takeUntil } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, firstValueFrom, forkJoin, map, of, takeUntil } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import { ToastrService } from 'ngx-toastr';
@@ -70,6 +70,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   selectedItemFotos: ItemInventariado | null = null;
   selectedFoto: ItemInventarioFoto | null = null;
   loadingFotos = false;
+  generatingInconsistenciasPdf = false;
   fotoObjectUrls: Record<string, string> = {};
   relatorioTipo: RelatorioComissaoTipo = 'geral';
   relatorioLocalId = '';
@@ -718,6 +719,123 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   private releaseFotoObjectUrls(): void {
     Object.values(this.fotoObjectUrls).forEach((url) => URL.revokeObjectURL(url));
     this.fotoObjectUrls = {};
+  }
+
+  async gerarRelatorioInconsistencias(): Promise<void> {
+    if (!this.comissaoEmEdicao || this.inconsistenciasDaComissao.length === 0 || this.generatingInconsistenciasPdf) {
+      return;
+    }
+
+    this.generatingInconsistenciasPdf = true;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const photoGap = 4;
+    const photoWidth = (pageWidth - (margin * 2) - (photoGap * 2)) / 3;
+    const photoHeight = 50;
+    let failedPhotos = 0;
+
+    try {
+      for (let inconsistenciaIndex = 0; inconsistenciaIndex < this.inconsistenciasDaComissao.length; inconsistenciaIndex++) {
+        const inconsistencia = this.inconsistenciasDaComissao[inconsistenciaIndex];
+        if (inconsistenciaIndex > 0) {
+          pdf.addPage();
+        }
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(15);
+        pdf.text('Relatório de Inconsistências do Inventário', margin, 14);
+        pdf.setFontSize(10);
+        pdf.text(`Comissão ${this.comissaoEmEdicao.ano} — ${inconsistencia.tipo === 'FotoAusente' ? 'Foto ausente' : 'Tombamento duplicado'}`, margin, 21);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.text(`Tombamento: ${inconsistencia.tombamento || 'Sem tombamento'} | ${inconsistencia.descricao || 'Descrição não informada'}`, margin, 27);
+        pdf.text(`Locais: ${this.getInconsistenciaLocaisLabel(inconsistencia)} | Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, 32);
+
+        let cursorY = 38;
+        for (const ocorrencia of inconsistencia.ocorrencias) {
+          const item = this.getItemInventariado(ocorrencia.itemInventariadoId);
+          const minimumSectionHeight = item?.fotos.length ? 76 : 28;
+          if (cursorY + minimumSectionHeight > pageHeight - 12) {
+            pdf.addPage();
+            cursorY = 14;
+          }
+
+          autoTable(pdf, {
+            startY: cursorY,
+            margin: { left: margin, right: margin },
+            head: [['Local', 'Inventariado por', 'Data', 'Classificação', 'Conservação', 'Observação']],
+            body: [[
+              ocorrencia.localNome || '-',
+              ocorrencia.usuarioNome || '-',
+              this.formatReportDate(ocorrencia.dataInventario),
+              ocorrencia.status || '-',
+              ocorrencia.estadoConservacao || '-',
+              ocorrencia.observacao || '-',
+            ]],
+            theme: 'grid',
+            styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+            headStyles: { fillColor: [41, 95, 150], textColor: 255, fontStyle: 'bold' },
+          });
+          cursorY = ((pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? cursorY) + 4;
+
+          if (!item?.fotos.length) {
+            pdf.setFontSize(8);
+            pdf.setTextColor(110, 110, 110);
+            pdf.text('Sem fotos disponíveis para esta ocorrência.', margin, cursorY);
+            pdf.setTextColor(0, 0, 0);
+            cursorY += 8;
+            continue;
+          }
+
+          for (let photoIndex = 0; photoIndex < item.fotos.length; photoIndex++) {
+            const column = photoIndex % 3;
+            if (column === 0 && cursorY + photoHeight > pageHeight - 12) {
+              pdf.addPage();
+              cursorY = 14;
+            }
+
+            try {
+              const blob = await firstValueFrom(this.itemInventariadoService.getFoto(item.id, item.fotos[photoIndex].id));
+              const imageData = await this.blobToDataUrl(blob);
+              const x = margin + column * (photoWidth + photoGap);
+              pdf.addImage(imageData, x, cursorY, photoWidth, photoHeight, undefined, 'FAST');
+            } catch {
+              failedPhotos++;
+            }
+
+            if (column === 2 || photoIndex === item.fotos.length - 1) {
+              cursorY += photoHeight + 6;
+            }
+          }
+        }
+
+        pdf.setFontSize(7);
+        pdf.text(`Inconsistência ${inconsistenciaIndex + 1} de ${this.inconsistenciasDaComissao.length}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+      }
+
+      const generatedAt = new Date();
+      pdf.save(`relatorio-inconsistencias-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(generatedAt)}.pdf`);
+      if (failedPhotos > 0) {
+        this.toastr.warning(`Relatório gerado, mas ${failedPhotos} foto(s) não puderam ser incluídas.`);
+      } else {
+        this.toastr.success('Relatório de inconsistências gerado com sucesso.');
+      }
+    } catch {
+      this.toastr.error('Não foi possível gerar o relatório de inconsistências.');
+    } finally {
+      this.generatingInconsistenciasPdf = false;
+    }
+  }
+
+  private blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
   }
 
   get relatorioLocalOptions(): SearchableSelectOption[] {

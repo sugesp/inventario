@@ -453,6 +453,18 @@
   gap: 10px;
 }
 
+.section-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-card-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .inconsistencia-summary span,
 .inconsistencia-head span {
   display: inline-flex;
