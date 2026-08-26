@@ -103,6 +103,8 @@
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'sem-tombamento-eestado'" (click)="setActiveTab('sem-tombamento-eestado')">Sem Tombamento do E-Estado</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'sem-tombamento'" (click)="setActiveTab('sem-tombamento')">Sem Nenhum Tombamento</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'excluidos'" (click)="setActiveTab('excluidos')">Itens excluídos</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'correcoes-local'" (click)="setActiveTab('correcoes-local')">Correções de local</button>
           </div>
@@ -392,6 +394,94 @@
           </div>
         </div>
 
+        <div class="col-12" *ngIf="activeTab === 'sem-tombamento-eestado'">
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <label class="form-label mb-1">Itens Sem Tombamento do E-Estado</label>
+                <p class="section-card-hint mb-0">Itens inventariados sem tombamento novo informado, apresentados individualmente.</p>
+              </div>
+              <div class="section-card-actions">
+                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioItensSemTombamento('eestado')"
+                  [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null || itensSemTombamentoEEstadoDaComissao.length === 0">
+                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                  {{ generatingItensSemTombamentoPdf === 'eestado' ? 'Gerando PDF...' : 'Relatório PDF' }}
+                </button>
+                <button class="btn btn-primary" type="button" (click)="loadItensInventariadosComissao()"
+                  [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null">
+                  {{ loadingItensInventariados ? 'Atualizando...' : 'Atualizar' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="inline-hint" *ngIf="loadingItensInventariados">Carregando itens da comissão...</div>
+            <div class="inline-hint" *ngIf="!loadingItensInventariados && itensSemTombamentoEEstadoDaComissao.length === 0">
+              Nenhum item sem tombamento do E-Estado encontrado nesta comissão.
+            </div>
+            <div class="inconsistencia-summary" *ngIf="!loadingItensInventariados && itensSemTombamentoEEstadoDaComissao.length > 0">
+              <span>{{ itensSemTombamentoEEstadoDaComissao.length }} item(ns)</span>
+            </div>
+
+            <div class="inconsistencia-list" *ngIf="!loadingItensInventariados && itensSemTombamentoEEstadoDaComissao.length > 0">
+              <div class="inconsistencia-item" *ngFor="let item of itensSemTombamentoEEstadoDaComissao">
+                <div class="inconsistencia-head">
+                  <div>
+                    <strong>{{ item.tombamentoAntigo || 'Sem nenhum tombamento' }}</strong>
+                    <small>{{ item.descricao || 'Descrição não informada' }}</small>
+                    <small>Local: {{ item.localNome || '-' }}</small>
+                  </div>
+                  <span>{{ item.fotos.length }} foto(s)</span>
+                </div>
+                <ng-container *ngTemplateOutlet="itemSemTombamentoDetalhes; context: { $implicit: item }"></ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="activeTab === 'sem-tombamento'">
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <label class="form-label mb-1">Itens Sem Nenhum Tombamento</label>
+                <p class="section-card-hint mb-0">Itens inventariados sem tombamento do E-Estado e sem tombamento antigo, apresentados individualmente.</p>
+              </div>
+              <div class="section-card-actions">
+                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioItensSemTombamento('nenhum')"
+                  [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null || itensSemNenhumTombamentoDaComissao.length === 0">
+                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                  {{ generatingItensSemTombamentoPdf === 'nenhum' ? 'Gerando PDF...' : 'Relatório PDF' }}
+                </button>
+                <button class="btn btn-primary" type="button" (click)="loadItensInventariadosComissao()"
+                  [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null">
+                  {{ loadingItensInventariados ? 'Atualizando...' : 'Atualizar' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="inline-hint" *ngIf="loadingItensInventariados">Carregando itens da comissão...</div>
+            <div class="inline-hint" *ngIf="!loadingItensInventariados && itensSemNenhumTombamentoDaComissao.length === 0">
+              Nenhum item sem tombamentos encontrado nesta comissão.
+            </div>
+            <div class="inconsistencia-summary" *ngIf="!loadingItensInventariados && itensSemNenhumTombamentoDaComissao.length > 0">
+              <span>{{ itensSemNenhumTombamentoDaComissao.length }} item(ns)</span>
+            </div>
+
+            <div class="inconsistencia-list" *ngIf="!loadingItensInventariados && itensSemNenhumTombamentoDaComissao.length > 0">
+              <div class="inconsistencia-item" *ngFor="let item of itensSemNenhumTombamentoDaComissao">
+                <div class="inconsistencia-head">
+                  <div>
+                    <strong>Sem nenhum tombamento</strong>
+                    <small>{{ item.descricao || 'Descrição não informada' }}</small>
+                    <small>Local: {{ item.localNome || '-' }}</small>
+                  </div>
+                  <span>{{ item.fotos.length }} foto(s)</span>
+                </div>
+                <ng-container *ngTemplateOutlet="itemSemTombamentoDetalhes; context: { $implicit: item }"></ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="col-12" *ngIf="activeTab === 'excluidos'">
           <div class="section-card">
             <div class="section-card-header">
@@ -563,6 +653,43 @@
     </div>
   </div>
 </div>
+
+<ng-template #itemSemTombamentoDetalhes let-item>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Inventariado por</th>
+          <th>Data</th>
+          <th>Classificação</th>
+          <th>Conservação</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ item.usuarioNome || '-' }}</td>
+          <td>{{ item.dataInventario | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ item.status || '-' }}</td>
+          <td>{{ item.estadoConservacao || '-' }}</td>
+          <td class="text-end">
+            <div class="inconsistencia-actions">
+              <button class="btn btn-sm btn-icon-action" type="button" (click)="openDetalhesInconsistencia(item.id)"
+                title="Detalhes" aria-label="Detalhes">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              </button>
+              <button class="btn btn-sm btn-icon-action" type="button" (click)="openFotosInconsistencia(item.id)"
+                [disabled]="!item.fotos.length" [title]="item.fotos.length ? 'Ver fotos' : 'Sem fotos'"
+                [attr.aria-label]="item.fotos.length ? 'Ver fotos' : 'Sem fotos'">
+                <i class="fa-solid fa-images" aria-hidden="true"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-template>
 
 <div class="modal-backdrop-custom" *ngIf="selectedItemDetalhes"></div>
 <div class="modal-custom" *ngIf="selectedItemDetalhes" appCloseOnOutsideClick
