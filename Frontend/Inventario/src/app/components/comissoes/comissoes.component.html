@@ -334,7 +334,7 @@
             </div>
 
             <div class="inconsistencia-list" *ngIf="!loadingInconsistencias && inconsistenciasDaComissao.length > 0">
-              <div class="inconsistencia-item" *ngFor="let inconsistencia of inconsistenciasDaComissao">
+              <div class="inconsistencia-item" *ngFor="let inconsistencia of inconsistenciasPaginadas">
                 <div class="inconsistencia-head">
                   <div>
                     <strong>{{ inconsistencia.tipo === 'FotoAusente' ? 'Foto ausente' : 'Tombamento duplicado' }} · {{ inconsistencia.tombamento || 'Sem tombamento' }}</strong>
@@ -391,6 +391,7 @@
                 </div>
               </div>
             </div>
+            <ng-container *ngTemplateOutlet="sectionPagination; context: { $implicit: 'inconsistencias', total: inconsistenciasDaComissao.length }"></ng-container>
           </div>
         </div>
 
@@ -423,7 +424,7 @@
             </div>
 
             <div class="inconsistencia-list" *ngIf="!loadingItensInventariados && itensSemTombamentoEEstadoDaComissao.length > 0">
-              <div class="inconsistencia-item" *ngFor="let item of itensSemTombamentoEEstadoDaComissao">
+              <div class="inconsistencia-item" *ngFor="let item of itensSemTombamentoEEstadoPaginados">
                 <div class="inconsistencia-head">
                   <div>
                     <strong>{{ item.tombamentoAntigo || 'Sem nenhum tombamento' }}</strong>
@@ -435,6 +436,7 @@
                 <ng-container *ngTemplateOutlet="itemSemTombamentoDetalhes; context: { $implicit: item }"></ng-container>
               </div>
             </div>
+            <ng-container *ngTemplateOutlet="sectionPagination; context: { $implicit: 'sem-tombamento-eestado', total: itensSemTombamentoEEstadoDaComissao.length }"></ng-container>
           </div>
         </div>
 
@@ -467,7 +469,7 @@
             </div>
 
             <div class="inconsistencia-list" *ngIf="!loadingItensInventariados && itensSemNenhumTombamentoDaComissao.length > 0">
-              <div class="inconsistencia-item" *ngFor="let item of itensSemNenhumTombamentoDaComissao">
+              <div class="inconsistencia-item" *ngFor="let item of itensSemNenhumTombamentoPaginados">
                 <div class="inconsistencia-head">
                   <div>
                     <strong>Sem nenhum tombamento</strong>
@@ -479,6 +481,7 @@
                 <ng-container *ngTemplateOutlet="itemSemTombamentoDetalhes; context: { $implicit: item }"></ng-container>
               </div>
             </div>
+            <ng-container *ngTemplateOutlet="sectionPagination; context: { $implicit: 'sem-tombamento', total: itensSemNenhumTombamentoDaComissao.length }"></ng-container>
           </div>
         </div>
 
@@ -516,7 +519,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let item of itensExcluidosDaComissao">
+                  <tr *ngFor="let item of itensExcluidosPaginados">
                     <td>{{ item.tombamentoNovo || item.tombamentoAntigo || '-' }}</td>
                     <td>{{ item.descricao || '-' }}</td>
                     <td>{{ item.localNome || '-' }}</td>
@@ -528,6 +531,7 @@
                 </tbody>
               </table>
             </div>
+            <ng-container *ngTemplateOutlet="sectionPagination; context: { $implicit: 'excluidos', total: itensExcluidosDaComissao.length }"></ng-container>
           </div>
         </div>
 
@@ -567,7 +571,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let movimento of movimentacoesLocalDaComissao">
+                  <tr *ngFor="let movimento of movimentacoesLocalPaginadas">
                     <td>{{ movimento.tombamento || '-' }}</td>
                     <td>{{ movimento.descricao || '-' }}</td>
                     <td>{{ movimento.localOrigemNome || '-' }}</td>
@@ -579,6 +583,7 @@
                 </tbody>
               </table>
             </div>
+            <ng-container *ngTemplateOutlet="sectionPagination; context: { $implicit: 'correcoes-local', total: movimentacoesLocalDaComissao.length }"></ng-container>
           </div>
         </div>
 
@@ -653,6 +658,19 @@
     </div>
   </div>
 </div>
+
+<ng-template #sectionPagination let-type let-total="total">
+  <div class="section-pagination" *ngIf="total > sectionPageSize">
+    <span class="list-pagination-summary">{{ getSectionRangeLabel(type, total) }}</span>
+    <div class="list-pagination-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="changeSectionPage(type, -1, total)"
+        [disabled]="!canGoToPreviousSectionPage(type)">Anterior</button>
+      <span class="list-pagination-label">{{ getSectionPageLabel(type, total) }}</span>
+      <button class="btn btn-outline-secondary" type="button" (click)="changeSectionPage(type, 1, total)"
+        [disabled]="!canGoToNextSectionPage(type, total)">Próxima</button>
+    </div>
+  </div>
+</ng-template>
 
 <ng-template #itemSemTombamentoDetalhes let-item>
   <div class="table-responsive">
@@ -1065,12 +1083,14 @@
   </div>
 </div>
 
-<div class="report-loading-overlay" *ngIf="generatingItensSemTombamentoPdf" role="status" aria-live="assertive">
+<div class="report-loading-overlay" *ngIf="generatingItensSemTombamentoPdf || generatingInconsistenciasPdf" role="status" aria-live="assertive">
   <div class="report-loading-card">
     <div class="spinner-border text-primary" aria-hidden="true"></div>
     <strong>Gerando relatório...</strong>
     <span>
-      {{ generatingItensSemTombamentoPdf === 'eestado'
+      {{ generatingInconsistenciasPdf
+        ? 'Preparando as inconsistências e suas fotos.'
+        : generatingItensSemTombamentoPdf === 'eestado'
         ? 'Preparando os itens sem tombamento do E-Estado e suas fotos.'
         : 'Preparando os itens sem nenhum tombamento e suas fotos.' }}
     </span>

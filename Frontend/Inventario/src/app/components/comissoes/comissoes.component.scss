@@ -720,6 +720,16 @@
   gap: 12px;
 }
 
+.section-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #dbe4ee;
+}
+
 .report-loading-overlay {
   position: fixed;
   inset: 0;
@@ -801,5 +811,14 @@
   .member-card-static {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .section-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .section-pagination .list-pagination-actions {
+    justify-content: space-between;
   }
 }

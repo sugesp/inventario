@@ -19,6 +19,7 @@ import { SearchableSelectOption } from '../shared/searchable-select/searchable-s
 type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 type RelatorioItensSemTombamentoTipo = 'eestado' | 'nenhum';
 type RelatorioComissaoTipo = 'geral' | 'local';
+type ComissaoListType = 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 
 interface LocalMapTile {
   url: string;
@@ -79,6 +80,12 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   memberTerm = '';
   memberPageNumber = 1;
   readonly memberPageSize = 10;
+  readonly sectionPageSize = 10;
+  inconsistenciasPageNumber = 1;
+  semTombamentoEEstadoPageNumber = 1;
+  semTombamentoPageNumber = 1;
+  excluidosPageNumber = 1;
+  correcoesLocalPageNumber = 1;
   memberTotalCount = 0;
   memberTotalPages = 0;
   memberOptions: Array<{ id: string; nome: string; cpf: string }> = [];
@@ -560,6 +567,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.correcoesLocalPageNumber = 1;
     this.loadingMovimentacoesLocal = true;
     this.itemInventariadoService.getLocalMovements().subscribe({
       next: (data) => {
@@ -578,6 +586,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.excluidosPageNumber = 1;
     this.loadingItensExcluidos = true;
     this.itemInventariadoService.getDeleted().subscribe({
       next: (data) => {
@@ -596,6 +605,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.semTombamentoEEstadoPageNumber = 1;
+    this.semTombamentoPageNumber = 1;
     this.loadingItensInventariados = true;
     this.itemInventariadoService.getAll().subscribe({
       next: (data) => {
@@ -614,6 +625,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.inconsistenciasPageNumber = 1;
     this.loadingInconsistencias = true;
     this.itemInventariadoService.getInconsistencias().subscribe({
       next: (data) => {
@@ -631,6 +643,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.inconsistenciasInventario.filter((item) => item.comissaoId === this.editingId);
   }
 
+  get inconsistenciasPaginadas(): InconsistenciaInventario[] {
+    return this.paginateItems(this.inconsistenciasDaComissao, this.inconsistenciasPageNumber);
+  }
+
   get itensInventariadosDaComissao(): ItemInventariado[] {
     return this.itensInventariados.filter((item) => item.comissaoId === this.editingId);
   }
@@ -639,16 +655,89 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     return this.itensInventariadosDaComissao.filter((item) => !item.tombamentoNovo?.trim());
   }
 
+  get itensSemTombamentoEEstadoPaginados(): ItemInventariado[] {
+    return this.paginateItems(this.itensSemTombamentoEEstadoDaComissao, this.semTombamentoEEstadoPageNumber);
+  }
+
   get itensSemNenhumTombamentoDaComissao(): ItemInventariado[] {
     return this.itensSemTombamentoEEstadoDaComissao.filter((item) => !item.tombamentoAntigo?.trim());
+  }
+
+  get itensSemNenhumTombamentoPaginados(): ItemInventariado[] {
+    return this.paginateItems(this.itensSemNenhumTombamentoDaComissao, this.semTombamentoPageNumber);
   }
 
   get itensExcluidosDaComissao(): ItemInventariado[] {
     return this.itensExcluidos.filter((item) => item.comissaoId === this.editingId);
   }
 
+  get itensExcluidosPaginados(): ItemInventariado[] {
+    return this.paginateItems(this.itensExcluidosDaComissao, this.excluidosPageNumber);
+  }
+
   get movimentacoesLocalDaComissao(): ItemInventariadoMovimentacaoLocal[] {
     return this.movimentacoesLocal.filter((item) => item.comissaoId === this.editingId);
+  }
+
+  get movimentacoesLocalPaginadas(): ItemInventariadoMovimentacaoLocal[] {
+    return this.paginateItems(this.movimentacoesLocalDaComissao, this.correcoesLocalPageNumber);
+  }
+
+  changeSectionPage(type: ComissaoListType, delta: number, totalItems: number): void {
+    const totalPages = this.getSectionTotalPages(totalItems);
+    const page = Math.min(Math.max(this.getSectionPageNumber(type) + delta, 1), totalPages || 1);
+    this.setSectionPageNumber(type, page);
+  }
+
+  getSectionPageLabel(type: ComissaoListType, totalItems: number): string {
+    const totalPages = this.getSectionTotalPages(totalItems);
+    return totalPages === 0 ? 'Página 0 de 0' : `Página ${this.getSectionPageNumber(type)} de ${totalPages}`;
+  }
+
+  canGoToPreviousSectionPage(type: ComissaoListType): boolean {
+    return this.getSectionPageNumber(type) > 1;
+  }
+
+  canGoToNextSectionPage(type: ComissaoListType, totalItems: number): boolean {
+    return this.getSectionPageNumber(type) < this.getSectionTotalPages(totalItems);
+  }
+
+  getSectionRangeLabel(type: ComissaoListType, totalItems: number): string {
+    if (totalItems === 0) {
+      return 'Nenhum registro';
+    }
+
+    const first = ((this.getSectionPageNumber(type) - 1) * this.sectionPageSize) + 1;
+    const last = Math.min(first + this.sectionPageSize - 1, totalItems);
+    return `${first}–${last} de ${totalItems} registro(s)`;
+  }
+
+  private paginateItems<T>(items: T[], pageNumber: number): T[] {
+    const start = (pageNumber - 1) * this.sectionPageSize;
+    return items.slice(start, start + this.sectionPageSize);
+  }
+
+  private getSectionTotalPages(totalItems: number): number {
+    return Math.ceil(totalItems / this.sectionPageSize);
+  }
+
+  private getSectionPageNumber(type: ComissaoListType): number {
+    const pages: Record<ComissaoListType, number> = {
+      inconsistencias: this.inconsistenciasPageNumber,
+      'sem-tombamento-eestado': this.semTombamentoEEstadoPageNumber,
+      'sem-tombamento': this.semTombamentoPageNumber,
+      excluidos: this.excluidosPageNumber,
+      'correcoes-local': this.correcoesLocalPageNumber,
+    };
+    return pages[type];
+  }
+
+  private setSectionPageNumber(type: ComissaoListType, page: number): void {
+    if (type === 'inconsistencias') this.inconsistenciasPageNumber = page;
+    if (type === 'sem-tombamento-eestado') this.semTombamentoEEstadoPageNumber = page;
+    if (type === 'sem-tombamento') this.semTombamentoPageNumber = page;
+    if (type === 'excluidos') this.excluidosPageNumber = page;
+    if (type === 'correcoes-local') this.correcoesLocalPageNumber = page;
   }
 
   get totalOcorrenciasInconsistencias(): number {
@@ -809,7 +898,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
             }
 
             try {
-              const blob = await firstValueFrom(this.itemInventariadoService.getFoto(item.id, item.fotos[photoIndex].id));
+              const blob = await firstValueFrom(this.itemInventariadoService.getFoto(item.id, item.fotos[photoIndex].id, true));
               const imageData = await this.blobToDataUrl(blob);
               const x = margin + column * (photoWidth + photoGap);
               pdf.addImage(imageData, x, cursorY, photoWidth, photoHeight, undefined, 'FAST');
@@ -956,13 +1045,15 @@ export class ComissoesComponent implements OnInit, OnDestroy {
           }
         }
 
-        pdf.setFontSize(7);
-        pdf.text(
-          `Página ${Math.floor(itemIndex / 2) + 1} de ${Math.ceil(itens.length / 2)}`,
-          pageWidth - margin,
-          pageHeight - 5,
-          { align: 'right' }
-        );
+        if (itemPositionOnPage === 1 || itemIndex === itens.length - 1) {
+          pdf.setFontSize(7);
+          pdf.text(
+            `Página ${Math.floor(itemIndex / 2) + 1} de ${Math.ceil(itens.length / 2)}`,
+            pageWidth - margin,
+            pageHeight - 5,
+            { align: 'right' }
+          );
+        }
       }
 
       pdf.save(`relatorio-${nomeArquivo}-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(generatedAt)}.pdf`);
