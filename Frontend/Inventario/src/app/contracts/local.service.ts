@@ -14,6 +14,10 @@ export class LocalService {
     return this.http.get<Local[]>(this.baseUrl);
   }
 
+  getByComissao(comissaoId: string): Observable<Local[]> {
+    return this.http.get<Local[]>(`${this.baseUrl}/comissao/${comissaoId}`);
+  }
+
   create(payload: LocalPayload): Observable<Local> {
     return this.http.post<Local>(this.baseUrl, payload);
   }

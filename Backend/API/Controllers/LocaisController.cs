@@ -26,6 +26,26 @@ public class LocaisController : ControllerBase
         return Ok(await _service.GetAllAsync(cancellationToken));
     }
 
+    [HttpGet("comissao/{comissaoId:guid}")]
+    public async Task<ActionResult<IEnumerable<LocalDto>>> GetByComissao(
+        Guid comissaoId,
+        CancellationToken cancellationToken
+    )
+    {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (!Guid.TryParse(value, out var usuarioId))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _service.GetByComissaoAsync(
+            comissaoId,
+            usuarioId,
+            User.IsInRole("Administrador"),
+            cancellationToken
+        ));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LocalDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

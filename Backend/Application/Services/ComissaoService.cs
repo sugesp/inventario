@@ -23,7 +23,15 @@ public class ComissaoService : IComissaoService
             .OrderByDescending(x => x.Ano)
             .ToListAsync(cancellationToken);
 
-        return items.Select(MapToDto);
+        var quantidadesPorComissao = await GetQuantidadesItensLocalizadosAsync(
+            items.Select(x => x.Id),
+            cancellationToken
+        );
+
+        return items.Select(item => MapToDto(
+            item,
+            quantidadesPorComissao.GetValueOrDefault(item.Id)
+        ));
     }
 
     public async Task<ComissaoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -31,7 +39,13 @@ public class ComissaoService : IComissaoService
         var entity = await QueryBase()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        return entity is null ? null : MapToDto(entity);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        var quantidadeItensLocalizados = await GetQuantidadeItensLocalizadosAsync(id, cancellationToken);
+        return MapToDto(entity, quantidadeItensLocalizados);
     }
 
     public async Task<ComissaoDto?> GetActiveAsync(CancellationToken cancellationToken = default)
@@ -39,7 +53,13 @@ public class ComissaoService : IComissaoService
         var entity = await QueryBase()
             .FirstOrDefaultAsync(x => x.Status == StatusAtiva, cancellationToken);
 
-        return entity is null ? null : MapToDto(entity);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        var quantidadeItensLocalizados = await GetQuantidadeItensLocalizadosAsync(entity.Id, cancellationToken);
+        return MapToDto(entity, quantidadeItensLocalizados);
     }
 
     public Task<bool> IsPresidentAsync(Guid comissaoId, Guid usuarioId, CancellationToken cancellationToken = default)
@@ -163,8 +183,7 @@ public class ComissaoService : IComissaoService
             .Where(x => x.DeletedAt == null)
             .Include(x => x.Presidente)
             .Include(x => x.Membros.Where(m => m.DeletedAt == null))
-                .ThenInclude(x => x.Usuario)
-            .Include(x => x.ItensInventariados.Where(item => item.DeletedAt == null));
+                .ThenInclude(x => x.Usuario);
     }
 
     private async Task<List<ComissaoMembroSaveDto>> ValidateAsync(
@@ -258,13 +277,53 @@ public class ComissaoService : IComissaoService
         };
     }
 
-    private static ComissaoDto MapToDto(Comissao entity)
+    private async Task<Dictionary<Guid, int>> GetQuantidadesItensLocalizadosAsync(
+        IEnumerable<Guid> comissaoIds,
+        CancellationToken cancellationToken
+    )
     {
-        var quantidadeItensLocalizados = entity.ItensInventariados
-            .Select(item => NormalizeTombamento(item.TombamentoNovo))
-            .Where(tombamento => !string.IsNullOrWhiteSpace(tombamento))
-            .Distinct()
-            .Count();
+        var ids = comissaoIds.Distinct().ToArray();
+        if (ids.Length == 0)
+        {
+            return new Dictionary<Guid, int>();
+        }
+
+        var tombamentos = await _context.ItensInventariados
+            .AsNoTracking()
+            .Where(item =>
+                item.DeletedAt == null
+                && item.ComissaoId.HasValue
+                && ids.Contains(item.ComissaoId.Value)
+                && item.TombamentoNovo != string.Empty
+            )
+            .Select(item => new { ComissaoId = item.ComissaoId!.Value, item.TombamentoNovo })
+            .ToListAsync(cancellationToken);
+
+        return tombamentos
+            .Select(item => new
+            {
+                item.ComissaoId,
+                Tombamento = NormalizeTombamento(item.TombamentoNovo)
+            })
+            .Where(item => !string.IsNullOrWhiteSpace(item.Tombamento))
+            .GroupBy(item => item.ComissaoId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(item => item.Tombamento).Distinct().Count()
+            );
+    }
+
+    private async Task<int> GetQuantidadeItensLocalizadosAsync(
+        Guid comissaoId,
+        CancellationToken cancellationToken
+    )
+    {
+        var quantidades = await GetQuantidadesItensLocalizadosAsync(new[] { comissaoId }, cancellationToken);
+        return quantidades.GetValueOrDefault(comissaoId);
+    }
+
+    private static ComissaoDto MapToDto(Comissao entity, int quantidadeItensLocalizados)
+    {
         var percentualProgresso = entity.QuantidadeItensEsperados > 0
             ? Math.Round((decimal)quantidadeItensLocalizados / entity.QuantidadeItensEsperados * 100, 2)
             : 0;

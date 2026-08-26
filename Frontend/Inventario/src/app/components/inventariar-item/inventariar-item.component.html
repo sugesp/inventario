@@ -33,6 +33,7 @@
       <div class="local-search">
         <label class="form-label" for="local-search-input">Buscar local</label>
         <input id="local-search-input" class="form-control" type="search" [(ngModel)]="localSearchTerm"
+          (ngModelChange)="filterLocalTree()"
           placeholder="Digite o local ou o local superior" autocomplete="off" />
       </div>
 

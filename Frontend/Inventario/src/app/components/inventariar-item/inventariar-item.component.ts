@@ -79,9 +79,9 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   private static readonly QR_SCAN_MAX_DIMENSION = 800;
   private static readonly QR_SCAN_CROP_WIDTH_RATIO = 0.9;
   private static readonly QR_SCAN_CROP_HEIGHT_RATIO = 0.65;
-  private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 3840;
-  private static readonly UPLOAD_IMAGE_QUALITY = 0.92;
-  private static readonly PHOTO_CAPTURE_MAX_DIMENSION = 3200;
+  private static readonly UPLOAD_IMAGE_MAX_DIMENSION = 1920;
+  private static readonly UPLOAD_IMAGE_QUALITY = 0.82;
+  private static readonly PHOTO_CAPTURE_MAX_DIMENSION = 1920;
   private static readonly STORAGE_KEY = 'inventario.flow.state';
 
   @ViewChild('scannerVideo') scannerVideo?: ElementRef<HTMLVideoElement>;
@@ -92,6 +92,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   @ViewChild('traseiraPhotoInput') traseiraPhotoInput?: ElementRef<HTMLInputElement>;
 
   locais: Local[] = [];
+  locaisDisponiveis: Local[] = [];
+  locaisEmArvore: LocalTreeItem[] = [];
   localSearchTerm = '';
   activeComissao: Comissao | null = null;
   selectedLocalId = '';
@@ -126,6 +128,8 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   private scannerCanvas: HTMLCanvasElement | null = null;
   private photoCaptureStream: MediaStream | null = null;
   private tombamentoBloqueadoNoLocal = '';
+  private locaisArvoreCompleta: LocalTreeItem[] = [];
+  private readonly caminhosLocais = new Map<string, string>();
 
   form: ItemInventarioForm = this.createEmptyForm();
 
@@ -139,7 +143,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadActiveComissao();
-    this.loadLocais();
     this.restoreState();
   }
 
@@ -152,44 +155,11 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.vehiclePhotos.forEach((photo) => this.releasePhoto(photo));
   }
 
-  get locaisDisponiveis(): Local[] {
-    const locaisDaComissao = this.activeComissao
-      ? this.locais.filter((item) => item.comissaoId === this.activeComissao?.id && !item.bloqueado)
-      : [];
-
-    if (this.authService.isAdmin) {
-      return locaisDaComissao;
-    }
-
-    const usuarioId = this.authService.session?.userId;
-    const locaisPorId = new Map(locaisDaComissao.map((item) => [item.id, item]));
-
-    return locaisDaComissao.filter((item) => {
-      let localAtual: Local | undefined = item;
-      const locaisVisitados = new Set<string>();
-
-      while (localAtual && !locaisVisitados.has(localAtual.id)) {
-        locaisVisitados.add(localAtual.id);
-
-        if (localAtual.membros.some((membro) => membro.usuarioId === usuarioId)) {
-          return true;
-        }
-
-        localAtual = localAtual.localSuperiorId
-          ? locaisPorId.get(localAtual.localSuperiorId)
-          : undefined;
-      }
-
-      return false;
-    });
-  }
-
   get localSelecionado(): Local | null {
     return this.locaisDisponiveis.find((item) => item.id === this.selectedLocalId) ?? null;
   }
 
-  get locaisEmArvore(): LocalTreeItem[] {
-    const termo = this.normalizeSearchValue(this.localSearchTerm);
+  private rebuildLocalTree(): void {
     const locais = this.locaisDisponiveis;
     const locaisPorId = new Map(locais.map((local) => [local.id, local]));
     const filhosPorSuperior = new Map<string, Local[]>();
@@ -229,9 +199,17 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       .sort((a, b) => a.nome.localeCompare(b.nome))
       .forEach((local) => adicionarLocal(local, 0, []));
 
-    return termo
-      ? resultado.filter((item) => this.normalizeSearchValue(item.caminho).includes(termo))
-      : resultado;
+    this.locaisArvoreCompleta = resultado;
+    this.caminhosLocais.clear();
+    resultado.forEach((item) => this.caminhosLocais.set(item.local.id, item.caminho));
+    this.filterLocalTree();
+  }
+
+  filterLocalTree(): void {
+    const termo = this.normalizeSearchValue(this.localSearchTerm);
+    this.locaisEmArvore = termo
+      ? this.locaisArvoreCompleta.filter((item) => this.normalizeSearchValue(item.caminho).includes(termo))
+      : this.locaisArvoreCompleta;
   }
 
   get canAdvanceToScan(): boolean {
@@ -396,19 +374,7 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   getLocalDisplayName(local: Local): string {
-    const locaisPorId = new Map(this.locaisDisponiveis.map((item) => [item.id, item]));
-    const caminho = [local.nome];
-    const visitados = new Set<string>([local.id]);
-    let superiorId = local.localSuperiorId;
-
-    while (superiorId && locaisPorId.has(superiorId) && !visitados.has(superiorId)) {
-      const superior = locaisPorId.get(superiorId)!;
-      caminho.unshift(superior.nome);
-      visitados.add(superior.id);
-      superiorId = superior.localSuperiorId;
-    }
-
-    return caminho.join(' > ');
+    return this.caminhosLocais.get(local.id) ?? local.nome;
   }
 
   private normalizeSearchValue(value: string): string {
@@ -423,11 +389,13 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     return this.conservacaoOptions.find((item) => item.value === this.form.estadoConservacao)?.label ?? this.form.estadoConservacao ?? '';
   }
 
-  loadLocais(): void {
+  loadLocais(comissaoId: string): void {
     this.loadingLocais = true;
-    this.localService.getAll().subscribe({
+    this.localService.getByComissao(comissaoId).subscribe({
       next: (data) => {
         this.locais = [...data].sort((a, b) => a.nome.localeCompare(b.nome));
+        this.locaisDisponiveis = this.locais.filter((item) => !item.bloqueado);
+        this.rebuildLocalTree();
         this.loadingLocais = false;
         this.ensureSelectedLocalIsAccessible();
         this.persistState();
@@ -445,10 +413,14 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.activeComissao = data;
         this.loadingComissao = false;
+        this.loadLocais(data.id);
         this.ensureSelectedLocalIsAccessible();
       },
       error: () => {
         this.activeComissao = null;
+        this.locais = [];
+        this.locaisDisponiveis = [];
+        this.rebuildLocalTree();
         this.loadingComissao = false;
       },
     });

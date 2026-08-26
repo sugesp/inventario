@@ -30,6 +30,61 @@ public class LocalService : ILocalService
         return items.Select(MapToDto);
     }
 
+    public async Task<IEnumerable<LocalDto>> GetByComissaoAsync(
+        Guid comissaoId,
+        Guid usuarioId,
+        bool usuarioAdministrador,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var items = await _context.Locais
+            .AsNoTracking()
+            .Where(x =>
+                x.DeletedAt == null
+                && x.ComissaoId == comissaoId
+                && x.Comissao != null
+                && x.Comissao.DeletedAt == null
+            )
+            .Include(x => x.Comissao)
+            .Include(x => x.LocalSuperior)
+            .Include(x => x.Membros.Where(m => m.DeletedAt == null))
+                .ThenInclude(x => x.Usuario)
+            .OrderBy(x => x.Nome)
+            .ToListAsync(cancellationToken);
+
+        if (!usuarioAdministrador)
+        {
+            var itemsPorId = items.ToDictionary(item => item.Id);
+            items = items.Where(item => UsuarioTemAcessoAoLocal(item, usuarioId, itemsPorId)).ToList();
+        }
+
+        return items.Select(MapToDto);
+    }
+
+    private static bool UsuarioTemAcessoAoLocal(
+        Local item,
+        Guid usuarioId,
+        IReadOnlyDictionary<Guid, Local> itemsPorId
+    )
+    {
+        Local? atual = item;
+        var visitados = new HashSet<Guid>();
+        while (atual is not null && visitados.Add(atual.Id))
+        {
+            if (atual.Membros.Any(membro => membro.DeletedAt == null && membro.UsuarioId == usuarioId))
+            {
+                return true;
+            }
+
+            atual = atual.LocalSuperiorId.HasValue
+                && itemsPorId.TryGetValue(atual.LocalSuperiorId.Value, out var superior)
+                    ? superior
+                    : null;
+        }
+
+        return false;
+    }
+
     public async Task<LocalDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await _context.Locais
