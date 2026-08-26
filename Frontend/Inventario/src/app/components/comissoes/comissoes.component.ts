@@ -856,10 +856,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 10;
-    const photoGap = 4;
-    const photoWidth = (pageWidth - (margin * 2) - (photoGap * 2)) / 3;
-    const photoHeight = 25;
-    const itemBlockHeight = 87;
+    const itemBlockHeight = 82;
     const firstItemY = 28;
     const generatedAt = new Date();
     let failedPhotos = 0;
@@ -880,7 +877,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
             photos: await Promise.all(pageItem.fotos.map(async (foto) => {
               try {
                 const blob = await firstValueFrom(this.itemInventariadoService.getFoto(pageItem.id, foto.id, true));
-                return await this.compressPhotoForPdf(blob);
+                return await this.compressPhotoForPdf(blob, pageItem.fotos.length > 3 ? 360 : 450, pageItem.fotos.length > 3 ? 202 : 220);
               } catch {
                 failedPhotos++;
                 return null;
@@ -937,16 +934,19 @@ export class ComissoesComponent implements OnInit, OnDestroy {
           pdf.setTextColor(0, 0, 0);
         } else {
           const photos = pagePhotos.get(item.id) ?? [];
+          const photoColumns = photos.length > 3 ? 6 : 3;
+          const photoGap = photos.length > 3 ? 2 : 4;
+          const photoWidth = (pageWidth - (margin * 2) - (photoGap * (photoColumns - 1))) / photoColumns;
+          const photoHeight = photos.length > 3 ? 25 : 44;
 
           for (let photoIndex = 0; photoIndex < photos.length; photoIndex++) {
-            const column = photoIndex % 3;
-            const row = Math.floor(photoIndex / 3);
+            const column = photoIndex % photoColumns;
             if (photos[photoIndex]) {
               pdf.addImage(
                 photos[photoIndex]!,
                 'JPEG',
                 margin + column * (photoWidth + photoGap),
-                cursorY + row * (photoHeight + 2),
+                cursorY,
                 photoWidth,
                 photoHeight,
                 undefined,
@@ -987,14 +987,14 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     });
   }
 
-  private compressPhotoForPdf(blob: Blob): Promise<string> {
+  private compressPhotoForPdf(blob: Blob, width: number, height: number): Promise<string> {
     return new Promise((resolve, reject) => {
       const image = new Image();
       const objectUrl = URL.createObjectURL(blob);
       image.onload = () => {
         const canvas = document.createElement('canvas');
-        canvas.width = 360;
-        canvas.height = 210;
+        canvas.width = width;
+        canvas.height = height;
         const context = canvas.getContext('2d');
         if (!context) {
           URL.revokeObjectURL(objectUrl);
@@ -1002,10 +1002,19 @@ export class ComissoesComponent implements OnInit, OnDestroy {
           return;
         }
 
-        const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
-        const width = image.naturalWidth * scale;
-        const height = image.naturalHeight * scale;
-        context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+        const renderedWidth = image.naturalWidth * scale;
+        const renderedHeight = image.naturalHeight * scale;
+        context.drawImage(
+          image,
+          (canvas.width - renderedWidth) / 2,
+          (canvas.height - renderedHeight) / 2,
+          renderedWidth,
+          renderedHeight
+        );
         URL.revokeObjectURL(objectUrl);
         resolve(canvas.toDataURL('image/jpeg', 0.42));
       };
