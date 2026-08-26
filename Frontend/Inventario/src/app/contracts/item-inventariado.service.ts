@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ConsultaPublicaBem, ConsultaTombamento, InconsistenciaInventario, ItemInventariado, ItemInventariadoMovimentacaoLocal } from './item-inventariado.model';
+import { SKIP_GLOBAL_LOADING } from '../core/loading/loading.interceptor';
 
 @Injectable({ providedIn: 'root' })
 export class ItemInventariadoService {
@@ -40,9 +41,12 @@ export class ItemInventariadoService {
     );
   }
 
-  getFoto(itemId: string, fotoId: string): Observable<Blob> {
+  getFoto(itemId: string, fotoId: string, skipGlobalLoading = false): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/${itemId}/fotos/${fotoId}`, {
       responseType: 'blob',
+      context: skipGlobalLoading
+        ? new HttpContext().set(SKIP_GLOBAL_LOADING, true)
+        : undefined,
     });
   }
 

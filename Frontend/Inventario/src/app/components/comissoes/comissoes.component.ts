@@ -879,7 +879,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
             itemId: pageItem.id,
             photos: await Promise.all(pageItem.fotos.map(async (foto) => {
               try {
-                const blob = await firstValueFrom(this.itemInventariadoService.getFoto(pageItem.id, foto.id));
+                const blob = await firstValueFrom(this.itemInventariadoService.getFoto(pageItem.id, foto.id, true));
                 return await this.compressPhotoForPdf(blob);
               } catch {
                 failedPhotos++;
