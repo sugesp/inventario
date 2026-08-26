@@ -1064,3 +1064,16 @@
     </div>
   </div>
 </div>
+
+<div class="report-loading-overlay" *ngIf="generatingItensSemTombamentoPdf" role="status" aria-live="assertive">
+  <div class="report-loading-card">
+    <div class="spinner-border text-primary" aria-hidden="true"></div>
+    <strong>Gerando relatório...</strong>
+    <span>
+      {{ generatingItensSemTombamentoPdf === 'eestado'
+        ? 'Preparando os itens sem tombamento do E-Estado e suas fotos.'
+        : 'Preparando os itens sem nenhum tombamento e suas fotos.' }}
+    </span>
+    <small>Esta operação pode levar alguns minutos. Aguarde o download do PDF.</small>
+  </div>
+</div>

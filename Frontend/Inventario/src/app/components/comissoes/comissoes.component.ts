@@ -852,34 +852,58 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.generatingItensSemTombamentoPdf = tipo;
     const titulo = tipo === 'eestado' ? 'Itens Sem Tombamento do E-Estado' : 'Itens Sem Nenhum Tombamento';
     const nomeArquivo = tipo === 'eestado' ? 'sem-tombamento-eestado' : 'sem-nenhum-tombamento';
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 10;
     const photoGap = 4;
     const photoWidth = (pageWidth - (margin * 2) - (photoGap * 2)) / 3;
-    const photoHeight = 50;
+    const photoHeight = 25;
+    const itemBlockHeight = 87;
+    const firstItemY = 28;
     const generatedAt = new Date();
     let failedPhotos = 0;
+    let pagePhotos = new Map<string, Array<string | null>>();
 
     try {
       for (let itemIndex = 0; itemIndex < itens.length; itemIndex++) {
         const item = itens[itemIndex];
-        if (itemIndex > 0) {
+        const itemPositionOnPage = itemIndex % 2;
+        if (itemIndex > 0 && itemPositionOnPage === 0) {
           pdf.addPage();
         }
 
+        if (itemPositionOnPage === 0) {
+          const pageItems = itens.slice(itemIndex, itemIndex + 2);
+          const preparedPagePhotos = await Promise.all(pageItems.map(async (pageItem) => ({
+            itemId: pageItem.id,
+            photos: await Promise.all(pageItem.fotos.map(async (foto) => {
+              try {
+                const blob = await firstValueFrom(this.itemInventariadoService.getFoto(pageItem.id, foto.id));
+                return await this.compressPhotoForPdf(blob);
+              } catch {
+                failedPhotos++;
+                return null;
+              }
+            })),
+          })));
+          pagePhotos = new Map(preparedPagePhotos.map((prepared) => [prepared.itemId, prepared.photos]));
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(15);
+          pdf.text(titulo, margin, 12);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.text(`Comissão ${this.comissaoEmEdicao.ano} | Gerado em: ${generatedAt.toLocaleString('pt-BR')}`, margin, 18);
+        }
+
+        const itemStartY = firstItemY + (itemPositionOnPage * itemBlockHeight);
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(15);
-        pdf.text(titulo, margin, 14);
-        pdf.setFontSize(10);
-        pdf.text(`Comissão ${this.comissaoEmEdicao.ano} — item ${itemIndex + 1} de ${itens.length}`, margin, 21);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(8);
-        pdf.text(`Gerado em: ${generatedAt.toLocaleString('pt-BR')}`, margin, 27);
+        pdf.setFontSize(9);
+        pdf.text(`Item ${itemIndex + 1} de ${itens.length}`, margin, itemStartY);
 
         autoTable(pdf, {
-          startY: 32,
+          startY: itemStartY + 3,
           margin: { left: margin, right: margin },
           head: [['Tombamento E-Estado', 'Tombamento antigo', 'Descrição', 'Local', 'Inventariado por', 'Data', 'Classificação', 'Conservação']],
           body: [[
@@ -893,45 +917,52 @@ export class ComissoesComponent implements OnInit, OnDestroy {
             item.estadoConservacao || '-',
           ]],
           theme: 'grid',
-          styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+          styles: { font: 'helvetica', fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
           headStyles: { fillColor: [41, 95, 150], textColor: 255, fontStyle: 'bold' },
         });
 
-        let cursorY = ((pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 32) + 5;
+        let cursorY = ((pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? itemStartY + 3) + 3;
         if (item.observacao) {
-          const observacao = pdf.splitTextToSize(`Observação: ${item.observacao}`, pageWidth - (margin * 2));
+          const observacao = pdf.splitTextToSize(`Observação: ${item.observacao}`, pageWidth - (margin * 2)).slice(0, 2);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7);
           pdf.text(observacao, margin, cursorY);
-          cursorY += (observacao.length * 4) + 3;
+          cursorY += (observacao.length * 3) + 2;
         }
 
         if (!item.fotos.length) {
+          pdf.setFontSize(7);
           pdf.setTextColor(110, 110, 110);
           pdf.text('Sem fotos disponíveis para este item.', margin, cursorY);
           pdf.setTextColor(0, 0, 0);
         } else {
-          for (let photoIndex = 0; photoIndex < item.fotos.length; photoIndex++) {
+          const photos = pagePhotos.get(item.id) ?? [];
+
+          for (let photoIndex = 0; photoIndex < photos.length; photoIndex++) {
             const column = photoIndex % 3;
-            if (column === 0 && cursorY + photoHeight > pageHeight - 12) {
-              pdf.addPage();
-              cursorY = 14;
-            }
-
-            try {
-              const blob = await firstValueFrom(this.itemInventariadoService.getFoto(item.id, item.fotos[photoIndex].id));
-              const imageData = await this.blobToDataUrl(blob);
-              pdf.addImage(imageData, margin + column * (photoWidth + photoGap), cursorY, photoWidth, photoHeight, undefined, 'FAST');
-            } catch {
-              failedPhotos++;
-            }
-
-            if (column === 2 || photoIndex === item.fotos.length - 1) {
-              cursorY += photoHeight + 6;
+            const row = Math.floor(photoIndex / 3);
+            if (photos[photoIndex]) {
+              pdf.addImage(
+                photos[photoIndex]!,
+                'JPEG',
+                margin + column * (photoWidth + photoGap),
+                cursorY + row * (photoHeight + 2),
+                photoWidth,
+                photoHeight,
+                undefined,
+                'FAST'
+              );
             }
           }
         }
 
         pdf.setFontSize(7);
-        pdf.text(`Item ${itemIndex + 1} de ${itens.length}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+        pdf.text(
+          `Página ${Math.floor(itemIndex / 2) + 1} de ${Math.ceil(itens.length / 2)}`,
+          pageWidth - margin,
+          pageHeight - 5,
+          { align: 'right' }
+        );
       }
 
       pdf.save(`relatorio-${nomeArquivo}-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(generatedAt)}.pdf`);
@@ -953,6 +984,36 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       reader.onload = () => resolve(String(reader.result));
       reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(blob);
+    });
+  }
+
+  private compressPhotoForPdf(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(blob);
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 360;
+        canvas.height = 210;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Não foi possível preparar a foto.'));
+          return;
+        }
+
+        const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+        const width = image.naturalWidth * scale;
+        const height = image.naturalHeight * scale;
+        context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+        URL.revokeObjectURL(objectUrl);
+        resolve(canvas.toDataURL('image/jpeg', 0.42));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Não foi possível carregar a foto.'));
+      };
+      image.src = objectUrl;
     });
   }
 
