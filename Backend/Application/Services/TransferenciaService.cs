@@ -95,7 +95,12 @@ public class TransferenciaService : ITransferenciaService
             item.DeletedAt = DateTime.UtcNow;
         }
 
-        entity.Itens = dto.Itens.Select(MapToEntity).ToList();
+        foreach (var itemDto in dto.Itens)
+        {
+            var item = MapToEntity(itemDto);
+            item.TransferenciaId = entity.Id;
+            _context.Set<TransferenciaItem>().Add(item);
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
         return await GetByIdAsync(id, cancellationToken);
