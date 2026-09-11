@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import jsQR from 'jsqr';
 import { ToastrService } from 'ngx-toastr';
-import { finalize, firstValueFrom } from 'rxjs';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { Comissao } from '../../contracts/comissao.model';
 import { ComissaoService } from '../../contracts/comissao.service';
@@ -127,7 +127,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   private scannerDetector: InstanceType<NonNullable<typeof window.BarcodeDetector>> | null = null;
   private scannerCanvas: HTMLCanvasElement | null = null;
   private photoCaptureStream: MediaStream | null = null;
-  private tombamentoBloqueadoNoLocal = '';
   private locaisArvoreCompleta: LocalTreeItem[] = [];
   private readonly caminhosLocais = new Map<string, string>();
 
@@ -467,7 +466,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.clearConsultaPublica();
     this.identificationMode = 'manual';
     this.codeReadMessage = '';
-    this.clearTombamentoBloqueadoNoLocal();
     this.activeStep = 'manualLookup';
     this.persistState();
   }
@@ -480,7 +478,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.clearConsultaPublica();
     this.identificationMode = 'vehicle';
     this.codeReadMessage = '';
-    this.clearTombamentoBloqueadoNoLocal();
     this.activeStep = 'vehicleDetails';
     this.persistState();
   }
@@ -490,7 +487,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.identificationMode = 'manual';
     this.codeReadMessage = 'Preencha os dados do item manualmente.';
     this.form.tombamentoNovo = '';
-    this.clearTombamentoBloqueadoNoLocal();
     this.activeStep = 'details';
     this.persistState();
   }
@@ -505,11 +501,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.identificationMode = 'manual';
     this.form.tombamentoNovo = this.formatTombamentoValue(tombamento);
-    if (!await this.canContinueWithTombamento(tombamento)) {
-      this.persistState();
-      return;
-    }
-
     this.codeReadMessage = 'Patrimônio informado manualmente. Consultando dados do bem.';
     this.consultarResumoPublico();
     this.activeStep = 'details';
@@ -675,11 +666,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       if (rawValue) {
         this.playScanBeep();
         this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
-        if (!await this.canContinueWithTombamento(rawValue)) {
-          this.persistState();
-          return false;
-        }
-
         this.codeReadMessage = 'Tombamento identificado automaticamente pela imagem.';
         this.consultarResumoPublico();
         this.persistState();
@@ -699,12 +685,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   async submit(): Promise<void> {
     if (!this.canSubmit) {
       this.toastr.warning(this.saveBlockingReasons[0] ?? 'Confira os dados obrigatórios antes de salvar.');
-      return;
-    }
-
-    if (!await this.canContinueWithTombamento(this.form.tombamentoNovo)) {
-      this.activeStep = this.isVehicleFlow ? 'vehicleDetails' : 'details';
-      this.persistState();
       return;
     }
 
@@ -782,7 +762,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.geolocationMessage = '';
     this.geolocationLoading = false;
     this.identificationMode = null;
-    this.clearTombamentoBloqueadoNoLocal();
     this.activeStep = this.selectedLocalId ? 'capture' : 'local';
     this.form = this.createEmptyForm();
     this.persistState();
@@ -794,7 +773,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.activeStep = 'capture';
     this.clearConsultaPublica();
     this.codeReadMessage = '';
-    this.clearTombamentoBloqueadoNoLocal();
     this.persistState();
   }
 
@@ -844,11 +822,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
   }
 
   async goToClassificationStep(): Promise<void> {
-    if (!await this.canContinueWithTombamento(this.form.tombamentoNovo)) {
-      this.persistState();
-      return;
-    }
-
     this.activeStep = 'classificacao';
     this.persistState();
   }
@@ -1069,12 +1042,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
           this.playScanBeep();
           this.form.tombamentoNovo = this.formatTombamentoValue(rawValue);
           this.identificationMode = 'qr';
-          if (!await this.canContinueWithTombamento(rawValue)) {
-            this.closeScanner();
-            this.persistState();
-            return;
-          }
-
           this.codeReadMessage = 'Tombamento identificado automaticamente pela câmera.';
           this.consultarResumoPublico();
           this.activeStep = 'details';
@@ -1373,53 +1340,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async canContinueWithTombamento(tombamento: string): Promise<boolean> {
-    const tombamentoNormalizado = this.normalizeScannedValue(tombamento);
-    if (!tombamentoNormalizado || !this.selectedLocalId) {
-      return true;
-    }
-
-    if (this.tombamentoBloqueadoNoLocal === tombamentoNormalizado) {
-      this.codeReadMessage = 'Este tombamento já foi inventariado neste local.';
-      this.toastr.warning(this.codeReadMessage);
-      return false;
-    }
-
-    try {
-      const result = await firstValueFrom(
-        this.itemInventariadoService.existeTombamentoNoLocal(this.selectedLocalId, tombamentoNormalizado)
-      );
-      if (!result.existe) {
-        this.clearTombamentoBloqueadoNoLocal();
-        return true;
-      }
-
-      this.clearConsultaPublica();
-      this.tombamentoBloqueadoNoLocal = tombamentoNormalizado;
-      this.codeReadMessage = 'Este tombamento já foi inventariado neste local.';
-      this.toastr.warning(this.codeReadMessage);
-      return false;
-    } catch {
-      this.codeReadMessage = 'Não foi possível verificar se este tombamento já foi inventariado. Tente novamente.';
-      this.toastr.warning(this.codeReadMessage);
-      return false;
-    }
-  }
-
-  private clearTombamentoBloqueadoNoLocal(): void {
-    this.tombamentoBloqueadoNoLocal = '';
-  }
-
-  private clearTombamentoBloqueadoNoLocalIfChanged(): void {
-    if (!this.tombamentoBloqueadoNoLocal) {
-      return;
-    }
-
-    if (this.normalizeScannedValue(this.form.tombamentoNovo) !== this.tombamentoBloqueadoNoLocal) {
-      this.clearTombamentoBloqueadoNoLocal();
-    }
-  }
-
   confirmarResumo(condiz: boolean): void {
     if (!condiz) {
       this.toastr.info('Você poderá ajustar a descrição manualmente antes de salvar.');
@@ -1431,7 +1351,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
   onTombamentoNovoChange(value: string): void {
     this.form.tombamentoNovo = this.formatTombamentoValue(value);
-    this.clearTombamentoBloqueadoNoLocalIfChanged();
     this.persistState();
   }
 
@@ -1504,11 +1423,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
 
     this.form.tombamentoNovo = this.formatTombamentoValue(tombamentoNormalizado);
     this.persistState();
-    if (!await this.canContinueWithTombamento(tombamentoNormalizado)) {
-      this.persistState();
-      return;
-    }
-
     if (this.normalizeScannedValue(this.consultaPublicaResumo?.tombamento ?? '') === tombamentoNormalizado) {
       this.persistState();
       return;
@@ -1606,7 +1520,6 @@ export class InventariarItemComponent implements OnInit, OnDestroy {
     this.identificationMode = null;
     this.clearConsultaPublica();
     this.codeReadMessage = '';
-    this.clearTombamentoBloqueadoNoLocal();
     this.persistState();
   }
 }

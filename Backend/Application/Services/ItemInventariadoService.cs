@@ -203,7 +203,7 @@ public class ItemInventariadoService : IItemInventariadoService
                 Items = group.Select(x => x.Item).ToList(),
                 LocalCount = group.Select(x => x.Item.LocalId).Distinct().Count()
             })
-            .Where(group => group.LocalCount > 1)
+            .Where(group => group.Items.Count > 1)
             .OrderByDescending(group => group.Ano)
             .ThenBy(group => group.TombamentoNormalizado)
             .Select(group => new InconsistenciaInventarioDto
@@ -545,7 +545,7 @@ public class ItemInventariadoService : IItemInventariadoService
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, null, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? usuarioAutenticadoId, true, usuarioAdministrador, cancellationToken);
         var fotosValidas = fotos.Where(x => x.Length > 0).ToList();
         var quantidadeFotosEsperada = dto.IsVeiculo ? 6 : 3;
         if (fotosValidas.Count != quantidadeFotosEsperada)
@@ -608,7 +608,7 @@ public class ItemInventariadoService : IItemInventariadoService
             return null;
         }
 
-        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, entity.Id, cancellationToken);
+        await ValidateAsync(dto, dto.UsuarioId ?? entity.UsuarioId, false, usuarioAdministrador, cancellationToken);
 
         entity.TombamentoNovo = dto.TombamentoNovo?.Trim() ?? string.Empty;
         entity.TombamentoAntigo = NormalizeOptionalTombamentoAntigo(dto.TombamentoAntigo);
@@ -730,13 +730,6 @@ public class ItemInventariadoService : IItemInventariadoService
             throw new InvalidOperationException("O local de destino deve pertencer à mesma comissão do item.");
         }
 
-        await EnsureTombamentoDisponivelNoLocalAsync(
-            entity.TombamentoNovo,
-            localDestino.Id,
-            entity.Id,
-            cancellationToken
-        );
-
         _context.ItensInventariadosMovimentacoesLocal.Add(new ItemInventariadoMovimentacaoLocal
         {
             ItemInventariadoId = entity.Id,
@@ -818,7 +811,6 @@ public class ItemInventariadoService : IItemInventariadoService
         Guid usuarioId,
         bool requireActiveComissao,
         bool usuarioAdministrador,
-        Guid? ignoredItemId,
         CancellationToken cancellationToken
     )
     {
@@ -901,8 +893,6 @@ public class ItemInventariadoService : IItemInventariadoService
         {
             throw new InvalidOperationException("Local informado não encontrado.");
         }
-
-        await EnsureTombamentoDisponivelNoLocalAsync(dto.TombamentoNovo, dto.LocalId, ignoredItemId, cancellationToken);
 
         var usuarioExiste = await _context.Usuarios.AnyAsync(
             x => x.Id == usuarioId && x.DeletedAt == null,
@@ -1005,35 +995,6 @@ public class ItemInventariadoService : IItemInventariadoService
         }
 
         return locaisAcessiveisIds;
-    }
-
-    private async Task EnsureTombamentoDisponivelNoLocalAsync(
-        string? tombamentoNovo,
-        Guid localId,
-        Guid? ignoredItemId,
-        CancellationToken cancellationToken
-    )
-    {
-        var tombamentoNormalizado = NormalizeDigits(tombamentoNovo ?? string.Empty);
-        if (string.IsNullOrWhiteSpace(tombamentoNormalizado))
-        {
-            return;
-        }
-
-        var jaInventariadoNoLocal = await _context.ItensInventariados
-            .AsNoTracking()
-            .AnyAsync(x =>
-                x.DeletedAt == null
-                && x.LocalId == localId
-                && (!ignoredItemId.HasValue || x.Id != ignoredItemId.Value)
-                && x.TombamentoNovo.Replace(".", string.Empty).Replace("-", string.Empty).Replace(" ", string.Empty) == tombamentoNormalizado,
-                cancellationToken
-            );
-
-        if (jaInventariadoNoLocal)
-        {
-            throw new InvalidOperationException("Este tombamento já foi inventariado neste local.");
-        }
     }
 
     private async Task<ItemInventarioFoto> SaveFotoAsync(IFormFile file, CancellationToken cancellationToken)
