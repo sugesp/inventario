@@ -2,6 +2,8 @@ namespace Domain.Model;
 
 public class LaudoTecnico : BaseEntity
 {
+    public Guid? ComissaoId { get; set; }
+    public Comissao? Comissao { get; set; }
     public string ProcessoSei { get; set; } = string.Empty;
     public string IdDevolucaoSei { get; set; } = string.Empty;
     public string UnidadeGestora { get; set; } = string.Empty;

@@ -8,6 +8,8 @@ public interface IComissaoService
     Task<ComissaoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ComissaoDto?> GetActiveAsync(CancellationToken cancellationToken = default);
     Task<bool> IsPresidentAsync(Guid comissaoId, Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<bool> PodeEmitirLaudoAsync(Guid comissaoId, Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<ComissaoDto?> UpdateLaudoMembrosAsync(Guid id, IReadOnlyCollection<Guid> usuarioIds, CancellationToken cancellationToken = default);
     Task<ComissaoDto> CreateAsync(ComissaoCreateUpdateDto dto, CancellationToken cancellationToken = default);
     Task<ComissaoDto?> UpdateAsync(Guid id, ComissaoCreateUpdateDto dto, bool usuarioAdministrador, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);

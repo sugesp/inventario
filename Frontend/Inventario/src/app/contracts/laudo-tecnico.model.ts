@@ -1,4 +1,6 @@
 export interface LaudoTecnico {
+  comissaoId: string | null;
+  comissaoAno: number | null;
   id: string;
   processoSei: string;
   idDevolucaoSei: string;

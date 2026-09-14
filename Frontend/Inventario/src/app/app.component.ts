@@ -93,6 +93,18 @@ export class AppComponent {
     return this.authService.canAccessComissoesConsulta || this.isActiveComissaoPresident;
   }
 
+  get canShowNovoLaudoMenu(): boolean {
+    return this.authService.canAccessInventarioConsultas
+      && !!this.activeComissao?.membros.some((membro) =>
+        membro.usuarioId === this.currentUserId && membro.podeEmitirLaudo
+      );
+  }
+
+  get isComissoesRoute(): boolean {
+    return this.isCurrentRoute(['/comissoes'])
+      && !this.router.url.split('?')[0].endsWith('/laudos/novo');
+  }
+
   get isLevantamentoRoute(): boolean {
     return this.isCurrentRoute(['/levantamento', '/levantamentos', '/levantamentos-lista']);
   }
@@ -143,6 +155,11 @@ export class AppComponent {
     private readonly pageTitleService: PageTitleService
   ) {
     this.updateViewportState();
+    this.comissaoService.laudoMembrosAtualizados$.subscribe((comissao) => {
+      if (this.activeComissao?.id === comissao.id) {
+        this.activeComissao = comissao;
+      }
+    });
     this.syncRouteState(this.router.url);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -315,13 +332,13 @@ export class AppComponent {
   }
 
   private syncActiveComissaoContext(): void {
-    if (!this.authService.isAuthenticated || this.isAuthRoute || !this.authService.hasPermission('Inventario')) {
+    if (!this.authService.isAuthenticated || this.isAuthRoute || !this.authService.canAccessInventarioConsultas) {
       this.activeComissao = null;
       this.activeComissaoLoaded = false;
       return;
     }
 
-    if (this.activeComissaoLoaded || this.activeComissaoLoading) {
+    if (this.activeComissaoLoading) {
       return;
     }
 

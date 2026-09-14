@@ -38,6 +38,7 @@ const routes: Routes = [
   { path: 'consulta-tombamento', component: ConsultaTombamentoComponent, canActivate: [ConsultaTombamentoGuard], data: { title: 'Consulta por tombamento' } },
   { path: 'comissoes', component: ComissoesComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Comissões' } },
   { path: 'comissoes/:id', component: ComissoesComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Comissão' } },
+  { path: 'comissoes/:comissaoId/laudos/novo', component: LaudoTecnicoComponent, canActivate: [InventarioConsultaGuard], data: { title: 'Laudo da Comissão' } },
   { path: 'unidades-administrativas', component: UnidadesAdministrativasComponent, canActivate: [AdminGuard], data: { title: 'Unidades Administrativas' } },
   { path: 'inventariar', component: InventariarItemComponent, canActivate: [InventarioGuard], data: { title: 'Inventariar item' } },
   { path: 'levantamentos', component: LevantamentosComponent, canActivate: [LevantamentoGuard], data: { title: 'Levantamentos' } },

@@ -1,23 +1,23 @@
 <div class="inventario-grid">
-  <section class="hero-card">
+  <section class="hero-card" *ngIf="!comissaoId">
     <div class="hero-header">
       <div>
-        <span class="list-header-eyebrow">GTI</span>
+        <span class="list-header-eyebrow">{{ comissaoId ? 'Comissão de inventário' : 'GTI' }}</span>
         <h2 class="list-header-title">Laudos Técnicos</h2>
       </div>
-      <a class="btn btn-primary" routerLink="/laudo-tecnico">Novo laudo</a>
+      <a class="btn btn-primary" *ngIf="canWrite" [routerLink]="comissaoId ? ['/comissoes', comissaoId, 'laudos', 'novo'] : ['/laudo-tecnico']">Novo laudo</a>
     </div>
-    <p class="hero-copy">
+    <p class="hero-copy" *ngIf="!comissaoId">
       Consulte os laudos já cadastrados e abra os detalhes em uma visualização preparada para leitura e impressão.
     </p>
   </section>
 
   <section class="step-card">
     <div class="step-head">
-      <span class="step-number">L</span>
+      <span class="step-number" *ngIf="!comissaoId">L</span>
       <div>
         <h3>Listagem de laudos</h3>
-        <p>Filtre os registros e abra o modal para visualizar o documento completo.</p>
+        <p *ngIf="!comissaoId">Filtre os registros e abra o modal para visualizar o documento completo.</p>
       </div>
     </div>
 
@@ -95,10 +95,10 @@
     <div class="laudo-modal-header">
       <div>
         <span class="list-header-eyebrow">Visualização</span>
-        <h3>{{ loadingModal ? 'Carregando laudo...' : 'Laudo Técnico de TI' }}</h3>
+        <h3>{{ loadingModal ? 'Carregando laudo...' : comissaoId ? 'Laudo da Comissão' : 'Laudo Técnico de TI' }}</h3>
       </div>
       <div class="modal-header-actions">
-        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLaudo && !editingIdentificacao"
+        <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLaudo && !editingIdentificacao && canWrite"
           (click)="editIdentificacao()">
           {{ activeLaudo.processoSei || activeLaudo.idDevolucaoSei || activeLaudo.unidadeGestora || activeLaudo.setor ||
           activeLaudo.dataAvaliacao ? 'Editar identificação' : 'Preencher identificação' }}
@@ -122,7 +122,7 @@
           <small>Sistema de Gestão Patrimonial</small>
         </div>
         <div class="print-document-identification">
-          <span>LAUDO TÉCNICO DE TI</span>
+          <span>{{ comissaoId ? 'LAUDO DA COMISSÃO' : 'LAUDO TÉCNICO DE TI' }}</span>
           <strong>{{ laudo.patrimonio || laudo.numeroSerie || 'SEM IDENTIFICAÇÃO' }}</strong>
         </div>
       </header>
@@ -165,7 +165,8 @@
       </section>
 
       <div class="print-title-block">
-        <h4>LAUDO TÉCNICO DE TI - AVALIAÇÃO INDIVIDUAL</h4>
+        <h4>{{ comissaoId ? 'LAUDO DA COMISSÃO' : 'LAUDO TÉCNICO DE TI' }} - AVALIAÇÃO INDIVIDUAL</h4>
+        <p *ngIf="laudo.comissaoAno">Comissão de inventário {{ laudo.comissaoAno }}</p>
       </div>
 
       <section class="print-section">

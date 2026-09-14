@@ -23,6 +23,31 @@
   box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
 }
 
+.laudo-members-modal {
+  grid-template-columns: minmax(0, 1fr);
+
+  .modal-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .modal-header-custom h3 {
+    min-width: 0;
+    font-size: 1.125rem;
+    overflow-wrap: anywhere;
+  }
+
+  .btn-close {
+    flex-shrink: 0;
+  }
+}
+
+.laudo-authorized-members {
+  padding: 8px 0 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #d8e2ef;
+}
+
 .modal-card-report {
   width: min(620px, 100%);
 }
@@ -820,5 +845,26 @@
 
   .section-pagination .list-pagination-actions {
     justify-content: space-between;
+  }
+}
+@media print {
+  .card:has(.laudos-content) {
+    border: 0;
+    box-shadow: none;
+
+    .card-body,
+    .row,
+    .laudos-content {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .card-body > .list-header,
+    .row > :not(.laudos-content),
+    .laudos-content > :not(app-laudos-tecnicos) {
+      display: none !important;
+    }
   }
 }

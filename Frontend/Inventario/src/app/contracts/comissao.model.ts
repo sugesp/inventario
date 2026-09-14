@@ -1,5 +1,6 @@
 export interface ComissaoMembro {
   usuarioId: string;
+  podeEmitirLaudo: boolean;
   nome: string;
   cpf: string;
 }

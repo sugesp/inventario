@@ -22,29 +22,31 @@ public class LaudoTecnicoService : ILaudoTecnicoService
         _fileStorageService = fileStorageService;
     }
 
-    public async Task<IEnumerable<LaudoTecnicoDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<LaudoTecnicoDto>> GetAllAsync(CancellationToken cancellationToken = default, Guid? comissaoId = null)
     {
         var entities = await _context.LaudosTecnicos
             .AsNoTracking()
+            .Include(x => x.Comissao)
             .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
-            .Where(x => x.DeletedAt == null)
+            .Where(x => x.DeletedAt == null && x.ComissaoId == comissaoId)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return entities.Select(MapToDto);
     }
 
-    public async Task<LaudoTecnicoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<LaudoTecnicoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default, Guid? comissaoId = null)
     {
         var entity = await _context.LaudosTecnicos
             .AsNoTracking()
+            .Include(x => x.Comissao)
             .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
-            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null && x.ComissaoId == comissaoId, cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
     }
 
-    public async Task<LaudoTecnicoDto> CreateAsync(LaudoTecnicoSaveDto dto, Guid usuarioAutenticadoId, CancellationToken cancellationToken = default)
+    public async Task<LaudoTecnicoDto> CreateAsync(LaudoTecnicoSaveDto dto, Guid usuarioAutenticadoId, CancellationToken cancellationToken = default, Guid? comissaoId = null)
     {
         await ValidateAsync(dto, cancellationToken);
 
@@ -59,6 +61,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
 
         var entity = new LaudoTecnico
         {
+            ComissaoId = comissaoId,
             ProcessoSei = dto.ProcessoSei.Trim(),
             IdDevolucaoSei = dto.IdDevolucaoSei.Trim(),
             UnidadeGestora = dto.UnidadeGestora.Trim(),
@@ -98,7 +101,7 @@ public class LaudoTecnicoService : ILaudoTecnicoService
             ClassificacaoFinal = dto.ClassificacaoFinal.Trim(),
             ResponsavelTecnicoUsuarioId = usuario.Id,
             ResponsavelTecnicoNome = usuario.Nome.Trim(),
-            ResponsavelTecnicoCargo = BuildResponsavelTecnicoCargo(usuario)
+            ResponsavelTecnicoCargo = comissaoId.HasValue ? "Membro da comissão de inventário" : BuildResponsavelTecnicoCargo(usuario)
         };
 
         _context.LaudosTecnicos.Add(entity);
@@ -111,11 +114,13 @@ public class LaudoTecnicoService : ILaudoTecnicoService
         Guid id,
         IReadOnlyList<IFormFile> fotos,
         IReadOnlyList<string> categorias,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? comissaoId = null)
     {
         var entity = await _context.LaudosTecnicos
+            .Include(x => x.Comissao)
             .Include(x => x.Fotos)
-            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null && x.ComissaoId == comissaoId, cancellationToken);
 
         if (entity is null)
         {
@@ -169,11 +174,13 @@ public class LaudoTecnicoService : ILaudoTecnicoService
     public async Task<(Stream Stream, string ContentType, string FileName)?> GetFotoAsync(
         Guid id,
         Guid fotoId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? comissaoId = null)
     {
         var foto = await _context.LaudosTecnicosFotos
             .AsNoTracking()
-            .Where(x => x.Id == fotoId && x.LaudoTecnicoId == id && x.DeletedAt == null)
+            .Where(x => x.Id == fotoId && x.LaudoTecnicoId == id && x.DeletedAt == null
+                && x.LaudoTecnico!.ComissaoId == comissaoId)
             .Select(x => new { x.CaminhoRelativo, x.NomeOriginal, LaudoDeletedAt = x.LaudoTecnico!.DeletedAt })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -185,11 +192,13 @@ public class LaudoTecnicoService : ILaudoTecnicoService
     public async Task<LaudoTecnicoDto?> UpdateIdentificacaoAsync(
         Guid id,
         LaudoTecnicoIdentificacaoDto dto,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? comissaoId = null)
     {
         var entity = await _context.LaudosTecnicos
+            .Include(x => x.Comissao)
             .Include(x => x.Fotos.Where(f => f.DeletedAt == null))
-            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null && x.ComissaoId == comissaoId, cancellationToken);
 
         if (entity is null)
         {
@@ -272,6 +281,8 @@ public class LaudoTecnicoService : ILaudoTecnicoService
         return new LaudoTecnicoDto
         {
             Id = entity.Id,
+            ComissaoId = entity.ComissaoId,
+            ComissaoAno = entity.Comissao?.Ano,
             ProcessoSei = entity.ProcessoSei,
             IdDevolucaoSei = entity.IdDevolucaoSei,
             UnidadeGestora = entity.UnidadeGestora,

@@ -1,4 +1,6 @@
-import { Component, DoCheck, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, DoCheck, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import jsQR from 'jsqr';
 import { finalize, switchMap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -64,6 +66,7 @@ interface PersistedLaudoState {
   selector: 'app-laudo-tecnico',
   templateUrl: './laudo-tecnico.component.html',
   styleUrl: './laudo-tecnico.component.scss',
+  providers: [LaudoTecnicoService],
 })
 export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   private static readonly QR_IMAGE_MAX_DIMENSION = 1600;
@@ -71,6 +74,14 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   private static readonly QR_SCAN_CROP_WIDTH_RATIO = 0.9;
   private static readonly QR_SCAN_CROP_HEIGHT_RATIO = 0.65;
   private static readonly STORAGE_KEY = 'inventario.laudo-tecnico.state';
+  comissaoId: string | null = null;
+  podeEmitirLaudo = false;
+
+  private get storageKey(): string {
+    return this.comissaoId
+      ? `${LaudoTecnicoComponent.STORAGE_KEY}.${this.comissaoId}.${this.authService.session?.userId}`
+      : LaudoTecnicoComponent.STORAGE_KEY;
+  }
 
   @ViewChild('qrInput') qrInput?: ElementRef<HTMLInputElement>;
   @ViewChild('qrVideo') qrVideo?: ElementRef<HTMLVideoElement>;
@@ -133,11 +144,40 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     readonly authService: AuthService,
     private readonly laudoTecnicoService: LaudoTecnicoService,
     private readonly itemInventariadoService: ItemInventariadoService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly destroyRef: DestroyRef,
     private readonly toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
-    this.restoreState();
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.stopQrScanner();
+      this.stopCamera();
+      this.clearPhotoPreviews();
+      this.photos = [];
+      this.savedLaudo = null;
+      this.form = this.createEmptyForm();
+      this.currentStep = 'equipamento';
+      this.comissaoId = params.get('comissaoId');
+      this.laudoTecnicoService.comissaoId = this.comissaoId;
+      this.podeEmitirLaudo = !this.comissaoId;
+      this.restoreState();
+      if (this.comissaoId) {
+        const comissaoId = this.comissaoId;
+        this.laudoTecnicoService.podeEmitir().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (permitido) => {
+            if (this.comissaoId !== comissaoId) return;
+            this.podeEmitirLaudo = permitido;
+            if (!permitido) {
+              this.toastr.warning('Você não está autorizado a emitir laudos nesta comissão.');
+              this.router.navigate(['/comissoes', comissaoId], { queryParams: { tab: 'laudos' } });
+            }
+          },
+          error: () => this.toastr.error('Não foi possível verificar a autorização para emitir laudos.'),
+        });
+      }
+    });
   }
 
   ngDoCheck(): void {
@@ -173,6 +213,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   get responsavelTecnicoCargo(): string {
+    if (this.comissaoId) return 'Membro da comissão de inventário';
     const labels = this.authService.permissionLabels;
     return labels.length > 0 ? labels.join(', ') : 'Usuário';
   }
@@ -186,7 +227,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   get canSubmit(): boolean {
-    return this.isStepValid('equipamento')
+    return this.podeEmitirLaudo && this.isStepValid('equipamento')
       && this.isStepValid('avaliacao')
       && this.isStepValid('viabilidade')
       && this.isStepValid('recomendacao')
@@ -694,7 +735,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
       form: this.form,
     };
 
-    window.sessionStorage.setItem(LaudoTecnicoComponent.STORAGE_KEY, JSON.stringify(state));
+    window.sessionStorage.setItem(this.storageKey, JSON.stringify(state));
   }
 
   private restoreState(): void {
@@ -703,7 +744,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
       return;
     }
 
-    const raw = window.sessionStorage.getItem(LaudoTecnicoComponent.STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(this.storageKey);
     if (!raw) {
       this.lastPersistedSnapshot = JSON.stringify({ currentStep: this.currentStep, form: this.form });
       return;
@@ -734,7 +775,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
       return;
     }
 
-    window.sessionStorage.removeItem(LaudoTecnicoComponent.STORAGE_KEY);
+    window.sessionStorage.removeItem(this.storageKey);
   }
 
   private syncSnapshotWithoutPersist(): void {

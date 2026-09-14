@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { AuthService } from '../../auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { LaudoTecnico, LaudoTecnicoIdentificacaoPayload } from '../../contracts/laudo-tecnico.model';
 import { LaudoTecnicoService } from '../../contracts/laudo-tecnico.service';
@@ -7,8 +8,12 @@ import { LaudoTecnicoService } from '../../contracts/laudo-tecnico.service';
   selector: 'app-laudos-tecnicos',
   templateUrl: './laudos-tecnicos.component.html',
   styleUrl: './laudos-tecnicos.component.scss',
+  providers: [LaudoTecnicoService],
+  host: { '[class.comissao-laudos]': '!!comissaoId' },
 })
-export class LaudosTecnicosComponent implements OnInit, OnDestroy {
+export class LaudosTecnicosComponent implements OnInit, OnChanges, OnDestroy {
+  @Input() comissaoId: string | null = null;
+  @Input() podeEmitirLaudo = false;
   laudos: LaudoTecnico[] = [];
   loading = false;
   selectedClassificacao = '';
@@ -23,11 +28,26 @@ export class LaudosTecnicosComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly laudoTecnicoService: LaudoTecnicoService,
+    readonly authService: AuthService,
     private readonly toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
+    this.laudoTecnicoService.comissaoId = this.comissaoId;
     this.loadLaudos();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['comissaoId'] && !changes['comissaoId'].firstChange) {
+      this.closeModal();
+      this.laudos = [];
+      this.laudoTecnicoService.comissaoId = this.comissaoId;
+      this.loadLaudos();
+    }
+  }
+
+  get canWrite(): boolean {
+    return this.comissaoId ? this.podeEmitirLaudo : this.authService.canAccessGtiTecnico;
   }
 
   ngOnDestroy(): void {

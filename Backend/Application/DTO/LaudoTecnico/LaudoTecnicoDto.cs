@@ -3,6 +3,8 @@ namespace Application.DTO.LaudoTecnico;
 public class LaudoTecnicoDto
 {
     public Guid Id { get; set; }
+    public Guid? ComissaoId { get; set; }
+    public int? ComissaoAno { get; set; }
     public string ProcessoSei { get; set; } = string.Empty;
     public string IdDevolucaoSei { get; set; } = string.Empty;
     public string UnidadeGestora { get; set; } = string.Empty;

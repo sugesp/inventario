@@ -98,6 +98,27 @@ public class ComissoesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Administrador,Inventario")]
+    [HttpPut("{id:guid}/laudo-membros")]
+    public async Task<ActionResult<ComissaoDto>> UpdateLaudoMembros(
+        Guid id, [FromBody] List<Guid> usuarioIds, CancellationToken cancellationToken)
+    {
+        if (!User.IsInRole("Administrador") && !await _service.IsPresidentAsync(id, GetUsuarioId(), cancellationToken))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var updated = await _service.UpdateLaudoMembrosAsync(id, usuarioIds, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     private Guid GetUsuarioId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

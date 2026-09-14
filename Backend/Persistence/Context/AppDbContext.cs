@@ -331,6 +331,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<LaudoTecnico>(entity =>
         {
             entity.ToTable("LaudosTecnicos");
+            entity.Property(x => x.ComissaoId).Metadata
+                .SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Throw);
+            entity.HasOne(x => x.Comissao)
+                .WithMany()
+                .HasForeignKey(x => x.ComissaoId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.Property(x => x.ProcessoSei).HasMaxLength(120);
             entity.Property(x => x.IdDevolucaoSei).HasMaxLength(120);
             entity.Property(x => x.UnidadeGestora).HasMaxLength(200);

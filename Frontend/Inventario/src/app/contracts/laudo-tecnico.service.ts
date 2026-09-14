@@ -6,12 +6,22 @@ import { LaudoTecnico, LaudoTecnicoIdentificacaoPayload, LaudoTecnicoPayload } f
 
 @Injectable({ providedIn: 'root' })
 export class LaudoTecnicoService {
-  private readonly baseUrl = `${environment.apiBaseUrl}/laudostecnicos`;
+  comissaoId: string | null = null;
+
+  private get baseUrl(): string {
+    return this.comissaoId
+      ? `${environment.apiBaseUrl}/comissoes/${this.comissaoId}/laudos`
+      : `${environment.apiBaseUrl}/laudostecnicos`;
+  }
 
   constructor(private readonly http: HttpClient) {}
 
   getAll(): Observable<LaudoTecnico[]> {
     return this.http.get<LaudoTecnico[]>(this.baseUrl);
+  }
+
+  podeEmitir(): Observable<boolean> {
+    return this.http.get<boolean>(`${this.baseUrl}/permissao`);
   }
 
   getById(id: string): Observable<LaudoTecnico> {

@@ -123,6 +123,9 @@ public class ComissaoService : IComissaoService
         entity.Status = NormalizeStatus(effectiveDto.Status);
         entity.PresidenteId = effectiveDto.PresidenteId;
 
+        var emissores = entity.Membros.Where(x => x.DeletedAt == null && x.PodeEmitirLaudo)
+            .Select(x => x.UsuarioId).ToHashSet();
+
         try
         {
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -134,7 +137,8 @@ public class ComissaoService : IComissaoService
                 .Select(membro => new ComissaoMembro
                 {
                     ComissaoId = entity.Id,
-                    UsuarioId = membro.UsuarioId
+                    UsuarioId = membro.UsuarioId,
+                    PodeEmitirLaudo = emissores.Contains(membro.UsuarioId)
                 })
                 .ToList();
 
@@ -165,6 +169,11 @@ public class ComissaoService : IComissaoService
             return false;
         }
 
+        if (await _context.LaudosTecnicos.AnyAsync(x => x.ComissaoId == id, cancellationToken))
+        {
+            throw new InvalidOperationException("Esta comissão possui laudos vinculados e não pode ser excluída.");
+        }
+
         if (entity.ItensInventariados.Any())
         {
             throw new InvalidOperationException("Esta comissão já possui itens inventariados vinculados e não pode ser excluída.");
@@ -174,6 +183,39 @@ public class ComissaoService : IComissaoService
         _context.Comissoes.Remove(entity);
 
         return await _context.SaveChangesAsync(cancellationToken) > 0;
+    }
+
+    public Task<bool> PodeEmitirLaudoAsync(Guid comissaoId, Guid usuarioId, CancellationToken cancellationToken = default)
+    {
+        return _context.ComissoesMembros.AnyAsync(x =>
+            x.ComissaoId == comissaoId && x.UsuarioId == usuarioId && x.PodeEmitirLaudo
+            && x.DeletedAt == null && x.Comissao!.DeletedAt == null
+            && x.Usuario!.DeletedAt == null && x.Usuario.Status == "Ativo", cancellationToken);
+    }
+
+    public async Task<ComissaoDto?> UpdateLaudoMembrosAsync(Guid id, IReadOnlyCollection<Guid> usuarioIds, CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.Comissoes.Include(x => x.Membros)
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        var ids = usuarioIds.ToHashSet();
+        var membros = entity.Membros.Where(x => x.DeletedAt == null).ToList();
+        if (ids.Except(membros.Select(x => x.UsuarioId)).Any())
+        {
+            throw new InvalidOperationException("Selecione somente membros desta comissão.");
+        }
+
+        foreach (var membro in membros)
+        {
+            membro.PodeEmitirLaudo = ids.Contains(membro.UsuarioId);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
     private IQueryable<Comissao> QueryBase()
@@ -345,6 +387,7 @@ public class ComissaoService : IComissaoService
                 .Select(x => new ComissaoMembroDto
                 {
                     UsuarioId = x.UsuarioId,
+                    PodeEmitirLaudo = x.PodeEmitirLaudo,
                     Nome = x.Usuario?.Nome ?? string.Empty,
                     Cpf = x.Usuario?.Cpf ?? string.Empty
                 })

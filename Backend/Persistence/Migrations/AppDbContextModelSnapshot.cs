@@ -134,6 +134,9 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("PodeEmitirLaudo")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -452,6 +455,9 @@ namespace Persistence.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("varchar(80)");
 
+                    b.Property<Guid?>("ComissaoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("CondicaoFuncionamento")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -624,6 +630,8 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ResponsavelTecnicoUsuarioId");
+
+                    b.HasIndex("ComissaoId");
 
                     b.ToTable("LaudosTecnicos", (string)null);
                 });
@@ -1234,6 +1242,11 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Model.LaudoTecnico", b =>
                 {
+                    b.HasOne("Domain.Model.Comissao", "Comissao")
+                        .WithMany()
+                        .HasForeignKey("ComissaoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Model.Usuario", "ResponsavelTecnicoUsuario")
                         .WithMany("LaudosTecnicos")
                         .HasForeignKey("ResponsavelTecnicoUsuarioId")
@@ -1241,6 +1254,8 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("ResponsavelTecnicoUsuario");
+
+                    b.Navigation("Comissao");
                 });
 
             modelBuilder.Entity("Domain.Model.LaudoTecnicoFoto", b =>

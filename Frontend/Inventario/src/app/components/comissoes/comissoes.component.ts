@@ -16,7 +16,7 @@ import { LocalService } from '../../contracts/local.service';
 import { PageParams } from '../../shared/pagination.model';
 import { SearchableSelectOption } from '../shared/searchable-select/searchable-select.component';
 
-type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
+type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'laudos' | 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 type RelatorioItensSemTombamentoTipo = 'eestado' | 'nenhum';
 type RelatorioComissaoTipo = 'geral' | 'local';
 type ComissaoListType = 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
@@ -55,6 +55,10 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   loadingMovimentacoesLocal = false;
   saving = false;
   savingMembers = false;
+  showLaudoMembersModal = false;
+  savingLaudoMembers = false;
+  laudoMemberTerm = '';
+  laudoMemberIds: string[] = [];
   savingLocal = false;
   readonly changingLocalBlockIds = new Set<string>();
   showModal = false;
@@ -152,6 +156,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       .subscribe((params) => {
         const id = params.get('id');
         if (id) {
+          this.activeTab = this.route.snapshot.queryParamMap.get('tab') === 'laudos' ? 'laudos' : 'resumo';
           this.loadComissao(id);
           return;
         }
@@ -191,6 +196,60 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   get canEditCurrentComissaoBasics(): boolean {
     return this.authService.isAdmin;
+  }
+
+  get podeEmitirLaudo(): boolean {
+    return this.comissaoEmEdicao?.membros.some((membro) =>
+      membro.usuarioId === this.authService.session?.userId && membro.podeEmitirLaudo
+    ) ?? false;
+  }
+
+  get laudoMembros() {
+    return this.comissaoEmEdicao?.membros.filter((membro) => membro.podeEmitirLaudo) ?? [];
+  }
+
+  get filteredLaudoMembers(): UserSummary[] {
+    const term = this.laudoMemberTerm.trim().toLowerCase();
+    return this.selectedMembers.filter((membro) =>
+      membro.nome.toLowerCase().includes(term) || membro.cpf.includes(term)
+    );
+  }
+
+  openLaudoMembersModal(): void {
+    this.laudoMemberIds = this.laudoMembros.map((membro) => membro.usuarioId);
+    this.laudoMemberTerm = '';
+    this.showLaudoMembersModal = true;
+  }
+
+  toggleLaudoMember(usuarioId: string, checked: boolean): void {
+    this.laudoMemberIds = checked
+      ? [...new Set([...this.laudoMemberIds, usuarioId])]
+      : this.laudoMemberIds.filter((id) => id !== usuarioId);
+  }
+
+  saveLaudoMembers(): void {
+    if (!this.editingId || !this.canManageCurrentComissao || this.savingLaudoMembers) return;
+    this.savingLaudoMembers = true;
+    this.comissaoService.updateLaudoMembros(this.editingId, this.laudoMemberIds).subscribe({
+      next: (comissao) => {
+        this.comissaoEmEdicao = comissao;
+        this.savingLaudoMembers = false;
+        this.showLaudoMembersModal = false;
+        this.toastr.success('Membros autorizados a emitir laudos atualizados.');
+      },
+      error: (error) => {
+        this.savingLaudoMembers = false;
+        this.toastr.error(error?.error?.message ?? 'Não foi possível salvar os membros dos laudos.');
+      },
+    });
+  }
+
+  removeLaudoMember(usuarioId: string): void {
+    if (!this.canManageCurrentComissao || this.savingLaudoMembers) return;
+    this.laudoMemberIds = this.laudoMembros
+      .filter((membro) => membro.usuarioId !== usuarioId)
+      .map((membro) => membro.usuarioId);
+    this.saveLaudoMembers();
   }
 
   get percentualProgressoVisual(): number {
@@ -391,6 +450,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
           ...this.comissaoEmEdicao,
           membros: [...this.comissaoEmEdicao.membros, {
             usuarioId: usuario.id,
+            podeEmitirLaudo: false,
             nome: usuario.nome,
             cpf: usuario.cpf,
           }],

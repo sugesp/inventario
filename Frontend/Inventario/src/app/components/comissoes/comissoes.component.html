@@ -102,6 +102,7 @@
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'resumo'" (click)="setActiveTab('resumo')">Resumo</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'membros'" (click)="setActiveTab('membros')">Membros</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'locais'" (click)="setActiveTab('locais')">Locais</button>
+            <button class="comissao-tab" type="button" [class.active]="activeTab === 'laudos'" (click)="setActiveTab('laudos')">Laudos</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'inconsistencias'" (click)="setActiveTab('inconsistencias')">Inconsistências</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'sem-tombamento-eestado'" (click)="setActiveTab('sem-tombamento-eestado')">Sem Tombamento do E-Estado</button>
             <button class="comissao-tab" type="button" [class.active]="activeTab === 'sem-tombamento'" (click)="setActiveTab('sem-tombamento')">Sem Nenhum Tombamento</button>
@@ -171,6 +172,37 @@
                 </div>
               </div>
             </div>
+        </div>
+
+        <div class="col-12 laudos-content" *ngIf="activeTab === 'laudos'">
+          <section class="laudo-authorized-members">
+            <div class="section-card-header">
+              <span class="form-label mb-0">Membros autorizados</span>
+              <button class="btn btn-primary" type="button" *ngIf="canManageCurrentComissao" [disabled]="savingLaudoMembers" (click)="openLaudoMembersModal()">Adicionar usuário</button>
+            </div>
+            <p *ngIf="laudoMembros.length === 0" class="text-muted mb-0">Nenhum membro autorizado a emitir laudos.</p>
+            <div class="table-responsive" *ngIf="laudoMembros.length > 0">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th class="text-end" *ngIf="canManageCurrentComissao">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let membro of laudoMembros">
+                    <td>{{ membro.nome }}</td>
+                    <td>{{ membro.cpf }}</td>
+                    <td class="text-end" *ngIf="canManageCurrentComissao">
+                      <button class="btn btn-sm btn-standard-danger" type="button" [disabled]="savingLaudoMembers" (click)="removeLaudoMember(membro.usuarioId)">Remover</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <app-laudos-tecnicos [comissaoId]="comissaoEmEdicao.id" [podeEmitirLaudo]="podeEmitirLaudo"></app-laudos-tecnicos>
         </div>
 
         <div class="col-12" *ngIf="activeTab === 'membros'">
@@ -909,6 +941,40 @@
         <button class="btn btn-outline-secondary" type="button" (click)="goToNextMemberPage()" [disabled]="memberPageNumber >= memberTotalPages || memberTotalPages === 0">
           Próxima
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showLaudoMembersModal"></div>
+<div class="modal-custom laudo-members-modal" *ngIf="showLaudoMembersModal" role="dialog" aria-modal="true" aria-labelledby="laudoMembersTitle">
+  <div class="modal-card modal-card-list">
+    <div class="modal-header-custom">
+      <h3 id="laudoMembersTitle">Membros autorizados a emitir laudos</h3>
+      <button class="btn-close" type="button" aria-label="Fechar" [disabled]="savingLaudoMembers" (click)="showLaudoMembersModal = false"></button>
+    </div>
+    <div class="modal-body-custom">
+      <input class="form-control mb-3" type="search" [(ngModel)]="laudoMemberTerm" placeholder="Buscar membro por nome ou CPF" aria-label="Buscar membro por nome ou CPF" />
+      <p *ngIf="filteredLaudoMembers.length === 0">Nenhum membro encontrado.</p>
+      <div class="table-responsive" *ngIf="filteredLaudoMembers.length > 0">
+        <table class="table table-sm align-middle">
+          <thead><tr><th></th><th>Membro</th><th>CPF</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let membro of filteredLaudoMembers">
+              <td class="select-column">
+                <input class="form-check-input" type="checkbox" [checked]="laudoMemberIds.includes(membro.id)" [disabled]="savingLaudoMembers" [attr.aria-label]="'Autorizar ' + membro.nome" (change)="toggleLaudoMember(membro.id, $any($event.target).checked)" />
+              </td>
+              <td>{{ membro.nome }}</td><td>{{ membro.cpf }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <span>{{ laudoMemberIds.length }} membro(s) selecionado(s)</span>
+      <div class="list-pagination-actions">
+        <button class="btn btn-secondary" type="button" [disabled]="savingLaudoMembers" (click)="showLaudoMembersModal = false">Cancelar</button>
+        <button class="btn btn-primary" type="button" [disabled]="savingLaudoMembers" (click)="saveLaudoMembers()">{{ savingLaudoMembers ? 'Salvando...' : 'Salvar membros' }}</button>
       </div>
     </div>
   </div>

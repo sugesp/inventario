@@ -2,6 +2,36 @@
   display: block;
 }
 
+:host.comissao-laudos {
+  min-width: 0;
+
+  .inventario-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-card,
+  .step-card {
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 16px 0;
+  }
+
+  .hero-header {
+    flex-wrap: wrap;
+  }
+
+  .list-header-title {
+    font-size: 1.25rem;
+  }
+
+  .step-head h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+}
+
 .inventario-grid {
   display: grid;
   gap: 20px;

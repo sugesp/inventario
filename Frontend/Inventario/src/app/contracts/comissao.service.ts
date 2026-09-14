@@ -1,12 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Comissao, ComissaoPayload } from './comissao.model';
 
 @Injectable({ providedIn: 'root' })
 export class ComissaoService {
   private readonly baseUrl = `${environment.apiBaseUrl}/comissoes`;
+  private readonly laudoMembrosAtualizados = new Subject<Comissao>();
+  readonly laudoMembrosAtualizados$ = this.laudoMembrosAtualizados.asObservable();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -32,5 +34,11 @@ export class ComissaoService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  updateLaudoMembros(id: string, usuarioIds: string[]): Observable<Comissao> {
+    return this.http.put<Comissao>(`${this.baseUrl}/${id}/laudo-membros`, usuarioIds).pipe(
+      tap((comissao) => this.laudoMembrosAtualizados.next(comissao))
+    );
   }
 }

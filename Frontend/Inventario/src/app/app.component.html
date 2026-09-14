@@ -30,10 +30,15 @@
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-box-archive"></i></span>
           <span>Inventariar</span>
         </a>
-        <a class="menu-item" *ngIf="canShowComissoesMenu" routerLink="/comissoes" routerLinkActive="active"
+        <a class="menu-item" *ngIf="canShowComissoesMenu" routerLink="/comissoes" [class.active]="isComissoesRoute"
           (click)="onMenuNavigate()">
           <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
           <span>Comissões</span>
+        </a>
+        <a class="menu-item" *ngIf="canShowNovoLaudoMenu" [routerLink]="['/comissoes', activeComissao?.id, 'laudos', 'novo']"
+          routerLinkActive="active" (click)="onMenuNavigate()">
+          <span class="menu-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-plus"></i></span>
+          <span>Novo laudo</span>
         </a>
         <a class="menu-item" *ngIf="authService.canAccessInventarioConsultas" routerLink="/lista-inventariados"
           routerLinkActive="active" (click)="onMenuNavigate()">
