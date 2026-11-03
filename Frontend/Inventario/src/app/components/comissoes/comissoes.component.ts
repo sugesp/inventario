@@ -20,6 +20,7 @@ type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'laudos' | 'inconsistencias
 type RelatorioItensSemTombamentoTipo = 'eestado' | 'nenhum';
 type RelatorioComissaoTipo = 'geral' | 'local';
 type RelatorioFormato = 'pdf' | 'csv';
+type RelatorioEEstadoFiltro = 'todos' | 'lancado' | 'nao-lancado';
 type RelatorioAlvo = 'comissao' | 'inconsistencias' | RelatorioItensSemTombamentoTipo;
 type ComissaoListType = 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 
@@ -84,6 +85,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   relatorioTipo: RelatorioComissaoTipo = 'geral';
   relatorioFormato: RelatorioFormato = 'pdf';
   relatorioAlvo: RelatorioAlvo = 'comissao';
+  relatorioEEstadoFiltro: RelatorioEEstadoFiltro = 'todos';
   relatorioLocalId = '';
   memberTerm = '';
   memberPageNumber = 1;
@@ -1201,6 +1203,7 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.relatorioLocalId = '';
     this.relatorioFormato = 'pdf';
     this.relatorioAlvo = 'comissao';
+    this.relatorioEEstadoFiltro = 'todos';
     this.showRelatorioModal = true;
   }
 
@@ -1245,11 +1248,16 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const itens = this.relatorioTipo === 'local'
+    const itensDoLocal = this.relatorioTipo === 'local'
       ? this.itensInventariadosDaComissao.filter((item) => item.localId === this.relatorioLocalId)
       : this.itensInventariadosDaComissao;
+    const itens = itensDoLocal.filter((item) =>
+      this.relatorioEEstadoFiltro === 'todos'
+      || (this.relatorioEEstadoFiltro === 'lancado' && item.lancadoEEstado)
+      || (this.relatorioEEstadoFiltro === 'nao-lancado' && !item.lancadoEEstado)
+    );
     if (itens.length === 0) {
-      this.toastr.info('O local selecionado ainda não possui itens inventariados para o relatório.');
+      this.toastr.info('Nenhum item corresponde aos filtros selecionados para o relatório.');
       return;
     }
 
@@ -1292,8 +1300,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     pdf.setFontSize(9);
     pdf.text(`Comissão ${this.comissaoEmEdicao.ano} | Presidente: ${this.comissaoEmEdicao.presidenteNome || '-'}`, margin, 20);
     pdf.text(`Gerado em: ${dataGeracao.toLocaleString('pt-BR')}`, margin, 25);
+    const filtroEEstado = this.getRelatorioEEstadoFiltroLabel();
     pdf.text(
-      `Locais com inventário: ${grupos.length} | Registros coletados: ${itens.length} | Itens únicos: ${this.comissaoEmEdicao.quantidadeItensLocalizados} | Esperados: ${this.comissaoEmEdicao.quantidadeItensEsperados}`,
+      `Filtro E-Estado: ${filtroEEstado} | Locais: ${grupos.length} | Registros: ${itens.length}`,
       margin,
       30
     );
@@ -1378,8 +1387,9 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       ? this.locaisDaComissaoEmEdicao.find((local) => local.id === this.relatorioLocalId)
       : null;
     const sufixoLocal = localSelecionado ? `-${this.formatFileName(localSelecionado.nome)}` : '';
+    const sufixoEEstado = this.relatorioEEstadoFiltro === 'todos' ? '' : `-${this.relatorioEEstadoFiltro}`;
 
-    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}${sufixoLocal}-${this.formatFileDateTime(dataGeracao)}.pdf`);
+    pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}${sufixoLocal}${sufixoEEstado}-${this.formatFileDateTime(dataGeracao)}.pdf`);
     this.fecharRelatorioModal();
     this.toastr.success('Relatório da comissão gerado com sucesso.');
   }
@@ -1405,7 +1415,18 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       ? this.locaisDaComissaoEmEdicao.find((item) => item.id === this.relatorioLocalId)
       : null;
     const sufixo = local ? `-${this.formatFileName(local.nome)}` : '';
-    this.downloadCsv(headers, rows, `relatorio-comissao-${this.comissaoEmEdicao!.ano}${sufixo}-${this.formatFileDateTime(new Date())}.csv`);
+    const sufixoEEstado = this.relatorioEEstadoFiltro === 'todos' ? '' : `-${this.relatorioEEstadoFiltro}`;
+    this.downloadCsv(headers, rows, `relatorio-comissao-${this.comissaoEmEdicao!.ano}${sufixo}${sufixoEEstado}-${this.formatFileDateTime(new Date())}.csv`);
+  }
+
+  private getRelatorioEEstadoFiltroLabel(): string {
+    if (this.relatorioEEstadoFiltro === 'lancado') {
+      return 'Lançado';
+    }
+    if (this.relatorioEEstadoFiltro === 'nao-lancado') {
+      return 'Não lançado';
+    }
+    return 'Todos';
   }
 
   private gerarCsvInconsistencias(): void {

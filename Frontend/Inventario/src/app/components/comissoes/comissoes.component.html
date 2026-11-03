@@ -688,6 +688,25 @@
           [required]="true"
         ></app-searchable-select>
       </div>
+
+      <ng-container *ngIf="relatorioAlvo === 'comissao'">
+        <p class="section-card-hint mt-4">Escolha a situação de lançamento no E-Estado.</p>
+
+        <div class="report-type-options">
+          <label class="report-type-option" [class.active]="relatorioEEstadoFiltro === 'todos'">
+            <input type="radio" name="relatorioEEstadoFiltro" value="todos" [(ngModel)]="relatorioEEstadoFiltro" />
+            <span><strong>Todos</strong><small>Inclui itens lançados e não lançados no E-Estado.</small></span>
+          </label>
+          <label class="report-type-option" [class.active]="relatorioEEstadoFiltro === 'lancado'">
+            <input type="radio" name="relatorioEEstadoFiltro" value="lancado" [(ngModel)]="relatorioEEstadoFiltro" />
+            <span><strong>Lançado</strong><small>Inclui somente os itens já lançados no E-Estado.</small></span>
+          </label>
+          <label class="report-type-option" [class.active]="relatorioEEstadoFiltro === 'nao-lancado'">
+            <input type="radio" name="relatorioEEstadoFiltro" value="nao-lancado" [(ngModel)]="relatorioEEstadoFiltro" />
+            <span><strong>Não lançado</strong><small>Inclui somente os itens ainda não lançados no E-Estado.</small></span>
+          </label>
+        </div>
+      </ng-container>
     </div>
 
     <div class="modal-footer-custom">
