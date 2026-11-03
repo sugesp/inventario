@@ -22,6 +22,8 @@ export class LevantamentosListaComponent implements OnInit {
   selectedLevantamentoIds = new Set<string>();
   deletingLevantamentoId = '';
   deletingItemId = '';
+  reportTarget: 'selected' | 'active' | null = null;
+  reportFormat: 'pdf' | 'csv' = 'pdf';
 
   constructor(
     private readonly authService: AuthService,
@@ -250,6 +252,31 @@ export class LevantamentosListaComponent implements OnInit {
     anchor.download = `${this.slugify(levantamento.nome || 'levantamento')}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  openReport(target: 'selected' | 'active'): void {
+    if (target === 'selected' && this.selectedLevantamentos.length === 0) {
+      this.toastr.warning('Selecione ao menos um levantamento para exportar.');
+      return;
+    }
+    if (target === 'active' && !this.activeLevantamento) {
+      return;
+    }
+    this.reportTarget = target;
+    this.reportFormat = 'pdf';
+  }
+
+  closeReport(): void {
+    this.reportTarget = null;
+  }
+
+  confirmReport(): void {
+    if (this.reportTarget === 'active' && this.activeLevantamento) {
+      this.reportFormat === 'csv' ? this.exportCsv(this.activeLevantamento) : this.exportPdf(this.activeLevantamento);
+    } else if (this.reportTarget === 'selected') {
+      this.reportFormat === 'csv' ? this.exportSelectedCsv() : this.exportSelectedPdf();
+    }
+    this.closeReport();
   }
 
   exportSelectedCsv(): void {

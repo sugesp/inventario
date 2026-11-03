@@ -340,10 +340,10 @@
                 <p class="section-card-hint mb-0">Tombamentos encontrados em mais de um local e arquivos de fotos ausentes.</p>
               </div>
               <div class="section-card-actions">
-                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioInconsistencias()"
+                <button class="btn btn-outline-primary" type="button" (click)="abrirRelatorio('inconsistencias')"
                   [disabled]="loadingInconsistencias || generatingInconsistenciasPdf || inconsistenciasDaComissao.length === 0">
-                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-                  {{ generatingInconsistenciasPdf ? 'Gerando PDF...' : 'Relatório PDF' }}
+                  <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                  {{ generatingInconsistenciasPdf ? 'Gerando relatório...' : 'Relatório' }}
                 </button>
                 <button class="btn btn-primary" type="button" (click)="loadInconsistenciasInventario()"
                   [disabled]="loadingInconsistencias || generatingInconsistenciasPdf">
@@ -435,10 +435,10 @@
                 <p class="section-card-hint mb-0">Itens inventariados sem tombamento novo informado, apresentados individualmente.</p>
               </div>
               <div class="section-card-actions">
-                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioItensSemTombamento('eestado')"
+                <button class="btn btn-outline-primary" type="button" (click)="abrirRelatorio('eestado')"
                   [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null || itensSemTombamentoEEstadoDaComissao.length === 0">
-                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-                  {{ generatingItensSemTombamentoPdf === 'eestado' ? 'Gerando PDF...' : 'Relatório PDF' }}
+                  <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                  {{ generatingItensSemTombamentoPdf === 'eestado' ? 'Gerando relatório...' : 'Relatório' }}
                 </button>
                 <button class="btn btn-primary" type="button" (click)="loadItensInventariadosComissao()"
                   [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null">
@@ -480,10 +480,10 @@
                 <p class="section-card-hint mb-0">Itens inventariados sem tombamento do E-Estado e sem tombamento antigo, apresentados individualmente.</p>
               </div>
               <div class="section-card-actions">
-                <button class="btn btn-outline-primary" type="button" (click)="gerarRelatorioItensSemTombamento('nenhum')"
+                <button class="btn btn-outline-primary" type="button" (click)="abrirRelatorio('nenhum')"
                   [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null || itensSemNenhumTombamentoDaComissao.length === 0">
-                  <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-                  {{ generatingItensSemTombamentoPdf === 'nenhum' ? 'Gerando PDF...' : 'Relatório PDF' }}
+                  <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                  {{ generatingItensSemTombamentoPdf === 'nenhum' ? 'Gerando relatório...' : 'Relatório' }}
                 </button>
                 <button class="btn btn-primary" type="button" (click)="loadItensInventariadosComissao()"
                   [disabled]="loadingItensInventariados || generatingItensSemTombamentoPdf !== null">
@@ -639,14 +639,27 @@
 <div class="modal-custom" *ngIf="showRelatorioModal" appCloseOnOutsideClick (appCloseOnOutsideClick)="fecharRelatorioModal()">
   <div class="modal-card modal-card-report" (click)="$event.stopPropagation()">
     <div class="modal-header-custom">
-      <h4>Gerar relatório da comissão</h4>
+      <h4>{{ relatorioModalTitulo }}</h4>
       <button class="btn-close" type="button" aria-label="Fechar" (click)="fecharRelatorioModal()"></button>
     </div>
 
     <div class="modal-body-custom">
-      <p class="section-card-hint">Escolha quais locais devem fazer parte do relatório.</p>
+      <p class="section-card-hint">Escolha o formato do arquivo.</p>
 
       <div class="report-type-options">
+        <label class="report-type-option" [class.active]="relatorioFormato === 'pdf'">
+          <input type="radio" name="relatorioFormato" value="pdf" [(ngModel)]="relatorioFormato" />
+          <span><strong>PDF</strong><small>Documento formatado para visualização e impressão.</small></span>
+        </label>
+        <label class="report-type-option" [class.active]="relatorioFormato === 'csv'">
+          <input type="radio" name="relatorioFormato" value="csv" [(ngModel)]="relatorioFormato" />
+          <span><strong>CSV</strong><small>Planilha de dados para abrir no Excel ou importar em outros sistemas.</small></span>
+        </label>
+      </div>
+
+      <p class="section-card-hint mt-4" *ngIf="relatorioAlvo === 'comissao'">Escolha quais locais devem fazer parte do relatório.</p>
+
+      <div class="report-type-options" *ngIf="relatorioAlvo === 'comissao'">
         <label class="report-type-option" [class.active]="relatorioTipo === 'geral'">
           <input type="radio" name="relatorioTipo" value="geral" [(ngModel)]="relatorioTipo" />
           <span>
@@ -664,7 +677,7 @@
         </label>
       </div>
 
-      <div class="mt-3" *ngIf="relatorioTipo === 'local'">
+      <div class="mt-3" *ngIf="relatorioAlvo === 'comissao' && relatorioTipo === 'local'">
         <label class="form-label">Local</label>
         <app-searchable-select
           name="relatorioLocal"
@@ -683,7 +696,7 @@
         class="btn btn-primary"
         type="button"
         (click)="confirmarRelatorioComissao()"
-        [disabled]="relatorioTipo === 'local' && !relatorioLocalId"
+        [disabled]="relatorioAlvo === 'comissao' && relatorioTipo === 'local' && !relatorioLocalId"
       >
         Gerar relatório
       </button>

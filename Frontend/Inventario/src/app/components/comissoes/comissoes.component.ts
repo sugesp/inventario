@@ -19,6 +19,8 @@ import { SearchableSelectOption } from '../shared/searchable-select/searchable-s
 type ComissaoTab = 'resumo' | 'membros' | 'locais' | 'laudos' | 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 type RelatorioItensSemTombamentoTipo = 'eestado' | 'nenhum';
 type RelatorioComissaoTipo = 'geral' | 'local';
+type RelatorioFormato = 'pdf' | 'csv';
+type RelatorioAlvo = 'comissao' | 'inconsistencias' | RelatorioItensSemTombamentoTipo;
 type ComissaoListType = 'inconsistencias' | 'sem-tombamento-eestado' | 'sem-tombamento' | 'excluidos' | 'correcoes-local';
 
 interface LocalMapTile {
@@ -80,6 +82,8 @@ export class ComissoesComponent implements OnInit, OnDestroy {
   generatingItensSemTombamentoPdf: RelatorioItensSemTombamentoTipo | null = null;
   fotoObjectUrls: Record<string, string> = {};
   relatorioTipo: RelatorioComissaoTipo = 'geral';
+  relatorioFormato: RelatorioFormato = 'pdf';
+  relatorioAlvo: RelatorioAlvo = 'comissao';
   relatorioLocalId = '';
   memberTerm = '';
   memberPageNumber = 1;
@@ -1195,6 +1199,14 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
     this.relatorioTipo = 'geral';
     this.relatorioLocalId = '';
+    this.relatorioFormato = 'pdf';
+    this.relatorioAlvo = 'comissao';
+    this.showRelatorioModal = true;
+  }
+
+  abrirRelatorio(alvo: Exclude<RelatorioAlvo, 'comissao'>): void {
+    this.relatorioAlvo = alvo;
+    this.relatorioFormato = 'pdf';
     this.showRelatorioModal = true;
   }
 
@@ -1204,6 +1216,27 @@ export class ComissoesComponent implements OnInit, OnDestroy {
 
   confirmarRelatorioComissao(): void {
     if (!this.comissaoEmEdicao) {
+      return;
+    }
+
+    if (this.relatorioAlvo === 'inconsistencias') {
+      this.fecharRelatorioModal();
+      if (this.relatorioFormato === 'csv') {
+        this.gerarCsvInconsistencias();
+      } else {
+        void this.gerarRelatorioInconsistencias();
+      }
+      return;
+    }
+
+    if (this.relatorioAlvo === 'eestado' || this.relatorioAlvo === 'nenhum') {
+      const tipo = this.relatorioAlvo;
+      this.fecharRelatorioModal();
+      if (this.relatorioFormato === 'csv') {
+        this.gerarCsvItensSemTombamento(tipo);
+      } else {
+        void this.gerarRelatorioItensSemTombamento(tipo);
+      }
       return;
     }
 
@@ -1217,6 +1250,13 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       : this.itensInventariadosDaComissao;
     if (itens.length === 0) {
       this.toastr.info('O local selecionado ainda não possui itens inventariados para o relatório.');
+      return;
+    }
+
+    if (this.relatorioFormato === 'csv') {
+      this.gerarCsvComissao(itens);
+      this.fecharRelatorioModal();
+      this.toastr.success('Relatório da comissão gerado com sucesso.');
       return;
     }
 
@@ -1342,6 +1382,74 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     pdf.save(`relatorio-comissao-${this.comissaoEmEdicao.ano}${sufixoLocal}-${this.formatFileDateTime(dataGeracao)}.pdf`);
     this.fecharRelatorioModal();
     this.toastr.success('Relatório da comissão gerado com sucesso.');
+  }
+
+  get relatorioModalTitulo(): string {
+    switch (this.relatorioAlvo) {
+      case 'inconsistencias': return 'Relatório de inconsistências';
+      case 'eestado': return 'Relatório de itens sem tombamento do E-Estado';
+      case 'nenhum': return 'Relatório de itens sem nenhum tombamento';
+      default: return 'Relatório da comissão';
+    }
+  }
+
+  private gerarCsvComissao(itens: ItemInventariado[]): void {
+    const headers = ['Local', 'Tombamento novo', 'Tombamento antigo', 'Descrição', 'Classificação', 'Conservação', 'Justificativa', 'Observação', 'Latitude', 'Longitude', 'Precisão (m)', 'Fotos', 'Inventariado por', 'Data', 'Situação E-Estado'];
+    const rows = itens.map((item) => [
+      item.localNome || '', item.tombamentoNovo || '', item.tombamentoAntigo || '', item.descricao || '',
+      item.status || '', item.estadoConservacao || '', item.justificativaInservivel || '', item.observacao || '',
+      item.latitude ?? '', item.longitude ?? '', item.precisaoLocalizacao ?? '', item.fotos.length,
+      item.usuarioNome || '', this.formatReportDate(item.dataInventario), item.lancadoEEstado ? 'Lançado' : 'Pendente',
+    ]);
+    const local = this.relatorioTipo === 'local'
+      ? this.locaisDaComissaoEmEdicao.find((item) => item.id === this.relatorioLocalId)
+      : null;
+    const sufixo = local ? `-${this.formatFileName(local.nome)}` : '';
+    this.downloadCsv(headers, rows, `relatorio-comissao-${this.comissaoEmEdicao!.ano}${sufixo}-${this.formatFileDateTime(new Date())}.csv`);
+  }
+
+  private gerarCsvInconsistencias(): void {
+    if (!this.comissaoEmEdicao || !this.inconsistenciasDaComissao.length) {
+      return;
+    }
+    const headers = ['Tipo', 'Tombamento', 'Descrição', 'Local', 'Inventariado por', 'Data', 'Classificação', 'Conservação', 'Observação', 'Arquivos de foto ausentes'];
+    const rows = this.inconsistenciasDaComissao.flatMap((inconsistencia) =>
+      inconsistencia.ocorrencias.map((ocorrencia) => [
+        inconsistencia.tipo === 'FotoAusente' ? 'Foto ausente' : 'Tombamento duplicado',
+        inconsistencia.tombamento || '', inconsistencia.descricao || '', ocorrencia.localNome || '',
+        ocorrencia.usuarioNome || '', this.formatReportDate(ocorrencia.dataInventario), ocorrencia.status || '',
+        ocorrencia.estadoConservacao || '', ocorrencia.observacao || '', ocorrencia.fotosAusentes.join(', '),
+      ])
+    );
+    this.downloadCsv(headers, rows, `relatorio-inconsistencias-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(new Date())}.csv`);
+    this.toastr.success('Relatório de inconsistências gerado com sucesso.');
+  }
+
+  private gerarCsvItensSemTombamento(tipo: RelatorioItensSemTombamentoTipo): void {
+    if (!this.comissaoEmEdicao) {
+      return;
+    }
+    const itens = tipo === 'eestado' ? this.itensSemTombamentoEEstadoDaComissao : this.itensSemNenhumTombamentoDaComissao;
+    const headers = ['Tombamento E-Estado', 'Tombamento antigo', 'Descrição', 'Local', 'Inventariado por', 'Data', 'Classificação', 'Conservação', 'Observação', 'Fotos'];
+    const rows = itens.map((item) => [
+      item.tombamentoNovo || '', item.tombamentoAntigo || '', item.descricao || '', item.localNome || '',
+      item.usuarioNome || '', this.formatReportDate(item.dataInventario), item.status || '',
+      item.estadoConservacao || '', item.observacao || '', item.fotos.length,
+    ]);
+    const nome = tipo === 'eestado' ? 'sem-tombamento-eestado' : 'sem-nenhum-tombamento';
+    this.downloadCsv(headers, rows, `relatorio-${nome}-comissao-${this.comissaoEmEdicao.ano}-${this.formatFileDateTime(new Date())}.csv`);
+    this.toastr.success('Relatório gerado com sucesso.');
+  }
+
+  private downloadCsv(headers: string[], rows: Array<Array<string | number>>, fileName: string): void {
+    const escape = (value: string | number) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const content = [headers, ...rows].map((row) => row.map(escape).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8;' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   private formatFileName(value: string): string {

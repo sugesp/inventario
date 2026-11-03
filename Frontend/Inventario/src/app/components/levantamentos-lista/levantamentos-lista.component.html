@@ -28,18 +28,10 @@
       <button
         class="btn btn-outline-secondary"
         type="button"
-        (click)="exportSelectedCsv()"
+        (click)="openReport('selected')"
         [disabled]="selectedLevantamentoIds.size === 0"
       >
-        Exportar CSV selecionados
-      </button>
-      <button
-        class="btn btn-outline-secondary"
-        type="button"
-        (click)="exportSelectedPdf()"
-        [disabled]="selectedLevantamentoIds.size === 0"
-      >
-        Exportar PDF selecionados
+        Relatório dos selecionados
       </button>
     </div>
 
@@ -122,11 +114,8 @@
         <h3>{{ loadingModal ? 'Carregando levantamento...' : (activeLevantamento?.nome || 'Levantamento') }}</h3>
       </div>
       <div class="modal-header-actions">
-        <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLevantamento" (click)="exportCsv(activeLevantamento)">
-          Exportar CSV
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLevantamento" (click)="exportPdf(activeLevantamento)">
-          Exportar PDF
+        <button class="btn btn-outline-secondary btn-sm" type="button" *ngIf="activeLevantamento" (click)="openReport('active')">
+          Relatório
         </button>
         <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="activeLevantamento?.usuarioPodeCompartilhar" (click)="openSharing(activeLevantamento!)">
           Compartilhar
@@ -206,6 +195,34 @@
     </div>
 
     <div class="scan-feedback modal-feedback" *ngIf="loadingModal">Carregando itens do levantamento...</div>
+  </div>
+</div>
+
+<div class="report-backdrop" *ngIf="reportTarget"></div>
+<div class="report-modal" *ngIf="reportTarget" appCloseOnOutsideClick (appCloseOnOutsideClick)="closeReport()">
+  <div class="report-card" (click)="$event.stopPropagation()">
+    <div class="report-header">
+      <div>
+        <span class="list-header-eyebrow">Exportação</span>
+        <h3>Gerar relatório</h3>
+        <p>Escolha o formato do arquivo.</p>
+      </div>
+      <button class="btn-close" type="button" aria-label="Fechar" (click)="closeReport()"></button>
+    </div>
+    <div class="report-body">
+      <label class="report-format" [class.active]="reportFormat === 'pdf'">
+        <input type="radio" name="reportFormat" value="pdf" [(ngModel)]="reportFormat" />
+        <span><strong>PDF</strong><small>Documento formatado para visualização e impressão.</small></span>
+      </label>
+      <label class="report-format" [class.active]="reportFormat === 'csv'">
+        <input type="radio" name="reportFormat" value="csv" [(ngModel)]="reportFormat" />
+        <span><strong>CSV</strong><small>Planilha de dados para abrir no Excel ou importar em outros sistemas.</small></span>
+      </label>
+    </div>
+    <div class="report-footer">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeReport()">Cancelar</button>
+      <button class="btn btn-primary" type="button" (click)="confirmReport()">Gerar relatório</button>
+    </div>
   </div>
 </div>
 
