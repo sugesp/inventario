@@ -2,7 +2,7 @@ import { Component, DestroyRef, DoCheck, ElementRef, OnDestroy, OnInit, ViewChil
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import jsQR from 'jsqr';
-import { finalize, switchMap } from 'rxjs';
+import { finalize, Subscription, switchMap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../auth/auth.service';
 import { LaudoTecnico, LaudoTecnicoPayload } from '../../contracts/laudo-tecnico.model';
@@ -131,6 +131,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   cameraCapturing = false;
   cameraError = '';
   private lastConsultedPatrimonio = '';
+  private patrimonioConsultation?: Subscription;
   private cameraStream: MediaStream | null = null;
   private qrScannerStream: MediaStream | null = null;
   private qrScannerFrameId: number | null = null;
@@ -195,6 +196,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.patrimonioConsultation?.unsubscribe();
     this.stopQrScanner();
     this.stopCamera();
     this.clearPhotoPreviews();
@@ -321,6 +323,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
         return;
       }
 
+      this.clearPatrimonioDetails();
       this.form.patrimonio = this.formatScannedTombamento(rawValue);
       this.consultPatrimonio();
     } catch {
@@ -332,12 +335,16 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
   }
 
   onPatrimonioChange(value: string): void {
+    const previousTombamento = this.normalizeTombamento(this.form.patrimonio);
     this.form.patrimonio = this.formatTombamento(value);
     this.patrimonioMessage = '';
 
     const tombamento = this.normalizeTombamento(this.form.patrimonio);
-    if (tombamento.length < 9) {
+    if (tombamento !== previousTombamento) {
+      this.patrimonioConsultation?.unsubscribe();
+      this.consultingPatrimonio = false;
       this.lastConsultedPatrimonio = '';
+      this.clearPatrimonioDetails();
     }
 
     if (tombamento.length === 9 && tombamento !== this.lastConsultedPatrimonio) {
@@ -357,7 +364,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
 
     this.lastConsultedPatrimonio = tombamento;
     this.consultingPatrimonio = true;
-    this.itemInventariadoService.consultarResumoPublico(tombamento)
+    this.patrimonioConsultation = this.itemInventariadoService.consultarResumoPublico(tombamento)
       .pipe(finalize(() => this.consultingPatrimonio = false))
       .subscribe({
         next: (resumo) => {
@@ -371,6 +378,22 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
           this.patrimonioMessage = 'Patrimônio lido, mas não foi possível localizar seus dados. Continue o preenchimento manualmente.';
         },
       });
+  }
+
+  clearPatrimonioDetails(): void {
+    this.patrimonioConsultation?.unsubscribe();
+    this.consultingPatrimonio = false;
+    this.patrimonioMessage = '';
+    this.form.tombamentoAntigo = '';
+    this.form.numeroSerie = '';
+    this.form.marca = '';
+    this.form.modelo = '';
+    this.form.anoAquisicao = '';
+    this.form.processador = '';
+    this.form.memoria = '';
+    this.form.armazenamento = '';
+    this.form.sistemaOperacional = '';
+    this.form.outros = '';
   }
 
   async openPhotoCamera(): Promise<void> {
@@ -830,6 +853,7 @@ export class LaudoTecnicoComponent implements OnInit, DoCheck, OnDestroy {
     this.detectQrFromVideo(video)
       .then((rawValue) => {
         if (rawValue) {
+          this.clearPatrimonioDetails();
           this.form.patrimonio = this.formatScannedTombamento(rawValue);
           this.patrimonioMessage = 'QR Code identificado automaticamente pela câmera.';
           this.closeQrScanner();

@@ -72,7 +72,7 @@ public class ItensInventariadosController : ControllerBase
         ));
     }
 
-    [Authorize(Roles = "Administrador,Inventario,ControleInterno")]
+    [Authorize(Roles = "Administrador,Inventario,ControleInterno,GTI.Tecnico")]
     [HttpGet("consulta-publica/{tombamento}")]
     public async Task<ActionResult<ConsultaPublicaBemDto>> ConsultarResumoPublico(string tombamento, CancellationToken cancellationToken)
     {

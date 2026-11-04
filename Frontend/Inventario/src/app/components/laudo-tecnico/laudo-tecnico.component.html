@@ -51,6 +51,9 @@
           <button class="btn btn-primary" type="button" (click)="openQrReader()" [disabled]="readingQrCode || consultingPatrimonio || qrScannerStarting || qrScannerOpen">
             {{ qrScannerStarting ? 'Abrindo câmera...' : (readingQrCode ? 'Lendo...' : (consultingPatrimonio ? 'Consultando...' : 'Ler QR Code')) }}
           </button>
+          <button class="btn btn-outline-secondary" type="button" (click)="clearPatrimonioDetails()">
+            Limpar campos
+          </button>
         </div>
         <input #qrInput class="d-none" type="file" accept="image/*" capture="environment" (change)="onQrImageSelected($event)" />
         <div class="scan-feedback" *ngIf="qrScannerError">{{ qrScannerError }}</div>
