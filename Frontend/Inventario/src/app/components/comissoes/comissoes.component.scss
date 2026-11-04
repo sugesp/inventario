@@ -49,11 +49,12 @@
 }
 
 .modal-card-report {
-  width: min(620px, 100%);
+  width: min(920px, 100%);
 }
 
 .report-type-options {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 10px;
 }
 
@@ -800,6 +801,10 @@
     padding: 10px;
     align-items: start;
     overflow-y: auto;
+  }
+
+  .report-type-options {
+    grid-template-columns: 1fr;
   }
 
   .team-form {
