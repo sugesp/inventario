@@ -41,6 +41,7 @@ public class ItemInventariadoService : IItemInventariadoService
         {
             var locaisAcessiveisIds = await GetLocaisAcessiveisIdsAsync(
                 usuarioAutenticadoId,
+                incluirLocaisBloqueados: true,
                 cancellationToken
             );
 
@@ -940,7 +941,11 @@ public class ItemInventariadoService : IItemInventariadoService
             return;
         }
 
-        var locaisAcessiveisIds = await GetLocaisAcessiveisIdsAsync(usuarioId, cancellationToken);
+        var locaisAcessiveisIds = await GetLocaisAcessiveisIdsAsync(
+            usuarioId,
+            incluirLocaisBloqueados: false,
+            cancellationToken
+        );
         var usuarioPodeInventariar = locaisAcessiveisIds.Contains(local.Id);
 
         if (!usuarioPodeInventariar)
@@ -951,12 +956,13 @@ public class ItemInventariadoService : IItemInventariadoService
 
     private async Task<HashSet<Guid>> GetLocaisAcessiveisIdsAsync(
         Guid usuarioId,
+        bool incluirLocaisBloqueados,
         CancellationToken cancellationToken
     )
     {
         var locais = await _context.Locais
             .AsNoTracking()
-            .Where(x => x.DeletedAt == null && !x.Bloqueado)
+            .Where(x => x.DeletedAt == null && (incluirLocaisBloqueados || !x.Bloqueado))
             .Select(x => new
             {
                 x.Id,

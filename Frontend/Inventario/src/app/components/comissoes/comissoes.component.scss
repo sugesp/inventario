@@ -678,6 +678,11 @@
   gap: 8px;
 }
 
+.local-members-summary {
+  cursor: help;
+  width: fit-content;
+}
+
 .member-card-check {
   justify-content: flex-start;
   cursor: pointer;

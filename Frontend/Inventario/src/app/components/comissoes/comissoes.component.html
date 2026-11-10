@@ -307,7 +307,10 @@
                   <strong>{{ getLocalHierarchyLabel(local) }}</strong>
                   <small *ngIf="local.bloqueado">Bloqueado temporariamente para inventário</small>
                   <small>Local superior: {{ local.localSuperiorNome || 'Nenhum (local raiz)' }}</small>
-                  <small>Responsáveis: {{ getLocalMembrosLabel(local) }}</small>
+                  <small
+                    class="local-members-summary"
+                    [attr.title]="getLocalMembrosLabel(local)"
+                  >Responsáveis: {{ getLocalMembrosCountLabel(local) }}</small>
                   <small>{{ getLocalGeolocalizacaoLabel(local) }}</small>
                 </div>
                 <div class="team-actions" *ngIf="canManageCurrentComissao">
@@ -1143,7 +1146,18 @@
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr>
-              <th class="select-column"></th>
+              <th class="select-column">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  title="Selecionar todos os membros"
+                  aria-label="Selecionar todos os membros"
+                  [checked]="areAllLocalMembersSelected"
+                  [indeterminate]="areSomeLocalMembersSelected"
+                  [disabled]="!canManageCurrentComissao || selectedMembers.length === 0"
+                  (change)="toggleAllLocalMembers($any($event.target).checked)"
+                />
+              </th>
               <th>Membro</th>
               <th>CPF</th>
             </tr>

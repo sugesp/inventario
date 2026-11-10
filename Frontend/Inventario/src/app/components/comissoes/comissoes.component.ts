@@ -1516,6 +1516,22 @@ export class ComissoesComponent implements OnInit, OnDestroy {
     this.localForm.membroUsuarioIds = this.localForm.membroUsuarioIds.filter((id) => id !== usuarioId);
   }
 
+  get areAllLocalMembersSelected(): boolean {
+    return this.selectedMembers.length > 0
+      && this.selectedMembers.every((usuario) => this.isLocalMemberSelected(usuario.id));
+  }
+
+  get areSomeLocalMembersSelected(): boolean {
+    return !this.areAllLocalMembersSelected
+      && this.selectedMembers.some((usuario) => this.isLocalMemberSelected(usuario.id));
+  }
+
+  toggleAllLocalMembers(checked: boolean): void {
+    this.localForm.membroUsuarioIds = checked
+      ? this.selectedMembers.map((usuario) => usuario.id)
+      : [];
+  }
+
   getLocalMembrosLabel(local: Local): string {
     const nomes = local.membros
       .map((membro) => membro.nome)
@@ -1523,6 +1539,11 @@ export class ComissoesComponent implements OnInit, OnDestroy {
       .sort((a, b) => a.localeCompare(b));
 
     return nomes.length > 0 ? nomes.join(', ') : 'Nenhum responsável informado';
+  }
+
+  getLocalMembrosCountLabel(local: Local): string {
+    const quantidade = local.membros.length;
+    return quantidade === 1 ? '1 responsável' : `${quantidade} responsáveis`;
   }
 
   get locaisVisiveis(): Local[] {
