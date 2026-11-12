@@ -462,6 +462,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
     const payload = this.toPayload();
     this.saving = true;
 
+    const isCreating = !this.transferenciaId;
     const request = this.transferenciaId
       ? this.transferenciaService.update(this.transferenciaId, payload)
       : this.transferenciaService.create(payload);
@@ -473,7 +474,7 @@ export class TransferirItensComponent implements OnInit, OnDestroy {
         this.applyTransferencia(transferencia);
         this.currentStep = 'resumo';
         this.toastr.success('Transferência salva com sucesso.');
-        this.router.navigate(['/transferencias', transferencia.id]);
+        this.router.navigate(isCreating ? ['/transferencias'] : ['/transferencias', transferencia.id]);
       },
       error: (error) => {
         this.saving = false;

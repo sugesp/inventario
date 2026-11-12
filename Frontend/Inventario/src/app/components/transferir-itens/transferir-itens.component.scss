@@ -19,6 +19,20 @@
   background: linear-gradient(135deg, #f8fbff 0%, #edf4fb 100%);
 }
 
+.hero-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-header .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .hero-copy {
   margin: 0;
   color: #61788f;
@@ -467,6 +481,10 @@
 }
 
 @media (max-width: 767.98px) {
+  .hero-header {
+    flex-direction: column;
+  }
+
   .hero-card {
     padding: 18px;
   }

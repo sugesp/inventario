@@ -1,7 +1,15 @@
 <div class="inventario-grid">
   <section class="hero-card">
-    <span class="list-header-eyebrow">Transferências</span>
-    <h2 class="list-header-title">{{ isReadOnly ? 'Detalhes da transferência' : (transferenciaId ? 'Editar transferência' : 'Nova transferência') }}</h2>
+    <div class="hero-header">
+      <div>
+        <span class="list-header-eyebrow">Transferências</span>
+        <h2 class="list-header-title">{{ isReadOnly ? 'Detalhes da transferência' : (transferenciaId ? 'Editar transferência' : 'Nova transferência') }}</h2>
+      </div>
+      <a class="btn btn-outline-secondary" routerLink="/transferencias">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        Voltar para transferências
+      </a>
+    </div>
     <p class="hero-copy">
       {{ isReadOnly ? 'Consulte os dados da transferência concluída e os itens transferidos.' : 'Monte a transferência em etapas: defina o destino, adicione os itens e salve.' }}
     </p>
