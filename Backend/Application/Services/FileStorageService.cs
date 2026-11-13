@@ -6,6 +6,7 @@ namespace Application.Services;
 
 public class FileStorageService : IFileStorageService
 {
+    private const long MaxFileSize = 10_000_000;
     private readonly string _rootPath;
 
     public FileStorageService(IConfiguration configuration)
@@ -27,7 +28,12 @@ public class FileStorageService : IFileStorageService
             throw new InvalidOperationException("Arquivo inválido.");
         }
 
-        var extension = Path.GetExtension(Path.GetFileName(file.FileName));
+        if (file.Length > MaxFileSize)
+        {
+            throw new InvalidOperationException("O arquivo deve ter no máximo 10 MB.");
+        }
+
+        var extension = await ValidateImageAsync(file, cancellationToken);
         var fileName = $"{Guid.NewGuid():N}{extension}";
         var safeFolder = SanitizeRelativePath(folder);
         var targetDirectory = Path.Combine(_rootPath, safeFolder);
@@ -104,7 +110,10 @@ public class FileStorageService : IFileStorageService
             : normalizedPath;
         var absolutePath = Path.GetFullPath(Path.Combine(_rootPath, relativeToRoot));
 
-        if (!absolutePath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
+        var rootPrefix = _rootPath.EndsWith(Path.DirectorySeparatorChar)
+            ? _rootPath
+            : _rootPath + Path.DirectorySeparatorChar;
+        if (!absolutePath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Caminho de arquivo inválido.");
         }
@@ -146,5 +155,47 @@ public class FileStorageService : IFileStorageService
             ".pdf" => "application/pdf",
             _ => "application/octet-stream"
         };
+    }
+
+    private static async Task<string> ValidateImageAsync(
+        IFormFile file,
+        CancellationToken cancellationToken
+    )
+    {
+        var header = new byte[12];
+        await using var stream = file.OpenReadStream();
+        var bytesRead = await stream.ReadAsync(header.AsMemory(0, header.Length), cancellationToken);
+
+        if (bytesRead >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF)
+        {
+            return ".jpg";
+        }
+
+        if (bytesRead >= 8
+            && header.AsSpan(0, 8).SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }))
+        {
+            return ".png";
+        }
+
+        if (bytesRead >= 6
+            && (header.AsSpan(0, 6).SequenceEqual("GIF87a"u8)
+                || header.AsSpan(0, 6).SequenceEqual("GIF89a"u8)))
+        {
+            return ".gif";
+        }
+
+        if (bytesRead >= 12
+            && header.AsSpan(0, 4).SequenceEqual("RIFF"u8)
+            && header.AsSpan(8, 4).SequenceEqual("WEBP"u8))
+        {
+            return ".webp";
+        }
+
+        if (bytesRead >= 2 && header[0] == 0x42 && header[1] == 0x4D)
+        {
+            return ".bmp";
+        }
+
+        throw new InvalidOperationException("Envie somente imagens JPG, PNG, GIF, WEBP ou BMP válidas.");
     }
 }

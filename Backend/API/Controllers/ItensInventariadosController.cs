@@ -181,11 +181,11 @@ public class ItensInventariadosController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new { message = ex.InnerException?.Message ?? ex.Message }
+                new { message = "Não foi possível concluir a operação." }
             );
         }
     }
@@ -233,18 +233,24 @@ public class ItensInventariadosController : ControllerBase
             }
 
             var form = await Request.ReadFormAsync(cancellationToken);
-            var updated = await _service.UpdateAsync(id, dto, form.Files, true, cancellationToken);
+            var updated = await _service.UpdateAsync(
+                id,
+                dto,
+                form.Files,
+                User.IsInRole("Administrador"),
+                cancellationToken
+            );
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new { message = ex.InnerException?.Message ?? ex.Message }
+                new { message = "Não foi possível concluir a operação." }
             );
         }
     }

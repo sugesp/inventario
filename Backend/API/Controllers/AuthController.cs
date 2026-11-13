@@ -3,6 +3,7 @@ using Application.DTO.Auth;
 using Application.DTO.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace API.Controllers;
@@ -19,6 +20,7 @@ public class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("Authentication")]
     [HttpPost("pre-register")]
     public async Task<ActionResult<UsuarioDto>> PreRegister(
         [FromBody] PreRegisterDto dto,
@@ -71,6 +73,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    [EnableRateLimiting("Authentication")]
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(
         [FromBody] LoginDto dto,

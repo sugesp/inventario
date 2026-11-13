@@ -5,6 +5,7 @@ using Domain.Model;
 using Domain.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Persistence.Context;
@@ -13,6 +14,7 @@ using Persistence.Repository;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,10 @@ builder.Services.AddHttpContextAccessor();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
+{
+    throw new InvalidOperationException("Jwt:Secret must contain at least 32 bytes.");
+}
 var jwtIssuer = jwtSection["Issuer"] ?? "Inventario.API";
 var jwtAudience = jwtSection["Audience"] ?? "Inventario.App";
 
@@ -127,17 +133,35 @@ builder.Services
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("Authentication", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+        limiterOptions.AutoReplenishment = true;
+    });
+});
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
         "DefaultCors",
-        policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+        policy =>
+        {
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
+            }
+        }
     );
 });
 
 var app = builder.Build();
 
-await SeedDefaultAdminAsync(app.Services);
+await SeedInitialAdminAsync(app.Services, app.Configuration);
 
 if (app.Environment.IsDevelopment())
 {
@@ -146,7 +170,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("DefaultCors");
-app.UseStaticFiles();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.Use(async (context, next) =>
 {
@@ -168,49 +192,49 @@ app.MapControllers();
 
 app.Run();
 
-static async Task SeedDefaultAdminAsync(IServiceProvider services)
+static async Task SeedInitialAdminAsync(IServiceProvider services, IConfiguration configuration)
 {
     using var scope = services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
 
-    var cpf = "00000000000";
+    var cpf = new string((configuration["BootstrapAdmin:Cpf"] ?? string.Empty).Where(char.IsDigit).ToArray());
+    var password = configuration["BootstrapAdmin:Password"];
+    if (cpf.Length != 11 || string.IsNullOrWhiteSpace(password))
+    {
+        return;
+    }
+
+    if (password.Length < 12)
+    {
+        throw new InvalidOperationException("BootstrapAdmin:Password must contain at least 12 characters.");
+    }
+
     var usuarioExistente = await dbContext.Usuarios.FirstOrDefaultAsync(x => x.Cpf == cpf && x.DeletedAt == null);
     if (usuarioExistente is not null)
     {
-        if (!UsuarioPermissoes.HasPermission(usuarioExistente.PermissoesJson, UsuarioPermissoes.Administrador))
-        {
-            usuarioExistente.PermissoesJson = UsuarioPermissoes.Serialize([UsuarioPermissoes.Administrador]);
-        }
-
-        if (usuarioExistente.MustChangePassword && !VerifyPassword("12345678", usuarioExistente.PasswordSalt, usuarioExistente.PasswordHash))
-        {
-            ApplyDefaultPassword(usuarioExistente);
-        }
-
-        await dbContext.SaveChangesAsync();
         return;
     }
 
     var usuario = new Usuario
     {
-        Nome = "sysadmin",
-        Email = "sysadmin@local",
+        Nome = configuration["BootstrapAdmin:Name"]?.Trim() ?? "Administrador do sistema",
+        Email = configuration["BootstrapAdmin:Email"]?.Trim().ToLowerInvariant() ?? "sysadmin@local",
         Cpf = cpf,
         PermissoesJson = UsuarioPermissoes.Serialize([UsuarioPermissoes.Administrador])
     };
 
-    ApplyDefaultPassword(usuario);
+    ApplyBootstrapPassword(usuario, password);
     dbContext.Usuarios.Add(usuario);
 
     await dbContext.SaveChangesAsync();
 }
 
-static void ApplyDefaultPassword(Usuario usuario)
+static void ApplyBootstrapPassword(Usuario usuario, string password)
 {
     var salt = RandomNumberGenerator.GetBytes(16);
     var hash = Rfc2898DeriveBytes.Pbkdf2(
-        password: "12345678",
+        password: password,
         salt: salt,
         iterations: 100_000,
         hashAlgorithm: HashAlgorithmName.SHA256,
@@ -220,19 +244,4 @@ static void ApplyDefaultPassword(Usuario usuario)
     usuario.PasswordSalt = Convert.ToBase64String(salt);
     usuario.PasswordHash = Convert.ToBase64String(hash);
     usuario.MustChangePassword = true;
-}
-
-static bool VerifyPassword(string senha, string saltBase64, string hashBase64)
-{
-    var salt = Convert.FromBase64String(saltBase64);
-    var expectedHash = Convert.FromBase64String(hashBase64);
-    var currentHash = Rfc2898DeriveBytes.Pbkdf2(
-        password: senha,
-        salt: salt,
-        iterations: 100_000,
-        hashAlgorithm: HashAlgorithmName.SHA256,
-        outputLength: 32
-    );
-
-    return CryptographicOperations.FixedTimeEquals(currentHash, expectedHash);
 }
